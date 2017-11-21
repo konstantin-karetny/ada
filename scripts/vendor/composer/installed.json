@@ -1,0 +1,95 @@
+[
+    {
+        "name": "ada/framework",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "C:/OSPanel/domains/_packagist/ada/framework",
+            "reference": "9a56cfd37e1df789748c3688605ed8a32aca1c8f"
+        },
+        "require": {
+            "php": ">=7.0.0"
+        },
+        "time": "2017-10-03T11:17:00+00:00",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Ada\\Framework\\": "/"
+            }
+        },
+        "license": [
+            "Apache 2.0"
+        ],
+        "authors": [
+            {
+                "name": "Konstantin Rudenko",
+                "email": "konstantin.i.rudenko@gmail.com"
+            }
+        ],
+        "description": "The Ada Framework"
+    },
+    {
+        "name": "ada/cms",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "C:/OSPanel/domains/_packagist/ada/cms",
+            "reference": "3e74f8d2e348cf72f16cffd4585cd3b39bc0df9b"
+        },
+        "require": {
+            "php": ">=7.0.0"
+        },
+        "time": "2017-10-03T11:19:29+00:00",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Ada\\Cms\\": "/"
+            }
+        },
+        "license": [
+            "Apache 2.0"
+        ],
+        "authors": [
+            {
+                "name": "Konstantin Rudenko",
+                "email": "konstantin.i.rudenko@gmail.com"
+            }
+        ],
+        "description": "The Ada CMS"
+    },
+    {
+        "name": "ada/tools",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "C:/OSPanel/domains/_packagist/ada/tools",
+            "reference": "1b6b158678a32e3331d7ea6132ec5141193a7291"
+        },
+        "require": {
+            "php": ">=7.0.0"
+        },
+        "time": "2017-10-03T12:05:08+00:00",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Ada\\Tools\\": "/"
+            }
+        },
+        "license": [
+            "Apache 2.0"
+        ],
+        "authors": [
+            {
+                "name": "Konstantin Rudenko",
+                "email": "konstantin.i.rudenko@gmail.com"
+            }
+        ],
+        "description": "The Ada Tools"
+    }
+]
