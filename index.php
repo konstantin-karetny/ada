@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 02.10.2017
+    * @version   1.0.0 13.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0

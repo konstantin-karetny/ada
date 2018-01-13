@@ -1,12 +1,12 @@
 <?php
     /**
-    * @package   ada/tools
-    * @version   1.0.0 03.10.2017
+    * @package   ada/core
+    * @version   1.0.0 13.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Tools;
+    namespace Ada\Core;
 
     class Exception extends \Exception {}

@@ -1,18 +1,26 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 02.10.2017
+    * @version   1.0.0 13.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada;
+    namespace Ada\Tools;
 
     require_once $path_root . '/scripts/vendor/ada/cms/includes/autoload.php';
 
 
-    exit(var_dump( Tools\Uri::getInst() ));
+
+
+
+    $url = Url::getInst();
+
+    //default root from configuration ..........................
+
+
+    exit(var_dump( $url, $url->toString() ));
 
     $app = Framework\App::getInst();
 
@@ -65,6 +73,6 @@
     $app = Application::getinst();
     $app->execute();
 
-    if($_POST || $_FILES) Uri::redirect(Uri::current());
+    if($_POST || $_FILES) Url::redirect(Url::current());
 
     echo $app->get_body();

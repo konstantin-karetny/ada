@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/tools
-    * @version   1.0.0 09.11.2017
+    * @version   1.0.0 13.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,9 +9,9 @@
 
     namespace Ada\Tools;
 
-    class Clean extends Proto {
+    class Clean extends \Ada\Core\Proto {
 
-        public static function uri(string $raw): string {
+        public static function url(string $raw): string {
             $res = filter_var(
                 str_replace(
                     [
@@ -33,7 +33,7 @@
             if ($res === false) {
                 throw new \ErrorException;
             }
-            return trim($res);
+            return trim(rtrim($res, '/'));
         }
 
     }
