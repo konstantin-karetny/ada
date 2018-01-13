@@ -80,12 +80,13 @@
         public static function current() {
             $res = 'http';
             if (
-                (!empty($_SERVER['HTTPS']) &&
+                (
+                    !empty($_SERVER['HTTPS']) &&
                     strtolower(trim($_SERVER['HTTPS'])) !== 'off'
                 ) ||
                 (
-					!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-					strtolower(trim($_SERVER['HTTP_X_FORWARDED_PROTO'])) !== 'http'
+                    !empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+                    strtolower(trim($_SERVER['HTTP_X_FORWARDED_PROTO'])) !== 'http'
                 )
             ) {
                 $res .= 's';
