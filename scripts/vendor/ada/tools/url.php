@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/tools
-    * @version   1.0.0 13.01.2018
+    * @version   1.0.0 15.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -43,6 +43,31 @@
             ROOT_DEFAULT_PARTS = [
                 'scheme',
                 'host'
+            ],
+            SPECIAL_CHARS_CODES = [
+                '!'  => '%21',
+                '#'  => '%23',
+                '$'  => '%24',
+                '&'  => '%26',
+                '\'' => '%27',
+                '('  => '%28',
+                ')'  => '%29',
+                '*'  => '%2A',
+                ','  => '%2C',
+                '/'  => '%2F',
+                ':'  => '%3A',
+                ';'  => '%3B',
+                '='  => '%3D',
+                '?'  => '%3F',
+                '@'  => '%40',
+                '['  => '%5B',
+                ']'  => '%5D'
+            ],
+            UNSAFE_CHARS_CODES = [
+                '\'' => '%27',
+                '"'  => '%22',
+                '<'  => '%3C',
+                '>'  => '%3E'
             ];
 
         protected
@@ -63,7 +88,7 @@
             bool   $cached = true
         ): self {
             return parent::getInst(
-                $url ? Clean::url($url) : self::current(),
+                $url ? self::clean($url) : self::current(),
                 $params,
                 $cached
             );
@@ -75,6 +100,25 @@
             }
             $this->initial = $url;
             $this->vars    = $this->parseQuery($this->query);
+        }
+
+        public static function clean(string $url): string {
+            $res = filter_var(
+                str_replace(
+                    array_keys(self::UNSAFE_CHARS_CODES),
+                    array_values(self::UNSAFE_CHARS_CODES),
+                    self::encode(
+                        strtolower(
+                            trim(trim($url), '/')
+                        )
+                    )
+                ),
+                FILTER_SANITIZE_URL
+            );
+            if ($res === false) {
+                throw new \ErrorException('Failed to clean url \'' . $url . '\'', 1);
+            }
+            return self::decode($url);
         }
 
         public static function current() {
@@ -101,7 +145,7 @@
                     $res .= '?' . trim($_SERVER['QUERY_STRING']);
                 }
             }
-            return Clean::url($res);
+            return self::clean($res);
         }
 
         public function getSchemes(): array {
@@ -276,16 +320,31 @@
             return $res;
         }
 
-        protected function parse(string $url): array {
-            $res = array_merge(
-                array_fill_keys(self::PARTS, ''),
-                parse_url(urldecode($url))
+        protected static function encode(string $url): string {
+            return str_replace(
+                array_values(self::SPECIAL_CHARS_CODES),
+                array_keys(self::SPECIAL_CHARS_CODES),
+                urlencode($url)
             );
-            foreach ($res as $k => $v) {
-                $res[$k] = Type::set(
-                    trim(trim($v, '/')),
-                    gettype($this->$k)
-                );
+        }
+
+        protected static function decode(string $url): string {
+            return urldecode(
+                str_replace(
+                    array_keys(self::SPECIAL_CHARS_CODES),
+                    array_values(self::SPECIAL_CHARS_CODES),
+                    $url
+                )
+            );
+        }
+
+        protected function parse(string $url): array {
+            $res = [];
+            foreach ((array) parse_url(self::clean($url)) as $k => $v) {
+                if (!in_array($k, self::PARTS)) {
+                    continue;
+                }
+                $res[$k] = Type::set($v, gettype($this->$k));
             }
             return $res;
         }

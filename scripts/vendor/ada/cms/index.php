@@ -15,7 +15,7 @@
 
 
 
-    $url = Url::getInst();
+    $url = Url::getInst('http://сайт.рф');
 
     //default root from configuration ..........................
 
