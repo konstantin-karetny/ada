@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/tools
-    * @version   1.0.0 15.01.2018
+    * @version   1.0.0 25.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -82,12 +82,12 @@
             $fragment = '',
             $vars     = [];
 
-        public static function getInst(
+        public static function init(
             string $url    = '',
             array  $params = [],
             bool   $cached = true
         ): self {
-            return parent::getInst(
+            return parent::init(
                 $url ? self::clean($url) : self::current(),
                 $params,
                 $cached
@@ -95,11 +95,30 @@
         }
 
         protected function __construct(string $url) {
+            if (!self::check($url)) {
+                throw new \Ada\Core\Exception('Wrong url \'' . $url . '\'', 1);
+            }
             foreach ($this->parse($url) as $k => $v) {
                 $this->$k = $v;
             }
             $this->initial = $url;
-            $this->vars    = $this->parseQuery($this->query);
+            $this->setQuery($this->query);
+        }
+
+        public static function check(string $url, $options = null): bool {
+            if (filter_var($url, FILTER_VALIDATE_URL, $options)) {
+                return true;
+            }
+            $mb_strlen = mb_strlen($url);
+            if ($mb_strlen == strlen($url)) {
+                return false;
+            }
+            $url_ascii = str_repeat(' ', $mb_strlen);
+            for ($i = 0; $i < $mb_strlen; $i++) {
+                $char          = mb_substr($url, $i, 1);
+                $url_ascii[$i] = strlen($char) != mb_strlen($char) ? 'a' : $char;
+            }
+            return (bool) filter_var($url_ascii, FILTER_VALIDATE_URL, $options);
         }
 
         public static function clean(string $url): string {
@@ -109,16 +128,16 @@
                     array_values(self::UNSAFE_CHARS_CODES),
                     self::encode(
                         strtolower(
-                            trim(trim($url), '/')
+                            trim($url, " \t\n\r\0\x0B/")
                         )
                     )
                 ),
                 FILTER_SANITIZE_URL
             );
             if ($res === false) {
-                throw new \ErrorException('Failed to clean url \'' . $url . '\'', 1);
+                throw new \Ada\Core\Exception('Failed to clean url \'' . $url . '\'', 2);
             }
-            return self::decode($url);
+            return self::decode($res);
         }
 
         public static function current() {
@@ -126,23 +145,23 @@
             if (
                 (
                     !empty($_SERVER['HTTPS']) &&
-                    strtolower(trim($_SERVER['HTTPS'])) !== 'off'
+                    self::clean($_SERVER['HTTPS']) !== 'off'
                 ) ||
                 (
                     !empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-                    strtolower(trim($_SERVER['HTTP_X_FORWARDED_PROTO'])) !== 'http'
+                    self::clean($_SERVER['HTTP_X_FORWARDED_PROTO']) !== 'http'
                 )
             ) {
                 $res .= 's';
             }
-            $res .= '://' . trim($_SERVER['HTTP_HOST']);
+            $res .= '://' . self::clean($_SERVER['HTTP_HOST']);
             if (!empty($_SERVER['PHP_SELF']) && !empty($_SERVER['REQUEST_URI'])) {
-                $res .= trim($_SERVER['REQUEST_URI']);
+                $res .= self::clean($_SERVER['REQUEST_URI']);
             }
             else {
-                $res .= trim($_SERVER['SCRIPT_NAME']);
+                $res .= self::clean($_SERVER['SCRIPT_NAME']);
                 if (!empty($_SERVER['QUERY_STRING'])) {
-                    $res .= '?' . trim($_SERVER['QUERY_STRING']);
+                    $res .= '?' . self::clean($_SERVER['QUERY_STRING']);
                 }
             }
             return self::clean($res);
@@ -210,8 +229,8 @@
 
         public function getVar(
             string $key,
-            string $type    = 'string',
-            string $default = ''
+            string $default = '',
+            string $type    = 'string'
         ) {
             return Type::set(
                 key_exists($key, $this->vars) ? $this->vars[$key] : $default,
@@ -228,62 +247,67 @@
             );
         }
 
-        public function setScheme(string $scheme): string {
-            $scheme = strtolower(trim($scheme));
+        public function setScheme(string $scheme) {
+            $scheme = self::clean($scheme);
             if ($scheme == '') {
-                throw new \Ada\Core\Exception('Scheme can not be empty');
+                throw new \Ada\Core\Exception('Scheme can not be empty', 3);
             }
             if (!in_array($scheme, self::SCHEMES)) {
-                throw new \Ada\Core\Exception('Unknown scheme \'' . $scheme . '\'');
+                throw new \Ada\Core\Exception('Unknown scheme \'' . $scheme . '\'', 4);
             }
-            return $this->scheme = $scheme;
+            $this->scheme = $scheme;
         }
 
-        public function setUser(string $user): string {
-            return $this->user = strtolower(trim($user));
+        public function setUser(string $user) {
+            $this->user = self::clean($user);
         }
 
-        public function setPassword(string $password): string {
-            return $this->password = strtolower(trim($password));
+        public function setPassword(string $password) {
+            $this->password = self::clean($password);
         }
 
-        public function setHost(string $host): string {
-            $host = strtolower(trim($host));
+        public function setHost(string $host) {
+            $host = self::clean($host);
             if ($host == '') {
-                throw new \Ada\Core\Exception('Host can not be empty');
+                throw new \Ada\Core\Exception('Host can not be empty', 5);
             }
-            return $this->host = $host;
+            $this->host = $host;
         }
 
-        public function setPort(int $port): int {
-            return $this->port = $port;
+        public function setPort(int $port) {
+            $this->port = $port;
         }
 
-        public function setPath(string $path): string {
-            return $this->path = strtolower(trim(trim($path), '/'));
+        public function setPath(string $path) {
+            $this->path = self::clean($path);
         }
 
-        public function setQuery(string $query): string {
-            $this->query = strtolower(trim(trim($query), '/'));
-            $this->vars  = $this->parseQuery($this->query);
-            return $this->query;
+        public function setQuery(string $query) {
+            $this->setVars($this->parseQuery($query));
         }
 
-        public function setFragment(string $fragment): string {
-            return $this->fragment = strtolower(trim(trim($fragment), '/'));
+        public function setFragment(string $fragment) {
+            $this->fragment = self::clean($fragment);
         }
 
-        public function setVars(array $vars): array {
+        public function setVars(array $vars) {
             foreach ($vars as $k => $v) {
                 $this->setVar($k, $v);
             }
-            return $this->vars;
         }
 
         public function setVar(string $key, string $value) {
             $this->vars[$key] = Type::typify($value);
             $this->query      = $this->buildQuery($this->vars);
-            return $value;
+        }
+
+        public function deleteVar(string $key): bool {
+            if (key_exists($key, $this->vars)) {
+                unset($this->vars[$key]);
+                $this->query = $this->buildQuery($this->vars);
+                return true;
+            }
+            return false;
         }
 
         public function isSSL(): bool {

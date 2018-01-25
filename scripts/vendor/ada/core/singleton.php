@@ -13,7 +13,7 @@
 
         private static $instances = [];
 
-        public static function getInst(
+        public static function init(
             string $id,
             array  $params = [],
             bool   $cached = true

@@ -1,0 +1,14 @@
+﻿INSTALLATION
+
+1 Скачать архив с официального сайта http://www.yiiframework.com/download
+2 Создать папку проекта в C:\ospanel\domains и распаковать в неё архив
+Для Advanced версии:
+3 Из консоли OpenServer перейти в папку проекта и выполнить команду php init
+4 В браузере из проекта перейти по ссылке /frontend/web либо /backend/web
+
+
+
+LINKS
+
+Yii2 установка advanced
+http://php-zametki.ru/yii2-cheatsheets/139-yii2-advanced-setup.html
