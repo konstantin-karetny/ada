@@ -1,0 +1,207 @@
+﻿
+
+
+
+TO DO
+- Грамотное определение языка пользователя http://habrahabr.ru/post/159129/
+- Как создать безопасный логин скрипт в PHP и MySQL http://ru.wikihow.com/создать-безопасный-логин-скрипт-в-PHP-и-MySQL
+
+
+.HTACCESS
+...Indexes (показывать посетителю список файлов, если в выбранном каталоге нет файла index . html или его аналога)
+http://www.htaccess.net.ru/doc/htaccess/Options.php
++
+Запрещаем просмотр содержимого папки
+...альтернативное решение, имеющее такой же результат — разместить в каждой папке файл index.html...
+http://www.proofsite.com.ua/article-2242.html
++
+...в каждую папку (директорию) помещаем пустой файл — index html или index.php и в файл .htaccess или в конфигурации apache добавляем строку
+Options –Indexes...
+http://darkghost.pp.ua/archives/1146
+
+Указание явной кодировки
+http://www.htaccess.net.ru/doc/AddType-charset/CharsetDefault.php
++
+Как задать кодировку в htaccess
+http://myrusakov.ru/php-charset-htaccess.html
+
+CLASSES:
+===== Config =====
+How to read and write to an ini file with PHP [duplicate]
+http://stackoverflow.com/questions/5695145/how-to-read-and-write-to-an-ini-file-with-php
+
+
+
+===== Db =====
+Защита от SQL-инъекций http://phpfaq.ru/slashes
+Почему стоит пользоваться PDO для работы с базой данных http://habrahabr.ru/post/137664/
+Как работать с PDO? Полное руководство. http://phpfaq.ru/pdo
+Объекты данных PHP http://php.net/manual/ru/book.pdo.php
+PDO константы атрибуты http://php-zametki.ru/php-prodvinutym/58-pdo-konstanty-atributy.html
+Selecting data using JDatabase https://docs.joomla.org/Selecting_data_using_JDatabase
+Класс для безопасной и удобной работы с MySQL http://phpfaq.ru/safemysql
+AtmPdo Wrapper https://bitbucket.org/MrBoriska/atmpdo-wrapper
+Zend_Db_Adapter http://framework.zend.com/manual/1.12/ru/zend.db.adapter.html
++ Class Zend_Db_Adapter_Pdo_Abstract http://apigen.juzna.cz/doc/komola/ZendFramework/class-Zend_Db_Adapter_Pdo_Abstract.html#methods
+Имена баз данных, таблиц, столбцов, индексы псевдонимы
+http://www.mysql.ru/docs/man/Legal_names.html
+...Чтобы закрыть соединение, необходимо уничтожить объект путем удаления всех ссылок на него (этого можно добиться, присваивая NULL всем переменным, указывающим на объект). Если не сделать этого явно, PHP автоматически закроет соединение по окончании работы скрипта
+http://php.net/manual/ru/pdo.connections.php
+*разумнее обойтись без публичного метода close() { $this->pdo = null; }, т.к. возможность ручного закрытие соединения принесёт гораздо больше проблем, нежели минимальные потери производительности при его холостой работе до автомаического закрытия
+
+
+
+===== Error =====
+C:\OpenServer\domains\joomla\includes\framework.php
+display_startup_errors ... Опцию имеет смысл выставлять в php.ini, а не в коде потому как проверки происходят ещё до запуска первой строчки кода
+http://rmcreative.ru/blog/post/display_startup_errors
+
+
+
+===== File =====
+*бессмысленно пытаться определить расширение таких файлов как *.html, *.css, *.js или *.php по их MIME-типу,
+*поскольку все они, как правило, создаются путём создания и переименования *.txt файла и, следовательно, имеют либо text/plain либо неопределённый inode/x-empty MIME-тип
++
+Список MIME-типов
+https://ru.wikipedia.org/wiki/Список_MIME-типов
++
+...file maps Internet media types to unique file extension(s)
+http://www.sympa.org/distribution/current/default/mime.types
+
+Ваш сайт тоже позволяет заливать всё подряд?
+https://habrahabr.ru/post/148999/
+
+
+
+===== FTP =====
+Simple FTP Class for PHP
+http://www.shayanderson.com/php/simple-ftp-class-for-php.htm
+
+
+
+===== Lang =====
+В языковых атрибутах HTML, а также для обозначения доменов первого уровня применяется система alpha-2
+http://www.exlab.net/tools/tables/regions.html
++
+...В языковых атрибутах HTML используется стандарт ISO 639-1...
+http://www.exlab.net/tools/tables/languages.html
++
+Если язык страницы, на которую ведет ссылка, отличен от языка ссылающейся страницы, то можно добавить атрибут hreflang, значением которого должен быть код языка (ISO 639). Также через дефис можно добавить код страны (ISO 3166)
+http://www.exlab.net/html/links.html
+
+
+
+===== Session =====
+Сессии. Подробное описание работы и объяснение механизма.
+http://phpfaq.ru/sessions
+Подводные камни использования сессий в PHP
+http://habrahabr.ru/post/182352/
+Безопасность сессий
+http://php.net/manual/ru/session.security.php
+Безопасная работа с сессиями в PHP
+http://samag.ru/archive/article/1944
+Правда о Сессиях
+www.php.su/articles/?cat=protocols&page=003
+...sec_session_start() which is  a common function that is easily found on the net for people looking for a secure login script. Here is the function
+http://forums.phpfreaks.com/topic/294623-to-session-regenerate-id-or-to-session-regenerate-idtrue/
+What is gained by changing the name of the PHPSESSID cookie?
+http://stackoverflow.com/questions/12286441/what-is-gained-by-changing-the-name-of-the-phpsessid-cookie
+
+password_hash()
+Hash API - новый подход к шифрованию паролей
+http://myrusakov.ru/php-hash-api.html
+Хэширование паролей в PHP 5.5 с использованием нового API
+habrahabr.ru/post/194972/
+PHP 5.5 «API хэширования паролей»
+http://habrahabr.ru/post/184220/
+...For the VAST majority of use-cases, let password_hash generate the salt randomly for you
+http://ua2.php.net/manual/ru/function.password-hash.php
+
+session_write_close()
+...Вы можете уменьшить время загрузки фреймов завершая сессию сразу после того, как все изменения переменных сессии будут произведены...
+http://phpdoc.hut.ru/function.session-write-close.php
+Для сведения блокировки файлов сессий к минимуму настоятельно рекомендуется закрывать сессию путем вызова функции session_write_close() сразу после того, как выполнены все действия с сессионными переменными...
+http://habrahabr.ru/post/182352/
+Если же необходимо писать в сессию после медленных операций, придётся сменить «коробочную» сессию на свою реализацию с неблокируемым хранилищем, таким, например, как база данных.
+http://rmcreative.ru/blog/post/blokirovanie-sessiy-v-php
+
+session_regenerate_id();
+when and why I should use session_regenerate_id()?
+http://stackoverflow.com/questions/22965067/when-and-why-i-should-use-session-regenerate-id
+Может возникнуть желание регенерировать идентификатор сессии при каждом запросе, но этого не стоит делать по следующим причинам
+http://samag.ru/archive/article/1944
+...незамедлительное удаление старых сессий может привести к неожиданным побочным эффектам. Сессия может быть утеряна...
+http://php.net/manual/ru/session.security.php
+[Решено] PHP и потеря сессии при session_regenerate_id() https://toster.ru/q/4962
+session_regenerate_id(true) resets session variables
+http://stackoverflow.com/questions/23831440/session-regenerate-idtrue-resets-session-variables
+session_regenerate_id(): Session object destruction failed
+https://bugs.php.net/bug.php?id=69127
++
+Bug #29419 	session_destroy() returns "session object destruction failed"
+https://bugs.php.net/bug.php?id=29419
+
+session_save_path()
+session.save_path
+http://php.net/manual/ru/session.configuration.php#ini.session.save-path
+Столкнулся с проблемой убийства сессий раньше назначенного им срока...
+http://habrahabr.ru/post/28418/
+Для повышения безопасности можно переопределить имя папки, хранящей файлы сессий...
+http://samag.ru/archive/article/1944
+
+session_cache_limiter()
+*использовать с дефолтным агрументом "nocache", однако заголовки посылаемые механизмом сессий могут глушить все прочие,
+*подобные конфликты возможно решить, передав в качестве аргумента любой из подоходящих, вплоть до "none", при котором механизм сессий вообще не будет слать заголовки
+*ф-цию использовать непосредственно перед session_start()
+Убедитесь, что HTTP контент не закэширован для аутентификационной сессии. Допускается кешировать только не конфиденциальный контент. Иначе содержимым могут воспользоваться
+http://php.net/manual/ru/session.security.php
+...механизм сессий посылает еще и заголовки, запрещающие кэширование страниц (тот самый cache limiter). Для html это правильно и необходимо. Но вот когда вы пытаетесь скриптом, проверяющим авторизацию, отдать файл, то интернет эксплорер отказывается его скачивать. Именно из-за этого заголовка. Вызов session_cache_limiter("private"); перед стартом сессии должен решить проблему
+http://phpfaq.ru/sessions#misc
+Если страница должна по-разному вести себя для разных пользователей, то кэшировать ее нельзя. Соответственно, старт сессии в дефолтовом варианте с сопутствующей отдачей заголовков с запретом кэширования явно не помешает
+http://phpclub.ru/talk/threads/можно-ли-узнать-есть-ли-сессия-не-открывая-ее.9379/page-2
+...вам нужно вызывать session_cache_limiter() для каждого запроса (и до вызова session_start()).
+http://www.php.su/session_cache_limiter
+The only way to remove those headers is to add session_cache_limiter('none'); BUT it only works if you add this line before session_start(). 
+http://trac.symfony-project.org/ticket/3542
+PHP has horrible misfeature called session.cache_limiter which hopelessly screws up HTTP headers unlesss you set it to none
+http://stackoverflow.com/questions/49284/file-downloads-in-ie6
+changing the PHP configuration (session.cache_limiter) to e.g. none - but this could introduce problems to other PHP applications
+http://stackoverflow.com/questions/681115/cache-control-header-modified-by-php-session
+
+
+
+===== Singleton =====
+*на данный момент NetBeans не поддерживает автодополнение для объектов, созданных по динамическому имени, единственное оптмальное решение -
+*писать метод для получения объекта каждого класса персонально с указанием имени класса в аннотации /** @return [classname] */
++
+Autocomplete for PHP object's http://forums.netbeans.org/topic53879.html
++
+Netbeans: PHP autocomplete http://software-talk.org/blog/2012/10/netbeans-php-autocomplete/
+
+..."Позднее связывание" отражает тот факт, что обращения через static:: не будут вычисляться по отношению к классу, в котором вызываемый метод определен, а будут вычисляться на основе информации в ходе исполнения...
+http://php.net/manual/ru/language.oop5.late-static-bindings.php
+
+
+
+===== View =====
+Метатеги
+https://ru.wikipedia.org/wiki/метатеги
+
+
+
+===== Uri =====
+*отключение кеширования вызвано кешированием содержимого адресной строки при перенаправлениях
+PHP скрипты часто генерируют динамический контент, который не должен кэшироваться ... Можно принудительно отключить кэширование...
+http://ua2.php.net/manual/ru/function.header.php
+C:\OpenServer\domains\joomla\libraries\joomla\uri\uri.php
+...Величина http_host всегда идентична тому доменному имени, который ввел пользователь в браузере, в то время как server_name иногда может содержать строку, жестко записанную в конфигурации сервера...
+http://php.ru/forum/viewtopic.php?t=47598
++
+если изменить $_SERVER['HTTP_HOST'] то ты просто не получишь этот запрос
+http://forum.php.su/topic.php?forum=71&topic=12279
+Как получить текущий URL страницы
+http://avolberg.ru/decisions/php/php-tekushij-url-stranicy
+Which $_SERVER variables are safe?
+http://stackoverflow.com/questions/6474783/which-server-variables-are-safe
+Редирект средствами php
+http://www.webengineer.pro/php-scripts/11-redirekt-sredstvami-php

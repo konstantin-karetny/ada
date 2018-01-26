@@ -76,7 +76,7 @@
             $user     = '',
             $password = '',
             $host     = '',
-            $port     = 0,
+            $port     = 80,
             $path     = '',
             $query    = '',
             $fragment = '',
@@ -167,6 +167,53 @@
             return self::clean($res);
         }
 
+        public static function isInternal(string $url): bool {
+            return self::init($url)->getRoot() == self::init()->getRoot();
+        }
+
+        public function delVar(string $key): bool {
+            if (key_exists($key, $this->vars)) {
+                unset($this->vars[$key]);
+                $this->query = $this->buildQuery($this->vars);
+                return true;
+            }
+            return false;
+        }
+
+        public function isSSL(): bool {
+            return $this->scheme == 'https';
+        }
+
+        public function toString(array $parts = self::DEFAULT_PARTS): string {
+            $res = '';
+            if (in_array('scheme', $parts)) {
+                $res .= $this->scheme . '://';
+            }
+            if (in_array('user', $parts) && $this->user != '') {
+                $res .= $this->user . ':';
+                if (in_array('password', $parts)) {
+                    $res .= $this->password;
+                }
+                $res .= '@';
+            }
+            if (in_array('host', $parts)) {
+                $res .= $this->host;
+            }
+            if (in_array('port', $parts) && $this->port > 0) {
+                $res .= ':' . $this->port;
+            }
+            if (in_array('path', $parts) && $this->path != '') {
+                $res .= '/' . $this->path;
+            }
+            if (in_array('query', $parts) && $this->query != '') {
+                $res .= '?' . $this->query;
+            }
+            if (in_array('fragment', $parts) && $this->fragment != '') {
+                $res .= '#' . $this->fragment;
+            }
+            return $res;
+        }
+
         public function getSchemes(): array {
             return self::SCHEMES;
         }
@@ -229,8 +276,8 @@
 
         public function getVar(
             string $key,
-            string $default = '',
-            string $type    = 'string'
+            string $type    = 'str',
+            string $default = null
         ) {
             return Type::set(
                 key_exists($key, $this->vars) ? $this->vars[$key] : $default,
@@ -299,49 +346,6 @@
         public function setVar(string $key, string $value) {
             $this->vars[$key] = Type::typify($value);
             $this->query      = $this->buildQuery($this->vars);
-        }
-
-        public function deleteVar(string $key): bool {
-            if (key_exists($key, $this->vars)) {
-                unset($this->vars[$key]);
-                $this->query = $this->buildQuery($this->vars);
-                return true;
-            }
-            return false;
-        }
-
-        public function isSSL(): bool {
-            return $this->scheme == 'https';
-        }
-
-        public function toString(array $parts = self::DEFAULT_PARTS): string {
-            $res = '';
-            if (in_array('scheme', $parts)) {
-                $res .= $this->scheme . '://';
-            }
-            if (in_array('user', $parts) && $this->user != '') {
-                $res .= $this->user . ':';
-                if (in_array('password', $parts)) {
-                    $res .= $this->password;
-                }
-                $res .= '@';
-            }
-            if (in_array('host', $parts)) {
-                $res .= $this->host;
-            }
-            if (in_array('port', $parts) && $this->port > 0) {
-                $res .= ':' . $this->port;
-            }
-            if (in_array('path', $parts) && $this->path != '') {
-                $res .= '/' . $this->path;
-            }
-            if (in_array('query', $parts) && $this->query != '') {
-                $res .= '?' . $this->query;
-            }
-            if (in_array('fragment', $parts) && $this->fragment != '') {
-                $res .= '#' . $this->fragment;
-            }
-            return $res;
         }
 
         protected static function encode(string $url): string {

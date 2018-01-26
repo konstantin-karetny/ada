@@ -14,16 +14,21 @@
 
 
 
+    exit(var_dump( DtFloat::getDefault() ));
 
 
-    $url = Url::init('http://сайт.рф/manual/ru/filter.filters.validate.php?p1=v1&p2=v2&p3=v3');
+
+    $url = Url::init('http://tracker.maxx-marketing.net/index.php?type=progr&project_id=8523');
+
+
 
     //Type::set($var, 'auto') instead Type::typify
     //own Exception with codes
     //default root from configuration .........................
+    //protocols list
 
 
-    exit(var_dump( $url, $url->getVar('p55', 'www'), $url->toString() ));
+    exit(var_dump( $url, $url->toString() ));
 
     $app = Framework\App::getInst();
 
