@@ -12,11 +12,28 @@
     require_once 'includes/autoload.php';
 
 
-
-    exit(var_dump( Input::get('HTTP_ACCEPT_LANGUAGE', 'bool', '', 'server') ));
-
+    if ($_FILES) {
 
 
+
+        exit(var_dump( Input::getFiles('fileinp') ));
+
+
+
+
+    }
+
+?>
+<form action="" enctype="multipart/form-data" method="POST">
+    <input name="txt" value="txt value">
+    <input type="file" name="fileinp[]" multiple>
+    <button>Submit</button>
+</form>
+
+
+
+<?php
+    die;
 
 
 

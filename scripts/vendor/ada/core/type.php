@@ -11,67 +11,36 @@
 
     class Type extends Proto {
 
-        protected static
-            $initial_values = [
-                'arr'   => [],
-                'bool'  => false,
-                'float' => 0.0,
-                'int'   => 0,
-                'null'  => null,
-                'obj'   => null,
-                'res'   => null,
-                'str'   => ''
+        const
+            INITIAL_VALUES = [
+                'array'    => [],
+                'bool'     => false,
+                'float'    => 0.0,
+                'int'      => 0,
+                'null'     => null,
+                'object'   => null,
+                'resource' => null,
+                'string'   => ''
             ],
-            $names          = [
-                'arr' => [
-                    'arr',
-                    'array'
-                ],
-                'bool' => [
-                    'bool',
-                    'boolean'
-                ],
-                'float' => [
-                    'float',
-                    'double'
-                ],
-                'int' => [
-                    'int',
-                    'integer'
-                ],
-                'null' => [
-                    'null'
-                ],
-                'obj' => [
-                    'obj',
-                    'object'
-                ],
-                'res' => [
-                    'res',
-                    'resource'
-                ],
-                'str' => [
-                    'str',
-                    'string'
-                ]
+            NAMES = [
+                'array'    => ['array'],
+                'bool'     => ['bool', 'boolean'],
+                'float'    => ['float', 'double'],
+                'int'      => ['int', 'integer'],
+                'null'     => ['null'],
+                'object'   => ['object'],
+                'resource' => ['resource'],
+                'string'   => ['string']
             ];
-
-        public static function getInitialValues(): array {
-            return self::$initial_values;
-        }
-
-        public static function getNames(): array {
-            return self::$names;
-        }
 
         public static function get($val): string {
             if (is_string($val) && is_numeric($val)) {
                 $val = 1 * $val;
             }
-            $type = gettype($val);
+            $type = strtolower(gettype($val));
             return key(
                 array_filter(
-                    self::$names,
+                    self::NAMES,
                     function($el) use($type) {
                         return in_array($type, $el);
                     }
@@ -93,7 +62,6 @@
                 );
             }
             switch (strtolower(trim($type))) {
-                case 'arr':
                 case 'array':
                     return (array) $val;
                 case 'auto':
@@ -113,13 +81,10 @@
                     return (int) ($val && $res ? $res : !!$val);
                 case 'null':
                     return null;
-                case 'obj':
                 case 'object':
                     return (object) $val;
-                case 'res':
                 case 'resource':
                     return null;
-                case 'str':
                 case 'string':
                     return (string) $val;
                 default:
@@ -127,7 +92,7 @@
             }
         }
 
-        public static function arr($val, bool $recursively = false): array {
+        public static function array($val, bool $recursively = false): array {
             return self::set($val, __FUNCTION__, $recursively);
         }
 
@@ -161,11 +126,11 @@
             return self::set($val, __FUNCTION__, $recursively);
         }
 
-        public static function res($val, bool $recursively = false) {
+        public static function resource($val, bool $recursively = false) {
             return self::set($val, __FUNCTION__, $recursively);
         }
 
-        public static function str($val, bool $recursively = false): string {
+        public static function string($val, bool $recursively = false): string {
             return self::set($val, __FUNCTION__, $recursively);
         }
 

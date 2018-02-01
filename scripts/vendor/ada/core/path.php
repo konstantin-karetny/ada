@@ -11,18 +11,18 @@
 
     class Path extends Singleton {
 
-        protected static
-            $ds = '/';
+        const
+            DS = '/';
 
         public function getDS() {
-            return self::$ds;
+            return self::DS;
         }
 
         public static function clean(string $path): string {
             return strtolower(
                 (string) preg_replace(
                     '/[\/\\\]+/',
-                    self::$ds,
+                    self::DS,
                     trim($path, " \t\n\r\0\x0B\\/")
                 )
             );

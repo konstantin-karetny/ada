@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 31.01.2018
+    * @version   1.0.0 01.02.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,12 +11,12 @@
 
     class Url extends Singleton {
 
-        protected static
-            $schemes = [
+        const
+            SCHEMES = [
                 'http',
                 'https'
             ],
-            $parts = [
+            PARTS = [
                 'scheme',
                 'user',
                 'password',
@@ -26,25 +26,25 @@
                 'query',
                 'fragment'
             ],
-            $default_parts = [
+            DEFAULT_PARTS = [
                 'scheme',
                 'host',
                 'path',
                 'query',
                 'fragment'
             ],
-            $root_parts = [
+            ROOT_PARTS = [
                 'scheme',
                 'user',
                 'password',
                 'host',
                 'port'
             ],
-            $root_default_parts = [
+            ROOT_DEFAULT_PARTS = [
                 'scheme',
                 'host'
             ],
-            $special_chars_codes = [
+            SPECIAL_CHARS_CODES = [
                 '!'  => '%21',
                 '#'  => '%23',
                 '$'  => '%24',
@@ -63,7 +63,7 @@
                 '['  => '%5B',
                 ']'  => '%5D'
             ],
-            $unsafe_chars_codes = [
+            UNSAFE_CHARS_CODES = [
                 '\'' => '%27',
                 '"'  => '%22',
                 '<'  => '%3C',
@@ -120,8 +120,8 @@
         public static function clean(string $url): string {
             $res = filter_var(
                 str_replace(
-                    array_keys(self::$unsafe_chars_codes),
-                    array_values(self::$unsafe_chars_codes),
+                    array_keys(self::UNSAFE_CHARS_CODES),
+                    array_values(self::UNSAFE_CHARS_CODES),
                     self::encode(
                         strtolower(
                             trim($url, " \t\n\r\0\x0B/")
@@ -180,9 +180,8 @@
             return $this->scheme == 'https';
         }
 
-        public function toString(array $parts = []): string {
+        public function toString(array $parts = self::DEFAULT_PARTS): string {
             $res = '';
-            $parts = $parts ? $parts : self::$default_parts;
             if (in_array('scheme', $parts)) {
                 $res .= $this->scheme . '://';
             }
@@ -209,26 +208,6 @@
                 $res .= '#' . $this->fragment;
             }
             return $res;
-        }
-
-        public function getSchemes(): array {
-            return self::$schemes;
-        }
-
-        public function getParts(): array {
-            return self::$parts;
-        }
-
-        public function getDefaultParts(): array {
-            return self::$default_parts;
-        }
-
-        public function getRootParts(): array {
-            return self::$root_parts;
-        }
-
-        public function getRootDefaultParts(): array {
-            return self::$root_default_parts;
         }
 
         public function getInitial(): string {
@@ -275,12 +254,9 @@
             return key_exists($key, $this->vars) ? $this->vars[$key] : $default;
         }
 
-        public function getRoot(array $parts = []): string {
+        public function getRoot(array $parts = self::ROOT_DEFAULT_PARTS): string {
             return $this->toString(
-                array_intersect(
-                    self::$root_parts,
-                    $parts ? $parts : self::$root_default_parts
-                )
+                array_intersect(self::ROOT_PARTS, $parts)
             );
         }
 
@@ -289,7 +265,7 @@
             if ($scheme == '') {
                 throw new Exception('Scheme can not be empty', 3);
             }
-            if (!in_array($scheme, self::$schemes)) {
+            if (!in_array($scheme, self::SCHEMES)) {
                 throw new Exception('Unknown scheme \'' . $scheme . '\'', 4);
             }
             $this->scheme = $scheme;
@@ -340,7 +316,7 @@
 
         public function setRoot(string $root) {
             $root_obj = self::init($root);
-            foreach (self::$root_parts as $part) {
+            foreach (self::ROOT_PARTS as $part) {
                 $this->{'set' . ucfirst($part)}(
                     $root_obj->{'get' . ucfirst($part)}()
                 );
@@ -349,8 +325,8 @@
 
         protected static function encode(string $url): string {
             return str_replace(
-                array_values(self::$special_chars_codes),
-                array_keys(self::$special_chars_codes),
+                array_values(self::SPECIAL_CHARS_CODES),
+                array_keys(self::SPECIAL_CHARS_CODES),
                 urlencode($url)
             );
         }
@@ -358,8 +334,8 @@
         protected static function decode(string $url): string {
             return urldecode(
                 str_replace(
-                    array_keys(self::$special_chars_codes),
-                    array_values(self::$special_chars_codes),
+                    array_keys(self::SPECIAL_CHARS_CODES),
+                    array_values(self::SPECIAL_CHARS_CODES),
                     $url
                 )
             );
@@ -368,7 +344,7 @@
         protected function parse(string $url): array {
             $res = [];
             foreach ((array) parse_url(self::clean($url)) as $k => $v) {
-                if (!in_array($k, self::$parts)) {
+                if (!in_array($k, self::PARTS)) {
                     continue;
                 }
                 $res[$k] = Type::set(self::clean($v), gettype($this->$k));
