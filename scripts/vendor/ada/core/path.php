@@ -14,10 +14,6 @@
         const
             DS = '/';
 
-        public function getDS() {
-            return self::DS;
-        }
-
         public static function clean(string $path): string {
             return strtolower(
                 (string) preg_replace(
