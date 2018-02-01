@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/framework
-    * @version   1.0.0 03.10.2017
+    * @version   1.0.0 31.01.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,17 +9,35 @@
 
     namespace Ada\Framework;
 
-    class App extends \Ada\Tools\Singleton {
+    class App extends \Ada\Core\Singleton {
 
-        /**
-         * @throws Exception
-         */
-        public static function getInst(string $id = '', bool $cached = true): App {
+        protected static
+            $interfaces = [
+                'front'
+            ];
 
-            /* TODO autofill $id according to interface */
-
-            return parent::getInst($id, $cached);
+        public static function init(
+            string $interface = '',
+            array  $params    = [],
+            bool   $cached    = true
+        ): self {
+            return parent::init(
+                $interface ? $interface : reset(self::$interfaces),
+                $params,
+                $cached
+            );
         }
 
+        public function getInterfaces(): array {
+            return self::$interfaces;
+        }
+
+        public function addInterface(string $interface) {
+            return array_push(self::$interfaces, $interface);
+        }
+
+        public function setInterfaces(array $interfaces) {
+            self::$interfaces = \Ada\Core\Type::set($interfaces, 'string', true);
+        }
 
     }

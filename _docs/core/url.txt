@@ -1,0 +1,11 @@
+﻿C:\OSPanel\domains\joomla\libraries\src\Uri\Uri.php
+
+FILTER_VALIDATE_URL does not support internationalized domain name (IDN) ... A non-ascii char is more than one byte long. We replace every one of those chars by "X" and check again
+http://php.net/manual/ru/function.filter-var.php
+public static function check
+
+Which $_SERVER variables are safe?
+http://stackoverflow.com/questions/6474783/which-server-variables-are-safe
+
+Редирект средствами php
+http://www.webengineer.pro/php-scripts/11-redirekt-sredstvami-php

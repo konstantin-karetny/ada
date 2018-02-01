@@ -1,9 +1,10 @@
 <?php
     /**
-    * @package    package_cms
-    * @version    1.0.0 11.10.2016
-    * @copyright  copyright
-    * @license    Licensed under the Apache License, Version 2.0
+    * @package   ada/cms
+    * @version   1.0.0 31.01.2018
+    * @author    author
+    * @copyright copyright
+    * @license   Licensed under the Apache License, Version 2.0
     */
 
     set_include_path(
