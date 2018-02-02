@@ -11,15 +11,21 @@
 
     require_once 'includes/autoload.php';
 
+    $file = File::init('D:\Downloads\LICENSE.txt');
+
+
+    //rename
+    //touch
+    //fileatime
+
+    exit(var_dump( $file ));
+
 
     if ($_FILES) {
 
 
 
         exit(var_dump( Input::getFiles('fileinp') ));
-
-
-
 
     }
 

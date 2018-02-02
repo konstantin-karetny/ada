@@ -71,7 +71,6 @@
             ];
 
         protected
-            $initial  = '',
             $scheme   = '',
             $user     = '',
             $password = '',
@@ -84,19 +83,16 @@
 
         public static function init(
             string $url    = '',
-            array  $params = [],
             bool   $cached = true
         ): self {
-            return parent::init($url ? $url : self::current(), $params, $cached);
+            return parent::init($url ? $url : self::current(), $cached);
         }
 
         protected function __construct(string $url) {
             if (!self::check($url)) {
                 throw new Exception('Wrong url \'' . $url . '\'', 1);
             }
-            $url           = self::clean($url);
-            $this->initial = $url;
-            foreach ($this->parse($url) as $k => $v) {
+            foreach ($this->parse(self::clean($url)) as $k => $v) {
                 $this->{'set' . ucfirst($k)}($v);
             }
         }
@@ -208,10 +204,6 @@
                 $res .= '#' . $this->fragment;
             }
             return $res;
-        }
-
-        public function getInitial(): string {
-            return $this->initial;
         }
 
         public function getScheme(): string {

@@ -115,7 +115,7 @@
             foreach ($_FILES[$name]['name'] as $k => $n) {
                 $res[$k] = [
                     'error'    => $_FILES[$name]['error'][$k],
-                    'ext'      => File::getExt($_FILES[$name]['name'][$k]),
+                    //'ext'      => File::getExt($_FILES[$name]['name'][$k]),
                     'name'     => $_FILES[$name]['name'][$k],
                     'size'     => $_FILES[$name]['size'][$k],
                     'tmp_name' => $_FILES[$name]['tmp_name'][$k],
