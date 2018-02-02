@@ -14,12 +14,16 @@
         protected
             $path = '';
 
-        public static function init(string $id, bool $cached = true): self {
-            return parent::init($id, $cached);
+        public static function init(string $path, bool $cached = true): self {
+            return parent::init($path, $cached);
         }
 
         protected function __construct(string $path) {
-            $this->path = Clean::path($path);
+            $path = Clean::path($path);
+            if ($path == '') {
+                throw new Exception('File path can not be empty', 1);
+            }
+            $this->path = $path;
         }
 
         public function delete(): bool {
@@ -32,7 +36,11 @@
         }
 
         public function getBasename(): string {
-            return basename($this->path);
+            return pathinfo($this->path, PATHINFO_BASENAME);
+        }
+
+        public function getDir(): string {
+            return pathinfo($this->path, PATHINFO_DIRNAME) . Path::DS;
         }
 
         public function getExt(): string {

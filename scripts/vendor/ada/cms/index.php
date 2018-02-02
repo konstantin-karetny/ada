@@ -14,11 +14,10 @@
     $file = File::init('D:\Downloads\LICENSE.txt');
 
 
-    //rename
     //touch
     //fileatime
 
-    exit(var_dump( $file ));
+    exit(var_dump( $file, $file->getExt() ));
 
 
     if ($_FILES) {
