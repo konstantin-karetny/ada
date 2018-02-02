@@ -347,7 +347,7 @@
                 if (!in_array($k, self::PARTS)) {
                     continue;
                 }
-                $res[$k] = Type::set(self::clean($v), gettype($this->$k));
+                $res[$k] = Type::set(self::clean($v), Type::get($this->$k));
             }
             return $res;
         }
