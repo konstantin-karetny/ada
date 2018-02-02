@@ -163,6 +163,33 @@
             return self::init($url)->getRoot() == self::init()->getRoot();
         }
 
+        public static function redirect(
+            string  $url     = '',
+            bool    $replace = true,
+            int     $status  = 301,
+            bool    $cache   = false
+        ) {
+
+            //C:\OSPanel\domains\ada-pre\core\classes\uri.php
+            //C:\OSPanel\domains\joomla\libraries\legacy\application\application.php
+            //C:\OSPanel\domains\ada\trunk\_docs\ada.txt
+            //C:\OSPanel\domains\ada\trunk\_docs\core\url.txt
+
+            if (headers_sent()) {
+                echo '<script>document.location.href="' . str_replace('"', '&apos;', $url) . '";</script>';
+                return;
+            }
+
+
+            if($uri === '') $uri = self::root();
+            if(!$caching) {
+                header("Cache-Control: no-cache, must-revalidate");
+                header("Expires: Wed, 13 Dec 1989 04:00:00 GMT");
+            }
+            header('Location: ' . $uri, $replace, $http_response_code);
+            exit;
+        }
+
         public function delVar(string $key): bool {
             if (key_exists($key, $this->vars)) {
                 unset($this->vars[$key]);

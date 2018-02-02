@@ -1,2 +1,7 @@
 ﻿http://php.net/manual/ru/ref.filesystem.php
+
+
 C:\OSPanel\domains\joomla\libraries\joomla\filesystem\file.php
+
+Ваш сайт тоже позволяет заливать всё подряд?
+https://habrahabr.ru/post/148999

@@ -2,9 +2,7 @@
 
 
 
-TO DO
-- Грамотное определение языка пользователя http://habrahabr.ru/post/159129/
-- Как создать безопасный логин скрипт в PHP и MySQL http://ru.wikihow.com/создать-безопасный-логин-скрипт-в-PHP-и-MySQL
+
 
 
 .HTACCESS
@@ -57,22 +55,6 @@ display_startup_errors ... Опцию имеет смысл выставлять
 http://rmcreative.ru/blog/post/display_startup_errors
 
 
-
-===== File =====
-*бессмысленно пытаться определить расширение таких файлов как *.html, *.css, *.js или *.php по их MIME-типу,
-*поскольку все они, как правило, создаются путём создания и переименования *.txt файла и, следовательно, имеют либо text/plain либо неопределённый inode/x-empty MIME-тип
-+
-Список MIME-типов
-https://ru.wikipedia.org/wiki/Список_MIME-типов
-+
-...file maps Internet media types to unique file extension(s)
-http://www.sympa.org/distribution/current/default/mime.types
-
-Ваш сайт тоже позволяет заливать всё подряд?
-https://habrahabr.ru/post/148999/
-
-
-
 ===== FTP =====
 Simple FTP Class for PHP
 http://www.shayanderson.com/php/simple-ftp-class-for-php.htm
@@ -80,6 +62,9 @@ http://www.shayanderson.com/php/simple-ftp-class-for-php.htm
 
 
 ===== Lang =====
+Грамотное определение языка пользователя
+http://habrahabr.ru/post/159129/
++
 В языковых атрибутах HTML, а также для обозначения доменов первого уровня применяется система alpha-2
 http://www.exlab.net/tools/tables/regions.html
 +
@@ -170,19 +155,6 @@ http://stackoverflow.com/questions/681115/cache-control-header-modified-by-php-s
 
 
 
-===== Singleton =====
-*на данный момент NetBeans не поддерживает автодополнение для объектов, созданных по динамическому имени, единственное оптмальное решение -
-*писать метод для получения объекта каждого класса персонально с указанием имени класса в аннотации /** @return [classname] */
-+
-Autocomplete for PHP object's http://forums.netbeans.org/topic53879.html
-+
-Netbeans: PHP autocomplete http://software-talk.org/blog/2012/10/netbeans-php-autocomplete/
-
-..."Позднее связывание" отражает тот факт, что обращения через static:: не будут вычисляться по отношению к классу, в котором вызываемый метод определен, а будут вычисляться на основе информации в ходе исполнения...
-http://php.net/manual/ru/language.oop5.late-static-bindings.php
-
-
-
 ===== View =====
 Метатеги
 https://ru.wikipedia.org/wiki/метатеги
@@ -205,3 +177,7 @@ Which $_SERVER variables are safe?
 http://stackoverflow.com/questions/6474783/which-server-variables-are-safe
 Редирект средствами php
 http://www.webengineer.pro/php-scripts/11-redirekt-sredstvami-php
+
+
+Login
+Как создать безопасный логин скрипт в PHP и MySQL http://ru.wikihow.com/создать-безопасный-логин-скрипт-в-PHP-и-MySQL

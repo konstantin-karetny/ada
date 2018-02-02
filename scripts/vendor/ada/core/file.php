@@ -35,6 +35,10 @@
             return is_file($this->path);
         }
 
+        public function getEditTime(): int {
+            return (int) @filemtime($this->path);
+        }
+
         public function getBasename(): string {
             return pathinfo($this->path, PATHINFO_BASENAME);
         }
@@ -46,13 +50,16 @@
         public function getExt(): string {
             return pathinfo($this->path, PATHINFO_EXTENSION);
         }
-
         public function getName(): string {
             return pathinfo($this->path, PATHINFO_FILENAME);
         }
 
         public function getPerms() {
-            return fileperms($this->path);
+            return @fileperms($this->path);
+        }
+
+        public function getSize(): int {
+            return (int) @filesize($this->path);
         }
 
         public function isReadable(): bool {
@@ -65,6 +72,10 @@
 
         public function copy(string $path): bool {
             return (bool) @copy($this->path, $path);
+        }
+
+        public function create(string $contents = ''): bool {
+            return $this->write($contents);
         }
 
         public function move(string $path): bool {
@@ -94,6 +105,16 @@
                 $this->path,
                 $contents,
                 $append ? FILE_APPEND : 0
+            );
+        }
+
+        public function setEditTime(
+            int $time        = 0,
+            int $access_time = 0
+        ):  bool {
+            return (int) @touch(
+                $this->path,
+                $time > 0 ? $time : Time::init()->getTimestamp()
             );
         }
 

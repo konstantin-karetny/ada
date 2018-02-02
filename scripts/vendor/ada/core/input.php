@@ -112,15 +112,14 @@
 
         public static function getFiles($name, array $default = []) {
             $res = [];
-            foreach ($_FILES[$name]['name'] as $k => $n) {
-                $res[$k] = [
-                    'error'    => $_FILES[$name]['error'][$k],
-                    //'ext'      => File::getExt($_FILES[$name]['name'][$k]),
-                    'name'     => $_FILES[$name]['name'][$k],
-                    'size'     => $_FILES[$name]['size'][$k],
-                    'tmp_name' => $_FILES[$name]['tmp_name'][$k],
-                    'type'     => $_FILES[$name]['type'][$k]
-                ];
+            foreach ($_FILES[$name] as $prop => $values) {
+                foreach ($values as $k => $v) {
+                    $v = strtolower(trim($v));
+                    if ($prop == 'tmp_name') {
+                        $v = Clean::path($v);
+                    }
+                    $res[$k][$prop] = Type::set($v);
+                }
             }
             return $res;
         }
