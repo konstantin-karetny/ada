@@ -1,0 +1,5 @@
+﻿Check if cookies are enabled
+https://stackoverflow.com/questions/6663859/check-if-cookies-are-enabled
+
+Detecting if the cookies are enabled with PHP
+https://nik.chankov.net/2010/01/16/detecting-if-the-cookies-are-enabled-with-php

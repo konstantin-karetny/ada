@@ -1,11 +1,29 @@
-C:\OSPanel\domains\joomla\libraries\src\Uri\Uri.php
+﻿C:\OSPanel\domains\joomla\libraries\src\Uri\Uri.php
 
 FILTER_VALIDATE_URL does not support internationalized domain name (IDN) ... A non-ascii char is more than one byte long. We replace every one of those chars by "X" and check again
 http://php.net/manual/ru/function.filter-var.php
 public static function check
+
+Note: The 2nd argument If you call header() more than once for the same header field, the value for that header will be the one included in the last call you made
+http://www.nicholassolutions.com/tutorials/php/headers.html
 
 Which $_SERVER variables are safe?
 http://stackoverflow.com/questions/6474783/which-server-variables-are-safe
 
 Редирект средствами php
 http://www.webengineer.pro/php-scripts/11-redirekt-sredstvami-php
+
+* отключение кеширования вызвано кешированием содержимого адресной строки при перенаправлениях
+PHP pages often generate very dynamic content, and to prevent users from missing updates by viewing cached pages, it is often helpful to be able to tell browsers not to cache certain pages. The following snippet works quite well on the browsers that are likely to visit your site
+http://www.nicholassolutions.com/tutorials/php/headers.html
++
+PHP-скрипты часто генерируют динамическое содержимое, которое обязано не кэшироваться клиентским браузером или proxy-кэшами между клиентским браузером и сервером. Во многих прокси и клиентах можно отключать кэширование
+http://www.php.su/header
+
+* определение текущего URL адреса
+...Величина http_host всегда идентична тому доменному имени, который ввел пользователь в браузере, в то время как server_name иногда может содержать строку, жестко записанную в конфигурации сервера...
+http://php.ru/forum/viewtopic.php?t=47598
++
+...как можно не допустить или проверить что переменные $_SERVER['HTTP_HOST'] и $_SERVER['SERVER_NAME'] не изменены пользователем ... если изменить $_SERVER['HTTP_HOST'] то ты просто не получишь этот запрос
+если изменить $_SERVER['HTTP_HOST'] то ты просто не получишь этот запрос
+http://forum.php.su/topic.php?forum=71&topic=12279

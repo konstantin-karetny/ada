@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 02.02.2018
+    * @version   1.0.0 05.02.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,21 +9,17 @@
 
     namespace Ada\Core;
 
-    class File extends Singleton {
+    class File extends Proto {
 
         protected
             $path = '';
 
-        public static function init(string $path, bool $cached = true): self {
-            return parent::init($path, $cached);
+        public static function init(string $path): self {
+            return new self($path);
         }
 
         protected function __construct(string $path) {
-            $path = Clean::path($path);
-            if ($path == '') {
-                throw new Exception('File path can not be empty', 1);
-            }
-            $this->path = $path;
+            $this->path = Clean::path($path);
         }
 
         public function delete(): bool {
@@ -50,6 +46,18 @@
         public function getExt(): string {
             return pathinfo($this->path, PATHINFO_EXTENSION);
         }
+
+        public function getMimeType(string $default = ''): string {
+            return (
+                $this->exists() && class_exists('finfo')
+                ? $this->mime_type = (new \finfo())->file(
+                    $this->path,
+                    FILEINFO_MIME_TYPE
+                )
+                : $default
+            );
+        }
+
         public function getName(): string {
             return pathinfo($this->path, PATHINFO_FILENAME);
         }
@@ -86,10 +94,21 @@
             return true;
         }
 
+        public function parseIni(
+            bool $process_sections = true,
+            int  $scanner_mode     = INI_SCANNER_TYPED
+        ) {
+            return (array) @parse_ini_file(
+                $this->path,
+                $process_sections,
+                $scanner_mode
+            );
+        }
+
         public function read(
             int $offset  = 0,
             int $maxlen  = null
-        ):  string {
+        ): string {
             return (string) @(
                 is_null($maxlen)
                 ? file_get_contents($this->path, false, null, $offset)
@@ -100,7 +119,7 @@
         public function write(
             string $contents,
             bool   $append = false
-        ):  bool {
+        ): bool {
             return (bool) @file_put_contents(
                 $this->path,
                 $contents,
@@ -111,7 +130,7 @@
         public function setEditTime(
             int $time        = 0,
             int $access_time = 0
-        ):  bool {
+        ): bool {
             return (int) @touch(
                 $this->path,
                 $time > 0 ? $time : Time::init()->getTimestamp()

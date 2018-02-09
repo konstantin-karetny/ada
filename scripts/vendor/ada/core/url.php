@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 01.02.2018
+    * @version   1.0.0 07.02.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -164,39 +164,37 @@
         }
 
         public static function redirect(
-            string  $url     = '',
-            bool    $replace = true,
-            int     $status  = 301,
-            bool    $cache   = false
+            string  $url                = '',
+            int     $delay              = 0,
+            bool    $replace            = true,
+            int     $http_response_code = 302
         ) {
-
-            //C:\OSPanel\domains\ada-pre\core\classes\uri.php
-            //C:\OSPanel\domains\joomla\libraries\legacy\application\application.php
-            //C:\OSPanel\domains\ada\trunk\_docs\ada.txt
-            //C:\OSPanel\domains\ada\trunk\_docs\core\url.txt
-
+            $url = self::clean($url);
+            $url = $url ? $url : self::current();
             if (headers_sent()) {
-                echo '<script>document.location.href="' . str_replace('"', '&apos;', $url) . '";</script>';
+                echo (
+                    '<script>document.location.href="' .
+                    str_replace('"', '&apos;', $url) .
+                    '";</script>'
+                );
                 return;
             }
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+            header(
+                'Refresh: ' . ($delay > 0 ? $delay : 0) . '; ' . $url,
+                $replace,
+                $http_response_code
+            );
+        }
 
-
-            if($uri === '') $uri = self::root();
+        public static function refresh($delay = 0, $uri = '', $caching = false) {
+            if($uri !== '') $uri = '; URL=' . $uri;
             if(!$caching) {
                 header("Cache-Control: no-cache, must-revalidate");
                 header("Expires: Wed, 13 Dec 1989 04:00:00 GMT");
             }
-            header('Location: ' . $uri, $replace, $http_response_code);
-            exit;
-        }
-
-        public function delVar(string $key): bool {
-            if (key_exists($key, $this->vars)) {
-                unset($this->vars[$key]);
-                $this->query = $this->buildQuery($this->vars);
-                return true;
-            }
-            return false;
+            header('Refresh: ' . $delay . $uri);
         }
 
         public function isSSL(): bool {
@@ -265,12 +263,19 @@
             return $this->fragment;
         }
 
-        public function getVars(): array {
-            return $this->vars;
+        public function getVar(
+            string $name,
+            string $filter  = 'string',
+                   $default = ''
+        ) {
+            return Clean::value(
+                $this->vars[Clean::cmd($name)] ?? $default,
+                $filter
+            );
         }
 
-        public function getVar(string $key, string $default = ' '): string {
-            return key_exists($key, $this->vars) ? $this->vars[$key] : $default;
+        public function getVars(string $filter  = 'string'): array {
+            return Clean::values($this->vars, $filter);
         }
 
         public function getRoot(array $parts = self::ROOT_DEFAULT_PARTS): string {
@@ -322,15 +327,25 @@
             $this->fragment = self::clean($fragment);
         }
 
+        public function setVar(string $name, string $value) {
+            $this->vars[Clean::cmd($name)] = self::clean($value);
+            $this->query                   = $this->buildQuery($this->vars);
+        }
+
         public function setVars(array $vars) {
             foreach ($vars as $k => $v) {
-                $this->addVar($k, $v);
+                $this->setVar($k, $v);
             }
         }
 
-        public function addVar(string $key, string $value) {
-            $this->vars[$key] = self::clean($value);
-            $this->query      = $this->buildQuery($this->vars);
+        public function unsetVar(string $name): bool {
+            $name = Clean::cmd($name);
+            if (isset($this->vars[$name])) {
+                unset($this->vars[$name]);
+                $this->query = $this->buildQuery($this->vars);
+                return true;
+            }
+            return false;
         }
 
         public function setRoot(string $root) {

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 01.02.2018
+    * @version   1.0.0 07.02.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -61,77 +61,13 @@
                     $val
                 );
             }
-            switch (strtolower(trim($type))) {
-                case 'array':
-                    return (array) $val;
-                case 'auto':
-                    return self::set($val, self::get($val));
-                case 'bool':
-                case 'boolean':
-                    return (bool) (
-                        is_numeric($val) ? (1 * $val) : $val
-                    );
-                case 'float':
-                case 'double':
-                    $res = (float) $val;
-                    return ($val && $res ? $res : !!$val);
-                case 'int':
-                case 'integer':
-                    $res = (int) $val;
-                    return (int) ($val && $res ? $res : !!$val);
-                case 'null':
-                    return null;
-                case 'object':
-                    return (object) $val;
-                case 'resource':
-                    return null;
-                case 'string':
-                    return (string) $val;
-                default:
-                    throw new Exception('Wrong datatype \'' . $type . '\'', 1);
+            if ($type == 'auto') {
+                $type = self::get($val);
             }
-        }
-
-        public static function array($val, bool $recursively = false): array {
-            return self::set($val, __FUNCTION__, $recursively);
-        }
-
-        public static function bool($val, bool $recursively = false): bool {
-            return self::set($val, __FUNCTION__, $recursively);
-        }
-
-        public static function float(
-                 $val,
-            bool $recursively = false,
-            bool $abs         = true
-        ): float {
-            $res = self::set($val, __FUNCTION__, $recursively);
-            return $abs ? abs($res) : $res;
-        }
-
-        public static function int(
-                 $val,
-            bool $recursively = false,
-            bool $abs         = true
-        ): int {
-            $res = self::set($val, __FUNCTION__, $recursively);
-            return $abs ? abs($res) : $res;
-        }
-
-        public static function null($val, bool $recursively = false) {
-            return self::set($val, __FUNCTION__, $recursively);
-        }
-
-        public static function obj($val, bool $recursively = false) {
-            return self::set($val, __FUNCTION__, $recursively);
-        }
-
-        public static function resource($val, bool $recursively = false) {
-            return self::set($val, __FUNCTION__, $recursively);
-        }
-
-        public static function string($val, bool $recursively = false): string {
-            return self::set($val, __FUNCTION__, $recursively);
+            if (!settype($val, strtolower(trim($type)))) {
+                throw new Exception('Failed to set type \'' . $type . '\'', 1);
+            }
+            return $val;
         }
 
     }

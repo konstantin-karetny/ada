@@ -1,0 +1,47 @@
+﻿C:\OSPanel\domains\joomla\libraries\joomla\session\handler\native.php
+C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
+C:\OSPanel\domains\joomla\libraries\src\Session\Session.php
+
+! Идентификатор сессии должен пересоздаваться при аутентификации пользователя...
+http://php.net/manual/ru/features.session.security.management.php
+
+! Рекомендуется пользоваться директивой session.save_path, с помощью которой задать собственный каталог для сохранения файлов сессий. Это более безопасно, чем когда они хранятся в общем временном каталоге сервера по умолчанию.
+phpfaq.ru/sessions#security
+
+Безопасная работа с сессиями в PHP
+http://samag.ru/archive/article/1944
+
+Безопасность сессий
+http://php.net/manual/ru/session.security.php
+
+Блокирование сессий в PHP
+http://rmcreative.ru/blog/post/blokirovanie-sessiy-v-php
+
+В чем разница между session_unset () и session_destroy () в PHP?
+http://ruphp.com/session_unset-session_destroy-php.html
+
+Подводные камни использования сессий в PHP
+https://habrahabr.ru/post/182352
+
+Правда о Сессиях
+http://phpclub.ru/detail/article/sessions
+
+Сессии. Подробное описание работы и объяснение механизма.
+http://phpfaq.ru/sessions
+
+cache_limiter
+Убедитесь, что содержимое HTTP не кешируется для аутентификационной сессии. Допускается кешировать только неконфиденциальный контент. Иначе содержимым могут воспользоваться...
+http://php.net/manual/ru/session.security.ini.php
++
+Когда на странице используются сессии, PHP автоматически отправляет некоторые связанные с кэшем HTTP заголовки, определённые в настройке session.cache_limiter в php.ini. Эти заголовки могут вмешиваться или отключать кэширование...
+https://yiiframework.com.ua/ru/doc/guide/2/caching-http
++
+cache_limiter = 'none'
+* полное отключение отправки HTTP заголовков
+
+register_shutdown_function()
+* для гарантированного корректного завершения сессии при отсановке скрипта
+
+session_start()
+Для использования сессий на основе cookie, функция session_start() должна быть вызвана перед выводом чего бы то ни было в браузер
+http://php.net/manual/ru/function.session-start.php
