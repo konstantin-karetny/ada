@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 08.02.2018
+    * @version   1.0.0 18.02.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,11 +13,11 @@
 
         protected const
             DEFAULT_NAMESPACE = '_',
-            HANDLERS          = ['db'],
             NAMESPACE_PREFIX  = '_';
 
         protected
             $new        = true,
+            $handler    = null,
             $ini_params = [
                 'cache_limiter'    => 'none',
                 'cookie_domain'    => '',
@@ -75,7 +75,6 @@
                 false,
                 [
                     $this->clear(),
-                    $this->stop(),
                     Cookie::unset($this->getName())
                 ]
             );
@@ -102,16 +101,17 @@
             if ($this->isStarted()) {
                 return true;
             }
-            $ini_params = $this->getIniParams();
-            if (in_array($ini_params['save_handler'], self::HANDLERS)) {
-                $handler_class = (
-                    __NAMESPACE__ . '\SessionHandler' .
-                    ucfirst($ini_params['save_handler'])
-                );
-                session_set_save_handler(new $handler_class);
-            }
             register_shutdown_function([$this, 'stop']);
-            return session_start($ini_params + ['read_and_close' => $read_only]);
+            $ini_params = $this->getIniParams();
+            if ($this->handler) {
+                unset($ini_params['save_handler']);
+            }
+            return session_start(
+                $ini_params +
+                [
+                    'read_and_close' => $read_only
+                ]
+            );
         }
 
         public function stop(): bool {
@@ -138,6 +138,10 @@
             return session_name();
         }
 
+        public function getHandler(): SessionHandler {
+            return $this->handler;
+        }
+
         public function isNew(): bool {
             return $this->new;
         }
@@ -148,6 +152,14 @@
 
         public function isStarted(): bool {
             return $this->getState() == 2;
+        }
+
+        public function setHandler(SessionHandler $handler): bool {
+            if (!session_set_save_handler($handler)) {
+                return false;
+            }
+            $this->handler = $handler;
+            return true;
         }
 
         public function setIniParam(string $name, string $param) {

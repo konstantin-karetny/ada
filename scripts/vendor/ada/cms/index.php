@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 05.02.2018
+    * @version   1.0.0 18.02.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,21 +11,20 @@
 
     require_once 'includes/autoload.php';
 
+    //session db handler
+    //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //Signature
     //Временные метки устаревших сессий
-    //db handler
-    //session
     //
     //folder
     //time
     //db
 
-
     $session = Session::init();
-    $session->setIniParam('save_handler', 'db');
+    $handler = new SessionHandlerDb;
+    $session->setHandler($handler);
 
-
-    exit(var_dump( $_SESSION, $session->start() ));
+    exit(var_dump( $session->start() ));
 
 
 
