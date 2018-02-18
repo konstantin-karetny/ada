@@ -11,10 +11,11 @@
 
     require_once 'includes/autoload.php';
 
-    //session db handler
-    //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
+    //SESSION
     //Signature
     //Временные метки устаревших сессий
+    //db handler
+    //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //
     //folder
     //time
