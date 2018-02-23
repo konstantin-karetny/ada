@@ -12,8 +12,8 @@
     require_once 'includes/autoload.php';
 
     //SESSION
-    //Signature
     //Временные метки устаревших сессий
+    //Signature
     //db handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //
@@ -21,11 +21,19 @@
     //time
     //db
 
-    $session = Session::init();
-    $handler = new SessionHandlerDb;
-    $session->setHandler($handler);
+    $dt = DateTime::init();
 
-    exit(var_dump( $session->start() ));
+    $dt->setTimezone(new \DateTimeZone('Europe/Berlin'));
+
+    exit(var_dump(  $dt, new DateTime ));
+
+    $session = Session::init();
+    //$handler = new SessionHandlerDb;
+    //$session->setHandler($handler);
+    //Session::set('var', 'val');
+    //$session->start();
+
+    exit(var_dump( $_SESSION ));
 
 
 

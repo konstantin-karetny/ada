@@ -12,6 +12,7 @@
     class Session extends InputSession {
 
         protected const
+            SELF_NAMESPACE    = '_SESS',
             DEFAULT_NAMESPACE = '_',
             NAMESPACE_PREFIX  = '_';
 
@@ -106,12 +107,16 @@
             if ($this->handler) {
                 unset($ini_params['save_handler']);
             }
-            return session_start(
+            $res = session_start(
                 $ini_params +
                 [
                     'read_and_close' => $read_only
                 ]
             );
+            if ($this->isNew()) {
+                self::set('last_activity', 'yy', self::SELF_NAMESPACE);
+            }
+            return $res;
         }
 
         public function stop(): bool {
