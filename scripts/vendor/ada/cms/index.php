@@ -11,6 +11,8 @@
 
     require_once 'includes/autoload.php';
 
+    date_default_timezone_set('Europe/Berlin');
+
     //SESSION
     //Временные метки устаревших сессий
     //Signature
@@ -21,11 +23,9 @@
     //time
     //db
 
-    $dt = DateTime::init();
 
-    $dt->setTimezone(new \DateTimeZone('Europe/Berlin'));
+    exit(var_dump( DateTime::init()->format() ));
 
-    exit(var_dump(  $dt, new DateTime ));
 
     $session = Session::init();
     //$handler = new SessionHandlerDb;
@@ -33,7 +33,7 @@
     //Session::set('var', 'val');
     //$session->start();
 
-    exit(var_dump( $_SESSION ));
+    exit(var_dump( $session->start(), $_SESSION ));
 
 
 

@@ -12,7 +12,7 @@
     class Session extends InputSession {
 
         protected const
-            SELF_NAMESPACE    = '_SESS',
+            SELF_NAMESPACE    = '_SESSION',
             DEFAULT_NAMESPACE = '_',
             NAMESPACE_PREFIX  = '_';
 
@@ -113,15 +113,19 @@
                     'read_and_close' => $read_only
                 ]
             );
-            if ($this->isNew()) {
-                self::set('last_activity', 'yy', self::SELF_NAMESPACE);
-            }
             return $res;
         }
 
         public function stop(): bool {
             if (!$this->isStarted()) {
                 return false;
+            }
+            if ($this->isNew()) {
+                self::set(
+                    'last_stop_datetime',
+                    DateTime::init()->format(),
+                    self::SELF_NAMESPACE
+                );
             }
             session_write_close();
             return true;
