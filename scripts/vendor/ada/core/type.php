@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.02.2018
+    * @version   1.0.0 05.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -40,7 +40,7 @@
             $type = strtolower(gettype($val));
             return key(
                 array_filter(
-                    self::NAMES,
+                    static::NAMES,
                     function($el) use($type) {
                         return in_array($type, $el);
                     }
@@ -56,13 +56,13 @@
             if ($recursively && is_array($val)) {
                 return array_map(
                     function($el) use($type) {
-                        return self::set($el, $type, true);
+                        return static::set($el, $type, true);
                     },
                     $val
                 );
             }
             if ($type == 'auto') {
-                $type = self::get($val);
+                $type = static::get($val);
             }
             if (!settype($val, strtolower(trim($type)))) {
                 throw new Exception('Failed to set type \'' . $type . '\'', 1);

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.02.2018
+    * @version   1.0.0 05.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -73,15 +73,15 @@
             if (!method_exists(__CLASS__, $filter)) {
                 throw new Exception('Wrong filter name \'' . $filter . '\'', 1);
             }
-            return self::$filter($val);
+            return static::$filter($val);
         }
 
         public static function values($array, string $filter = 'string'): array {
             foreach ((array) $array as $k => $v) {
                 $array[$k] = (
                     is_array($v)
-                    ? self::values($v, $filter)
-                    : self::value($v, $filter)
+                    ? static::values($v, $filter)
+                    : static::value($v, $filter)
                 );
             }
             return $array;

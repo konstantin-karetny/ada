@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 18.02.2018
+    * @version   1.0.0 05.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -60,6 +60,26 @@
             return true;
         }
 
+        public function check(): bool {
+            if (
+                !$this->isNew() &&
+                (
+                    strtotime(static::getString(
+                        'last_stop_datetime',
+                        '',
+                        static::SELF_NAMESPACE
+                    ))
+                    +
+                    $this->getIniParam('gc_maxlifetime')
+                )
+                <
+                DateTime::init()->getTimestamp()
+            ) {
+                return false;
+            }
+            return true;
+        }
+
         public function clear(): bool {
             if (!$this->isStarted()) {
                 return false;
@@ -113,6 +133,10 @@
                     'read_and_close' => $read_only
                 ]
             );
+            if (!$this->check()) {
+                $this->delete();
+                return false;
+            }
             return $res;
         }
 
@@ -120,13 +144,11 @@
             if (!$this->isStarted()) {
                 return false;
             }
-            if ($this->isNew()) {
-                self::set(
-                    'last_stop_datetime',
-                    DateTime::init()->format(),
-                    self::SELF_NAMESPACE
-                );
-            }
+            static::set(
+                'last_stop_datetime',
+                DateTime::init()->format(),
+                static::SELF_NAMESPACE
+            );
             session_write_close();
             return true;
         }
@@ -135,7 +157,7 @@
             return session_id();
         }
 
-        public function getIniParam(string $name): array {
+        public function getIniParam(string $name) {
             return $this->ini_params[strtolower(Clean::cmd($name))] ?? null;
         }
 
@@ -193,8 +215,8 @@
 
         protected function namespaceFull(string $namespace): string {
             return strtoupper(
-                Clean::cmd(self::NAMESPACE_PREFIX) .
-                Clean::cmd($namespace == '' ? self::DEFAULT_NAMESPACE : $namespace)
+                Clean::cmd(static::NAMESPACE_PREFIX) .
+                Clean::cmd($namespace == '' ? static::DEFAULT_NAMESPACE : $namespace)
             );
         }
 

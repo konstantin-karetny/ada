@@ -11,20 +11,15 @@
 
     require_once 'includes/autoload.php';
 
-    date_default_timezone_set('Europe/Berlin');
-
     //SESSION
-    //Временные метки устаревших сессий
     //Signature
     //db handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //
     //folder
-    //time
     //db
 
-
-    exit(var_dump( DateTime::init()->format() ));
+    exit(var_dump( $_SERVER, Client::init()->getSignature() ));
 
 
     $session = Session::init();

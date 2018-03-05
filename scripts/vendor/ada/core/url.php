@@ -85,14 +85,14 @@
             string $url    = '',
             bool   $cached = true
         ): self {
-            return parent::init($url ? $url : self::current(), $cached);
+            return parent::init($url ? $url : static::current(), $cached);
         }
 
         protected function __construct(string $url) {
-            if (!self::check($url)) {
+            if (!static::check($url)) {
                 throw new Exception('Wrong url \'' . $url . '\'', 1);
             }
-            foreach ($this->parse(self::clean($url)) as $k => $v) {
+            foreach ($this->parse(static::clean($url)) as $k => $v) {
                 $this->{'set' . ucfirst($k)}($v);
             }
         }
@@ -116,9 +116,9 @@
         public static function clean(string $url): string {
             $res = filter_var(
                 str_replace(
-                    array_keys(self::UNSAFE_CHARS_CODES),
-                    array_values(self::UNSAFE_CHARS_CODES),
-                    self::encode(
+                    array_keys(static::UNSAFE_CHARS_CODES),
+                    array_values(static::UNSAFE_CHARS_CODES),
+                    static::encode(
                         strtolower(
                             trim($url, " \t\n\r\0\x0B/")
                         )
@@ -129,7 +129,7 @@
             if ($res === false) {
                 throw new Exception('Failed to clean url \'' . $url . '\'', 2);
             }
-            return self::decode($res);
+            return static::decode($res);
         }
 
         public static function current() {
@@ -137,30 +137,30 @@
             if (
                 (
                     !empty($_SERVER['HTTPS']) &&
-                    self::clean($_SERVER['HTTPS']) !== 'off'
+                    static::clean($_SERVER['HTTPS']) !== 'off'
                 ) ||
                 (
                     !empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-                    self::clean($_SERVER['HTTP_X_FORWARDED_PROTO']) !== 'http'
+                    static::clean($_SERVER['HTTP_X_FORWARDED_PROTO']) !== 'http'
                 )
             ) {
                 $res .= 's';
             }
-            $res .= '://' . self::clean($_SERVER['HTTP_HOST']);
+            $res .= '://' . static::clean($_SERVER['HTTP_HOST']);
             if (!empty($_SERVER['PHP_SELF']) && !empty($_SERVER['REQUEST_URI'])) {
-                $res .= self::clean($_SERVER['REQUEST_URI']);
+                $res .= static::clean($_SERVER['REQUEST_URI']);
             }
             else {
-                $res .= self::clean($_SERVER['SCRIPT_NAME']);
+                $res .= static::clean($_SERVER['SCRIPT_NAME']);
                 if (!empty($_SERVER['QUERY_STRING'])) {
-                    $res .= '?' . self::clean($_SERVER['QUERY_STRING']);
+                    $res .= '?' . static::clean($_SERVER['QUERY_STRING']);
                 }
             }
-            return self::clean($res);
+            return static::clean($res);
         }
 
         public static function isInternal(string $url): bool {
-            return self::init($url)->getRoot() == self::init()->getRoot();
+            return static::init($url)->getRoot() == static::init()->getRoot();
         }
 
         public static function redirect(
@@ -169,8 +169,8 @@
             bool    $replace            = true,
             int     $http_response_code = 302
         ) {
-            $url = self::clean($url);
-            $url = $url ? $url : self::current();
+            $url = static::clean($url);
+            $url = $url ? $url : static::current();
             if (headers_sent()) {
                 echo (
                     '<script>document.location.href="' .
@@ -280,31 +280,31 @@
 
         public function getRoot(array $parts = self::ROOT_DEFAULT_PARTS): string {
             return $this->toString(
-                array_intersect(self::ROOT_PARTS, $parts)
+                array_intersect(static::ROOT_PARTS, $parts)
             );
         }
 
         public function setScheme(string $scheme) {
-            $scheme = self::clean($scheme);
+            $scheme = static::clean($scheme);
             if ($scheme == '') {
                 throw new Exception('Scheme can not be empty', 3);
             }
-            if (!in_array($scheme, self::SCHEMES)) {
+            if (!in_array($scheme, static::SCHEMES)) {
                 throw new Exception('Unknown scheme \'' . $scheme . '\'', 4);
             }
             $this->scheme = $scheme;
         }
 
         public function setUser(string $user) {
-            $this->user = self::clean($user);
+            $this->user = static::clean($user);
         }
 
         public function setPassword(string $password) {
-            $this->password = self::clean($password);
+            $this->password = static::clean($password);
         }
 
         public function setHost(string $host) {
-            $host = self::clean($host);
+            $host = static::clean($host);
             if ($host == '') {
                 throw new Exception('Host can not be empty', 5);
             }
@@ -316,7 +316,7 @@
         }
 
         public function setPath(string $path) {
-            $this->path = self::clean($path);
+            $this->path = static::clean($path);
         }
 
         public function setQuery(string $query) {
@@ -324,11 +324,11 @@
         }
 
         public function setFragment(string $fragment) {
-            $this->fragment = self::clean($fragment);
+            $this->fragment = static::clean($fragment);
         }
 
         public function setVar(string $name, string $value) {
-            $this->vars[Clean::cmd($name)] = self::clean($value);
+            $this->vars[Clean::cmd($name)] = static::clean($value);
             $this->query                   = $this->buildQuery($this->vars);
         }
 
@@ -349,8 +349,8 @@
         }
 
         public function setRoot(string $root) {
-            $root_obj = self::init($root);
-            foreach (self::ROOT_PARTS as $part) {
+            $root_obj = static::init($root);
+            foreach (static::ROOT_PARTS as $part) {
                 $this->{'set' . ucfirst($part)}(
                     $root_obj->{'get' . ucfirst($part)}()
                 );
@@ -359,8 +359,8 @@
 
         protected static function encode(string $url): string {
             return str_replace(
-                array_values(self::SPECIAL_CHARS_CODES),
-                array_keys(self::SPECIAL_CHARS_CODES),
+                array_values(static::SPECIAL_CHARS_CODES),
+                array_keys(static::SPECIAL_CHARS_CODES),
                 urlencode($url)
             );
         }
@@ -368,8 +368,8 @@
         protected static function decode(string $url): string {
             return urldecode(
                 str_replace(
-                    array_keys(self::SPECIAL_CHARS_CODES),
-                    array_values(self::SPECIAL_CHARS_CODES),
+                    array_keys(static::SPECIAL_CHARS_CODES),
+                    array_values(static::SPECIAL_CHARS_CODES),
                     $url
                 )
             );
@@ -377,11 +377,11 @@
 
         protected function parse(string $url): array {
             $res = [];
-            foreach ((array) parse_url(self::clean($url)) as $k => $v) {
-                if (!in_array($k, self::PARTS)) {
+            foreach ((array) parse_url(static::clean($url)) as $k => $v) {
+                if (!in_array($k, static::PARTS)) {
                     continue;
                 }
-                $res[$k] = Type::set(self::clean($v), Type::get($this->$k));
+                $res[$k] = Type::set(static::clean($v), Type::get($this->$k));
             }
             return $res;
         }

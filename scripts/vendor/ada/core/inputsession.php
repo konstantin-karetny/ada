@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 08.02.2018
+    * @version   1.0.0 05.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -48,7 +48,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'base64', $default, $namespace);
+            return static::get($name, 'base64', $default, $namespace);
         }
 
         public static function getBool(
@@ -56,7 +56,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): bool {
-            return self::get($name, 'bool', $default, $namespace);
+            return static::get($name, 'bool', $default, $namespace);
         }
 
         public static function getCmd(
@@ -64,7 +64,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'cmd', $default, $namespace);
+            return static::get($name, 'cmd', $default, $namespace);
         }
 
         public static function getEmail(
@@ -72,7 +72,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'email', $default, $namespace);
+            return static::get($name, 'email', $default, $namespace);
         }
 
         public static function getHtml(
@@ -80,7 +80,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'html', $default, $namespace);
+            return static::get($name, 'html', $default, $namespace);
         }
 
         public static function getInt(
@@ -88,7 +88,7 @@
                    $default   = 0,
             string $namespace = Session::DEFAULT_NAMESPACE
         ): int {
-            return self::get($name, 'int', $default, $namespace);
+            return static::get($name, 'int', $default, $namespace);
         }
 
         public static function getFloat(
@@ -96,7 +96,7 @@
                    $default   = 0,
             string $namespace = Session::DEFAULT_NAMESPACE
         ): float {
-            return self::get($name, 'float', $default, $namespace);
+            return static::get($name, 'float', $default, $namespace);
         }
 
         public static function getPath(
@@ -104,7 +104,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'path', $default, $namespace);
+            return static::get($name, 'path', $default, $namespace);
         }
 
         public static function getString(
@@ -112,7 +112,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'string', $default, $namespace);
+            return static::get($name, 'string', $default, $namespace);
         }
 
         public static function getUrl(
@@ -120,7 +120,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'url', $default, $namespace);
+            return static::get($name, 'url', $default, $namespace);
         }
 
         public static function getWord(
@@ -128,7 +128,7 @@
                    $default   = '',
             string $namespace = Session::DEFAULT_NAMESPACE
         ): string {
-            return self::get($name, 'word', $default, $namespace);
+            return static::get($name, 'word', $default, $namespace);
         }
 
         public static function set(

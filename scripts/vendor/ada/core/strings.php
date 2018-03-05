@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.02.2018
+    * @version   1.0.0 05.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -26,7 +26,7 @@
             return (string) str_replace(
                 ' ',
                 '',
-                ucwords(self::separateWith($val))
+                ucwords(static::separateWith($val))
             );
         }
 
