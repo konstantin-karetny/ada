@@ -19,7 +19,7 @@
     //folder
     //db
 
-    exit(var_dump( $_SERVER, Client::init()->getSignature() ));
+    exit(var_dump( Client::init(), Client::init()->getSignature() ));
 
 
     $session = Session::init();

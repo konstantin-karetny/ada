@@ -25,5 +25,4 @@ http://www.php.su/header
 http://php.ru/forum/viewtopic.php?t=47598
 +
 ...как можно не допустить или проверить что переменные $_SERVER['HTTP_HOST'] и $_SERVER['SERVER_NAME'] не изменены пользователем ... если изменить $_SERVER['HTTP_HOST'] то ты просто не получишь этот запрос
-если изменить $_SERVER['HTTP_HOST'] то ты просто не получишь этот запрос
 http://forum.php.su/topic.php?forum=71&topic=12279

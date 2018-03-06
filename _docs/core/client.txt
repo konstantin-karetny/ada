@@ -1,2 +1,23 @@
 ﻿...Get the client IP address
 https://www.w3resource.com/php-exercises/php-basic-exercise-5.php
+
+$_SERVER
+http://php.net/manual/ru/reserved.variables.server.php
+
+List of HTTP header fields
+https://en.wikipedia.org/wiki/List_of_HTTP_header_fields
+
+Using browser fingerprints for session encryption
+https://www.mind-it.info/2012/08/01/using-browser-fingerprints-for-session-encryption
++
+Заголовок Accept не должен использоваться в "отпечатках пальцев", так как Microsoft'овский Internet Explorer известен расхождением в значениях этого заголовка в случаях, когда пользователь обновляет страницу и когда он кликает по ссылке
+http://phpclub.ru/detail/article/sessions
++
+Подпись браузера
+http://samag.ru/archive/article/1944
+
+Определение IP адреса
+http://phpfaq.ru/tech/ip
++
+ZendFramework/Controller/Request/Http.php
+https://github.com/komola/ZendFramework/blob/master/Controller/Request/Http.php#L1054

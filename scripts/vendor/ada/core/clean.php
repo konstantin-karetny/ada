@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 05.03.2018
+    * @version   1.0.0 06.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -29,16 +29,17 @@
         }
 
         public static function email($val): string {
-            return (string) filter_var($val, FILTER_SANITIZE_EMAIL);
+            return (string) filter_var(trim($val), FILTER_SANITIZE_EMAIL);
         }
 
         public static function html($val, bool $abs = true): string {
+            $val = trim($val);
             return (string) (
                 preg_match('//u', $val)
-                ? $val
-                : htmlspecialchars_decode(
-                    htmlspecialchars($val, ENT_IGNORE, 'UTF-8')
-                )
+                    ? $val
+                    : htmlspecialchars_decode(
+                        htmlspecialchars($val, ENT_IGNORE, 'UTF-8')
+                    )
             );
         }
 
@@ -61,7 +62,7 @@
         }
 
         public static function string($val): string {
-            return html_entity_decode($val);
+            return html_entity_decode(trim($val));
         }
 
         public static function url($val): string {

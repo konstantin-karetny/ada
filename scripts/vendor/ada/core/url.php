@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.02.2018
+    * @version   1.0.0 06.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -135,25 +135,19 @@
         public static function current() {
             $res = 'http';
             if (
-                (
-                    !empty($_SERVER['HTTPS']) &&
-                    static::clean($_SERVER['HTTPS']) !== 'off'
-                ) ||
-                (
-                    !empty($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
-                    static::clean($_SERVER['HTTP_X_FORWARDED_PROTO']) !== 'http'
-                )
+                Server::get('HTTPS', 'string', 'off')                   !== 'off' ||
+                Server::get('HTTP_X_FORWARDED_PROTO', 'string', 'http') !== 'http'
             ) {
                 $res .= 's';
             }
-            $res .= '://' . static::clean($_SERVER['HTTP_HOST']);
-            if (!empty($_SERVER['PHP_SELF']) && !empty($_SERVER['REQUEST_URI'])) {
-                $res .= static::clean($_SERVER['REQUEST_URI']);
+            $res .= '://' . static::clean(Server::get('HTTP_HOST'));
+            if (Server::get('PHP_SELF') && Server::get('REQUEST_URI')) {
+                $res .= static::clean(Server::get('REQUEST_URI'));
             }
             else {
-                $res .= static::clean($_SERVER['SCRIPT_NAME']);
-                if (!empty($_SERVER['QUERY_STRING'])) {
-                    $res .= '?' . static::clean($_SERVER['QUERY_STRING']);
+                $res .= static::clean(Server::get('SCRIPT_NAME'));
+                if (Server::get('QUERY_STRING')) {
+                    $res .= '?' . static::clean(Server::get('QUERY_STRING'));
                 }
             }
             return static::clean($res);
