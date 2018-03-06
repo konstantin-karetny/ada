@@ -33,7 +33,7 @@
             return parent::init($id, $cached);
         }
 
-        protected function __construct(bool $cached = true) {
+        protected function __construct(string $id, bool $cached = true) {
             if (!$this->getId()) {
                 foreach ([
                     'auth',
@@ -143,7 +143,7 @@
             foreach ($parts as $prop) {
                 $res .= '::' . $this->{'get' . ucfirst(Strings::toCamelCase($prop))}();
             }
-            return md5($res);
+            return sha1($res);
         }
 
         public function setAuth(string $auth) {
