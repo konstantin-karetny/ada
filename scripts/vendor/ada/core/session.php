@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 05.03.2018
+    * @version   1.0.0 07.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,7 +12,7 @@
     class Session extends InputSession {
 
         protected const
-            SELF_NAMESPACE    = '_SESSION',
+            SELF_NAMESPACE    = '9be28143618f21b9456528c2ee825873',
             DEFAULT_NAMESPACE = '_',
             NAMESPACE_PREFIX  = '_';
 
@@ -61,19 +61,37 @@
         }
 
         public function check(): bool {
+            if (!$this->isStarted()) {
+                return false;
+            }
+            if ($this->isNew()) {
+                return true;
+            }
             if (
-                !$this->isNew() &&
                 (
-                    strtotime(static::getString(
-                        'last_stop_datetime',
+                    (
+                        strtotime(
+                            static::getString(
+                                'last_stop_datetime',
+                                '',
+                                static::SELF_NAMESPACE
+                            )
+                        )
+                        +
+                        $this->getIniParam('gc_maxlifetime')
+                    )
+                    <
+                    DateTime::init()->getTimestamp()
+                ) ||
+                (
+                    static::getString(
+                        'browser_signature',
                         '',
                         static::SELF_NAMESPACE
-                    ))
-                    +
-                    $this->getIniParam('gc_maxlifetime')
+                    )
+                    !=
+                    Client::init()->getSignature()
                 )
-                <
-                DateTime::init()->getTimestamp()
             ) {
                 return false;
             }
@@ -147,6 +165,11 @@
             static::set(
                 'last_stop_datetime',
                 DateTime::init()->format(),
+                static::SELF_NAMESPACE
+            );
+            static::set(
+                'browser_signature',
+                Client::init()->getSignature(),
                 static::SELF_NAMESPACE
             );
             session_write_close();

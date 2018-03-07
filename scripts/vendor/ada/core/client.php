@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 06.03.2018
+    * @version   1.0.0 07.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -34,7 +34,7 @@
         }
 
         protected function __construct(string $id, bool $cached = true) {
-            if (!$this->getId()) {
+            if (!$id) {
                 foreach ([
                     'auth',
                     'browser',
@@ -139,11 +139,11 @@
         }
 
         public function getSignature(array $parts = self::SIGNATURE_PARTS): string {
-            $res = implode($parts);
+            $line = implode($parts);
             foreach ($parts as $prop) {
-                $res .= '::' . $this->{'get' . ucfirst(Strings::toCamelCase($prop))}();
+                $line .= $this->{'get' . ucfirst(Strings::toCamelCase($prop))}();
             }
-            return sha1($res);
+            return Hash::asMd5($line);
         }
 
         public function setAuth(string $auth) {

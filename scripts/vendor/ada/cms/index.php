@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 18.02.2018
+    * @version   1.0.0 07.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,24 +11,24 @@
 
     require_once 'includes/autoload.php';
 
-    //SESSION
-    //Signature
-    //db handler
+    //db
+    //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //
     //folder
-    //db
-
-    exit(var_dump( Client::init(), Client::init()->getSignature() ));
 
 
-    $session = Session::init();
+    $db = Db::init();
+
+
+
+
     //$handler = new SessionHandlerDb;
     //$session->setHandler($handler);
     //Session::set('var', 'val');
     //$session->start();
 
-    exit(var_dump( $session->start(), $_SESSION ));
+    exit(var_dump( $db->loadCell('SELECT `text` FROM ada_test WHERE `id` = 1') ));
 
 
 

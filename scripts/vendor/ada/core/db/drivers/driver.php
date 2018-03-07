@@ -7,37 +7,23 @@
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Db\Drivers;
 
-    class Db extends Singleton {
+    class Driver extends \Ada\Core\Proto {
 
         protected
-            $charset     = 'utf8',
-            $connected   = false,
-            $driver      = null,
-            $driver_name = 'mysql',
-            $host        = 'localhost',
-            $name        = '',
-            $password    = '',
-            $prefix      = '',
-            $user        = 'root';
-
-        public static function init(string $id = '', bool $cached = true): self {
-            return parent::init($id, $cached);
-        }
-
-        protected function __construct(string $id, bool $cached = true) {
-            parent::__construct($id, $cached);
-        }
+            $charset   = 'utf8',
+            $connected = false,
+            $driver    = 'mysql',
+            $host      = 'localhost',
+            $name      = '',
+            $password  = '',
+            $prefix    = '',
+            $user      = 'root';
 
         public function connect(): string {
-            if ($this->isConnected()) {
-                return true;
-            }
-            $this->driver = $this->getDriver();
 
-
-            exit(var_dump( $this->driver ));
+            exit(var_dump( $this ));
 
             switch ($this->type) {
                 case 'mysql':
@@ -65,12 +51,8 @@
             return $this->charset;
         }
 
-        public function isConnected(): bool {
-            return $this->connected;
-        }
-
-        public function getDriverName(): string {
-            return $this->driver_name;
+        public function getDriver(): string {
+            return $this->driver;
         }
 
         public function getHost(): string {
@@ -97,8 +79,8 @@
             $this->charset = $charset;
         }
 
-        public function setDriverName(string $driver_name): string {
-            $this->driver_name = $driver_name;
+        public function setDriver(string $driver): string {
+            $this->driver = $driver;
         }
 
         public function setHost(string $host): string {
@@ -119,18 +101,6 @@
 
         public function setUser(string $user): string {
             $this->user = $user;
-        }
-
-        protected function getDriver(bool $cached = true): Db\Drivers\Driver {
-            if ($this->driver && $cached) {
-                return $this->driver;
-            }
-            $classname    = (
-                __NAMESPACE__ .
-                '\\Db\\Drivers\\' .
-                ucfirst($this->getDriverName())
-            );
-            return new $classname();
         }
 
     }
