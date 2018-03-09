@@ -81,16 +81,7 @@
             );
             $inp_params = [];
             preg_match_all($pattern, $query, $inp_params);
-            $inp_params = array_map(
-                function($el) {
-                    return str_replace(
-                        '\\' . static::INP_PARAM_CHAR . '\\',
-                        static::INP_PARAM_CHAR,
-                        $el
-                    );
-                },
-                (array) $inp_params[1]
-            );
+            $inp_params = (array) $inp_params[1];
             $this->stmt = $this->pdo->prepare(
                 trim(
                     preg_replace(
@@ -262,7 +253,7 @@
             $this->password = $password;
         }
 
-        public function setPdoParams(array $pdo_params){
+        public function setPdoParams(array $pdo_params) {
             $this->pdo_params = $this->pdo_params + $pdo_params;
         }
 
