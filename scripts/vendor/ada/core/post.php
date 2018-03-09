@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.02.2018
+    * @version   1.0.0 09.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,7 +13,7 @@
 
         public static function get(
             string $name,
-            string $filter  = 'string',
+            string $filter  = 'auto',
                    $default = ''
         ) {
             return Clean::value(
@@ -24,7 +24,7 @@
 
         public static function getArray(
             string $name,
-            string $filter  = 'string',
+            string $filter  = 'auto',
                    $default = []
         ): array {
             return Clean::values(

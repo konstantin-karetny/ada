@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 07.03.2018
+    * @version   1.0.0 09.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -17,8 +17,14 @@
     //
     //folder
 
-
-    $db = Db::init();
+    $db = Db::init(
+        1,
+        true,
+        [
+           'name'   => 'ada',
+           'prefix' => 'ada_'
+        ]
+    );
 
 
 
@@ -28,7 +34,22 @@
     //Session::set('var', 'val');
     //$session->start();
 
-    exit(var_dump( $db->loadCell('SELECT `text` FROM ada_test WHERE `id` = 1') ));
+    $query = '
+        SELECT ' . $db->qs([
+            'u.id',
+            'u.email'           => 'email',
+            'u.password',
+            'u.create_datetime' => 'cd'
+        ])       . '
+        FROM '   . $db->t('users', 'u')            . '
+        WHERE '  . $db->q('id')              . ' > ' . $db->esc(0) . '
+        AND '    . $db->q('create_datetime') . ' > ' . $db->esc('2002-01-01 00:00:00') . '
+        AND '    . $db->q('password')        . ' LIKE ' . $db->esc('password%') . '
+        OR '     . $db->q('password')        . ' LIKE ' . $db->esc('pa:    :ssword%') . '
+    ';
+
+
+    exit(var_dump( $db->selectRows($query), $db ));
 
 
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 06.03.2018
+    * @version   1.0.0 09.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -57,6 +57,10 @@
             return (float) ($abs ? abs($res) : $res);
         }
 
+        public static function null() {
+            return null;
+        }
+
         public static function path($val): string {
             return Path::clean($val);
         }
@@ -69,23 +73,32 @@
             return Url::clean($val);
         }
 
-        public static function value($val, string $filter = 'string') {
+        public static function value($val, string $filter = 'auto') {
             $filter = strtolower(trim($filter));
+            if ($filter == 'auto') {
+                $filter = Type::get($val);
+            }
             if (!method_exists(__CLASS__, $filter)) {
                 throw new Exception('Wrong filter name \'' . $filter . '\'', 1);
             }
             return static::$filter($val);
         }
 
-        public static function values($array, string $filter = 'string'): array {
-            foreach ((array) $array as $k => $v) {
-                $array[$k] = (
-                    is_array($v)
-                    ? static::values($v, $filter)
-                    : static::value($v, $filter)
-                );
+        public static function values($set, string $filter = 'auto') {
+            if (!is_array($set) && !is_object($set)) {
+                $set = Type::set($set, 'array');
             }
-            return $array;
+            foreach ($set as $k => $v) {
+                $v = (
+                    is_array($v) || is_object($v)
+                        ? static::values($v, $filter)
+                        : static::value($v, $filter)
+                );
+                is_array($set)
+                    ? $set[$k] = $v
+                    : $set->$k = $v;
+            }
+            return $set;
         }
 
         public static function word($val): string {

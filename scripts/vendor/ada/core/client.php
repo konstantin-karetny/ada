@@ -33,7 +33,7 @@
             return parent::init($id, $cached);
         }
 
-        protected function __construct(string $id, bool $cached = true) {
+        protected function __construct(string $id) {
             if (!$id) {
                 foreach ([
                     'auth',

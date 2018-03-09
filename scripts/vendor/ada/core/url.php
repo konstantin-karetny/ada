@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 06.03.2018
+    * @version   1.0.0 09.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -259,7 +259,7 @@
 
         public function getVar(
             string $name,
-            string $filter  = 'string',
+            string $filter  = 'auto',
                    $default = ''
         ) {
             return Clean::value(
@@ -268,7 +268,7 @@
             );
         }
 
-        public function getVars(string $filter  = 'string'): array {
+        public function getVars(string $filter  = 'auto'): array {
             return Clean::values($this->vars, $filter);
         }
 
