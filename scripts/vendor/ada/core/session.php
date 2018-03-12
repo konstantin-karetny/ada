@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -35,20 +35,36 @@
                 'use_trans_sid'    => false
             ];
 
-        public static function init(bool $cached = true): self {
+        public static function init(
+            array          $ini_params = [],
+            SessionHandler $handler    = null
+        ): self {
             static $res;
-            return $res && $cached ? $res : ($res = new self);
+            return $res
+                ?  $res
+                : (
+                   $res = new self($ini_params, $handler)
+                );
         }
 
-        protected function __construct() {
+        protected function __construct(
+            array          $ini_params = [],
+            SessionHandler $handler    = null
+        ) {
             $this->new        = !Cookie::getBool($this->generateName());
-            $this->ini_params = array_merge(
-                $this->ini_params,
-                [
-                    'cookie_secure' => Url::init()->isSSL(),
-                    'save_path'     => Clean::path(session_save_path())
-                ]
+            $this->ini_params = Type::set(
+                array_merge(
+                    $this->ini_params,
+                    [
+                        'cookie_secure' => Url::init()->isSSL(),
+                        'save_path'     => Clean::path(session_save_path())
+                    ],
+                    $ini_params
+                )
             );
+            if ($handler && session_set_save_handler($handler)) {
+                $this->handler = $handler;
+            }
             session_name($this->generateName());
         }
 
@@ -206,24 +222,6 @@
 
         public function isStarted(): bool {
             return $this->getState() == 2;
-        }
-
-        public function setHandler(SessionHandler $handler): bool {
-            if (!session_set_save_handler($handler)) {
-                return false;
-            }
-            $this->handler = $handler;
-            return true;
-        }
-
-        public function setIniParam(string $name, string $param) {
-            $this->ini_params[strtolower(Clean::cmd($name))] = Type::set($param);
-        }
-
-        public function setIniParams(array $params) {
-            foreach ($params as $name => $param) {
-                $this->setIniParam($name, $param);
-            }
         }
 
         protected function generateName(): string {

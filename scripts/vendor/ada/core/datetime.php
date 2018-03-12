@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 05.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,7 +12,7 @@
     class DateTime extends \DateTime {
 
         protected static
-            $default_format    = 'Y-m-d H:i:s',
+            $default_format    = '',
             $default_timezone  = null;
 
         protected
@@ -20,23 +20,32 @@
             $locales_file_ext  = 'ini';
 
         public static function init(
-            string $time        = 'now',
-            string $timezone_id = ''
+            string $time                = 'now',
+            string $timezone_id         = '',
+            string $default_format      = 'Y-m-d H:i:s',
+            string $default_timezone_id = null
         ): self {
-            return new self(
-                $time,
-                $timezone_id ? DateTimeZone::init($timezone_id) : null
-            );
+            return new self(...func_get_args());
         }
 
         public function __construct(
-            string       $time,
-            DateTimeZone $timezone = null
+            string $time                = 'now',
+            string $timezone_id         = '',
+            string $default_format      = 'Y-m-d H:i:s',
+            string $default_timezone_id = null
         ) {
+            if (!static::$default_format && $default_format) {
+                static::$default_format = $default_format;
+            }
+            if (!static::$default_timezone && $default_timezone_id) {
+                static::$default_timezone = DateTimeZone::init($default_timezone_id);
+            }
+            $timezone = $timezone_id === '' ? null : DateTimeZone::init($timezone_id);
             if (!$timezone && static::$default_timezone) {
                 $timezone = $this->getDefaultTimezone();
             }
             parent::__construct($time, $timezone);
+            $this->locales_path = Clean::path($this->locales_path);
         }
 
         public function format($format = '', string $locale_id = 'en'): string {
@@ -105,14 +114,6 @@
                 return [];
             }
             return $file->parseIni();
-        }
-
-        public function setDefaultFormat(string $format) {
-            static::$default_format = $format;
-        }
-
-        public function setDefaultTimezone(string $timezone_id) {
-            static::$default_timezone = DateTimeZone::init($timezone_id);
         }
 
     }

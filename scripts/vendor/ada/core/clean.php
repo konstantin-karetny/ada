@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -88,13 +88,14 @@
             if (!is_array($set) && !is_object($set)) {
                 $set = Type::set($set, 'array');
             }
+            $is_array = is_array($set);
             foreach ($set as $k => $v) {
                 $v = (
                     is_array($v) || is_object($v)
                         ? static::values($v, $filter)
                         : static::value($v, $filter)
                 );
-                is_array($set)
+                $is_array
                     ? $set[$k] = $v
                     : $set->$k = $v;
             }

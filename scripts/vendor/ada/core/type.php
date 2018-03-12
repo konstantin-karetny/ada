@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 05.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -53,13 +53,21 @@
             string $type        = 'auto',
             bool   $recursively = false
         ) {
-            if ($recursively && is_array($val)) {
-                return array_map(
-                    function($el) use($type) {
-                        return static::set($el, $type, true);
-                    },
-                    $val
-                );
+            if ($recursively) {
+                if (is_array($val)) {
+                    return array_map(
+                        function($el) use($type) {
+                            return static::set($el, $type, true);
+                        },
+                        $val
+                    );
+                }
+                elseif (is_object($val)) {
+                    foreach ($val as $k => $v) {
+                        $val->$k = static::set($v, $type, true);
+                    }
+                    return $val;
+                }
             }
             if ($type == 'auto') {
                 $type = static::get($val);

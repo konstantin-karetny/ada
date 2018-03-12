@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -29,8 +29,8 @@
             $ip            = '',
             $lang          = 'en';
 
-        public static function init(string $id = '', bool $cached = true): self {
-            return parent::init($id, $cached);
+        public static function init(string $id = ''): self {
+            return parent::init($id);
         }
 
         protected function __construct(string $id) {

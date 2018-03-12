@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,24 +11,39 @@
 
     class Db extends Proto {
 
+        const
+            DEFAULT_PARAMS = [
+                'charset'    => 'utf8',
+                'driver'     => 'mysql',
+                'host'       => '127.0.0.1',
+                'name'       => '',
+                'password'   => '',
+                'pdo_params' => [
+                    \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+                ],
+                'prefix'     => '',
+                'user'       => 'root'
+            ];
+
         public static function init(
             string $id     = '',
-            bool   $cached = true,
-                ...$args
+            array  $params = []
         ): Db\Drivers\Driver {
-            $params = reset($args) + [
-
-            ];
-            $driver = (
-                __NAMESPACE__ .
-                '\\Db\\Drivers\\' .
-                ucfirst($params['driver'] ?? Db\Drivers\Driver::init()->getDriver())
+            $params = array_merge(static::DEFAULT_PARAMS, $params);
+            return call_user_func_array(
+                (
+                    __NAMESPACE__ .
+                    '\\Db\\Drivers\\' .
+                    ucfirst($params['driver']) .
+                    '::init'
+                ),
+                func_get_args()
             );
-            $driver           = $driver::init($id, $cached);
-            foreach ($params as $k => $v) {
-                $driver->{'set' . Strings::toCamelCase($k)}($v);
-            }
-            return $driver;
+        }
+
+        public static function getAvailableDrivers(): array {
+            return (array) \PDO::getAvailableDrivers();
         }
 
     }

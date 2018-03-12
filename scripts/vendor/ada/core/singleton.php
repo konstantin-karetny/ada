@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,15 +15,15 @@
             $instances = [];
 
         protected
-            $id = '';
+            $id        = '';
 
-        public static function init(string $id = '', bool $cached = true) {
-            $id    = Type::set($id);
+        public static function init() {
+            $id    = Type::set(func_get_arg(0));
             $class = get_called_class();
-            if (isset( self::$instances[$class][$id]) && $cached) {
+            if (isset( self::$instances[$class][$id])) {
                 return self::$instances[$class][$id];
             };
-            self::$instances[$class][$id] = new $class(...func_get_args());
+            self::$instances[$class][$id]     = new $class(...func_get_args());
             self::$instances[$class][$id]->id = $id;
             return self::$instances[$class][$id];
         }

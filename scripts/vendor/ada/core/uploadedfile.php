@@ -22,7 +22,7 @@
             return new self($params);
         }
 
-        protected function __construct(array $params) {
+        public function __construct(array $params) {
             foreach ($params as $k => $v) {
                 $v = trim($v);
                 switch ($k) {

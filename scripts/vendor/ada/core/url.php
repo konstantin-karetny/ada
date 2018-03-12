@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 12.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,7 +9,7 @@
 
     namespace Ada\Core;
 
-    class Url extends Singleton {
+    class Url extends Proto {
 
         const
             SCHEMES = [
@@ -81,14 +81,12 @@
             $fragment = '',
             $vars     = [];
 
-        public static function init(
-            string $url    = '',
-            bool   $cached = true
-        ): self {
-            return parent::init($url ? $url : static::current(), $cached);
+        public static function init(string $url = ''): self {
+            return new self($url);
         }
 
-        protected function __construct(string $url) {
+        public function __construct(string $url = '') {
+            $url = $url === '' ? static::current() : $url;
             if (!static::check($url)) {
                 throw new Exception('Wrong url \'' . $url . '\'', 1);
             }
