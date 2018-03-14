@@ -14,11 +14,8 @@
     //db
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
-    //
-    //folder
 
 
-    exit(var_dump( Folder::init('C:\OSPanel\domains\ada\scripts\vendor\ada\core\db\zz')->setEditTime(1521040000) ));
 
     $db = Db::init(
         1,
@@ -28,7 +25,7 @@
         ]
     );
 
-
+    exit(var_dump( $db->getVersion() ));
 
 
     //$handler = new SessionHandlerDb;

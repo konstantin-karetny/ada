@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 14.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -23,6 +23,9 @@
         }
 
         public function copy(string $path): bool {
+            if (!$this->exists()) {
+                return false;
+            }
             $folder = static::init($path);
             if ($folder->exists() || !$folder->create()) {
                 return false;
@@ -40,6 +43,13 @@
                 );
             }
             return !in_array(false, $res);
+        }
+
+        public function contents(): array {
+            return array_merge(
+                $this->folders(),
+                $this->files()
+            );
         }
 
         public function create(int $mode = 0755): bool {
@@ -68,10 +78,7 @@
         public function files(): array {
             $res = [];
             if (!$this->exists()) {
-                throw new Exception(
-                    'Folder ' . $this->path . ' does not exists',
-                    1
-                );
+                return $res;
             }
             foreach (new \DirectoryIterator($this->path) as $iter) {
                 if ($iter->isFile() && !$iter->isDot()) {
@@ -79,16 +86,14 @@
                     $res[$path] = File::init($path);
                 }
             }
+            ksort($res);
             return $res;
         }
 
         public function folders(): array {
             $res = [];
             if (!$this->exists()) {
-                throw new Exception(
-                    'Folder ' . $this->path . ' does not exists',
-                    1
-                );
+                return $res;
             }
             foreach (new \DirectoryIterator($this->path) as $iter) {
                 if ($iter->isDir() && !$iter->isDot()) {
@@ -96,6 +101,7 @@
                     $res[$path] = static::init($path);
                 }
             }
+            ksort($res);
             return $res;
         }
 
@@ -120,13 +126,10 @@
         }
 
         public function getSize(): int {
-            if (!$this->exists()) {
-                throw new Exception(
-                    'Folder ' . $this->path . ' does not exists',
-                    1
-                );
-            }
             $res = 0;
+            if (!$this->exists()) {
+                return $res;
+            }
             foreach(new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator(
                     $this->path,
@@ -153,14 +156,10 @@
             return $this->delete();
         }
 
-        public function setEditTime(
-            int $time        = 0,
-            int $access_time = 0
-        ): bool {
-            return (int) @touch(
+        public function setEditTime(int $time = 0): bool {
+            return (bool) @touch(
                 $this->path,
-                $time > 0 ? $time : DateTime::init()->getTimestamp(),
-                $access_time
+                $time > 0 ? $time : DateTime::init()->getTimestamp()
             );
         }
 

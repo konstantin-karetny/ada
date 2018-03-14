@@ -12,21 +12,22 @@
     abstract class Driver extends \Ada\Core\Singleton {
 
         const
-            DSN_LINE    = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
-            ESC_TAG     = ':',
-            Q           = '`';
+            DSN_LINE     = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
+            ESC_TAG      = ':',
+            Q            = '`';
 
         protected
-            $charset    = '',
-            $driver     = '',
-            $host       = '',
-            $name       = '',
-            $password   = '',
-            $pdo        = null,
-            $pdo_params = [],
-            $prefix     = '',
-            $stmt       = null,
-            $user       = '';
+            $charset     = '',
+            $driver      = '',
+            $host        = '',
+            $min_version = '',
+            $name        = '',
+            $password    = '',
+            $pdo         = null,
+            $pdo_params  = [],
+            $prefix      = '',
+            $stmt        = null,
+            $user        = '';
 
         public static function init(string $id = '', array $params = []): self {
             return parent::init($id, $params);
@@ -35,6 +36,21 @@
         protected function __construct(string $id, array $params) {
             foreach (array_keys(\Ada\Core\Db::DEFAULT_PARAMS) as $k) {
                 $this->$k = \Ada\Core\Type::set($params[$k]);
+            }
+            if (
+                version_compare(
+                    $this->getVersion(),
+                    $this->getMinVersion(),
+                    '<'
+                )
+            ) {
+                throw new \Ada\Core\Exception(
+                    (
+                        'Version of the driver ' . $this->getVersion() .
+                        ' less than required '   . $this->getMinVersion()
+                    ),
+                    1
+                );
             }
         }
 
@@ -47,7 +63,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to close a transaction. ' . $e->getMessage(),
-                    7
+                    8
                 );
             }
         }
@@ -144,7 +160,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . trim($query) . '\''
                     ),
-                    2
+                    3
                 );
             }
         }
@@ -169,7 +185,7 @@
             if (!key_exists($column, reset($res))) {
                 throw new \Ada\Core\Exception(
                     'Unknown column \'' . $column . '\'. Query: \'' . trim($query) . '\'',
-                    5
+                    6
                 );
             }
             return array_combine(
@@ -193,7 +209,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . trim($query) . '\''
                     ),
-                    3
+                    4
                 );
             }
             return \Ada\Core\Type::set(
@@ -219,7 +235,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . trim($query) . '\''
                     ),
-                    3
+                    4
                 );
             }
             $res = \Ada\Core\Type::set(
@@ -233,7 +249,7 @@
             if (!key_exists($key, (array) reset($res))) {
                 throw new \Ada\Core\Exception(
                     'Unknown key \'' . $key . '\'. Query: \'' . trim($query) . '\'',
-                    4
+                    5
                 );
             }
             return array_combine(
@@ -290,7 +306,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to start a transaction. ' . $e->getMessage(),
-                    6
+                    7
                 );
             }
         }
@@ -340,7 +356,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to roll back a transaction. ' . $e->getMessage(),
-                    8
+                    9
                 );
             }
         }
@@ -418,6 +434,10 @@
             return $this->host;
         }
 
+        public function getMinVersion(): string {
+            return $this->min_version;
+        }
+
         public function getName(): string {
             return $this->name;
         }
@@ -435,7 +455,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to get PDO parameter ' . $name . '. ' . $e->getMessage(),
-                    9
+                    10
                 );
             }
         }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 14.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -32,21 +32,23 @@
         ): Db\Drivers\Driver {
             $params = array_merge(static::DEFAULT_PARAMS, $params);
             return call_user_func_array(
-                (
-                    __NAMESPACE__ .
-                    '\\Db\\Drivers\\' .
-                    ucfirst($params['driver']) .
-                    '::init'
-                ),
+                __CLASS__ . '\Drivers\\' . $params['driver'] . '::init',
                 func_get_args()
             );
         }
 
         public static function getDrivers(bool $supported_only = false): array {
+            $res = array_map('strtolower', (array) \PDO::getAvailableDrivers());
+            sort($res);
             if (!$supported_only) {
-                return (array) \PDO::getAvailableDrivers();
+                return $res;
             }
-            return (array) \PDO::getAvailableDrivers();
+            foreach ($res as $i => $driver) {
+                if (!class_exists(__CLASS__ . '\Drivers\\' . $driver)) {
+                    unset($res[$i]);
+                }
+            }
+            return $res;
         }
 
     }

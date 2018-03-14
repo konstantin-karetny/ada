@@ -120,14 +120,10 @@
             );
         }
 
-        public function setEditTime(
-            int $time        = 0,
-            int $access_time = 0
-        ): bool {
-            return (int) @touch(
+        public function setEditTime(int $time = 0): bool {
+            return (bool) @touch(
                 $this->path,
-                $time > 0 ? $time : DateTime::init()->getTimestamp(),
-                $access_time
+                $time > 0 ? $time : DateTime::init()->getTimestamp()
             );
         }
 
