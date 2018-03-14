@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 14.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -72,11 +72,11 @@
             return $this->isConnected();
         }
 
-        public function delete(string $table, string $where): bool {
+        public function delete(string $table, string $condition): bool {
             return $this->exec(
                 'DELETE FROM ' .
                 $this->t($table) .
-                'WHERE ' . $where
+                'WHERE ' . $condition
             );
         }
 
@@ -371,12 +371,16 @@
             return $this->q($this->getPrefix() . $table, $as);
         }
 
-        public function update(string $table, array $data, string $where): bool {
+        public function update(
+            string $table,
+            array  $data,
+            string $condition
+        ): bool {
             return $this->exec(
                 'UPDATE ' .
                 $this->t($table) .
                 $this->sqlSet($data) .
-                'WHERE ' . $where
+                'WHERE ' . $condition
             );
         }
 

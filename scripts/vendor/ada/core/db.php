@@ -42,7 +42,10 @@
             );
         }
 
-        public static function getAvailableDrivers(): array {
+        public static function getDrivers(bool $supported_only = false): array {
+            if (!$supported_only) {
+                return (array) \PDO::getAvailableDrivers();
+            }
             return (array) \PDO::getAvailableDrivers();
         }
 

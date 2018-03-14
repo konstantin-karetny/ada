@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 14.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -18,6 +18,7 @@
     //folder
 
 
+    exit(var_dump( Folder::init('C:\OSPanel\domains\ada\scripts\vendor\ada\core\db\zz')->setEditTime(1521040000) ));
 
     $db = Db::init(
         1,
@@ -34,42 +35,6 @@
     //$session->setHandler($handler);
     //Session::set('var', 'val');
     //$session->start();
-
-    $query = '
-        SELECT ' . $db->qs([
-            't.id',
-            't.name'           => 'name',
-            't.text'
-        ])       . '
-        FROM '   . $db->t('test', 't')            . '
-        WHERE '  . $db->q('id')              . ' > ' . $db->esc(0) . '
-        AND '    . $db->q('name')        . ' LIKE ' . $db->esc('Test%') . '
-        AND '    . $db->q('text')        . ' LIKE ' . $db->esc('Lorem 1%') . '
-    ';
-
-    $query = '
-        SELECT ' . $db->qs([
-            't.id',
-            't.name'           => 'name',
-            't.text'
-        ])       . '
-        FROM '   . $db->t('test', 't')            . '
-        WHERE '  . $db->q('id')              . ' > ' . $db->esc(0) . '
-        AND '    . $db->q('name')        . ' LIKE ' . $db->esc('Test%') . '
-        OR '    . $db->q('text')        . ' LIKE ' . $db->esc('Lorem 1%') . '
-    ';
-
-    $data = [
-        'name' => 'Test 4',
-        'text' => 'Lorem 4 ipsum dolor sit amet'
-    ];
-
-
-    exit(var_dump( $db->update('test', $data, $db->where('id', '=', 4)) ));
-
-    //exit(var_dump( $db->insert('test', $data) ));
-    exit(var_dump( $db->delete('test', $db->q('id') . ' = ' . $db->esc(4)) ));
-    //exit(var_dump( $db->update('test', $data, $db->q('id') . ' = ' . $db->esc(4)) ));
 
 
 

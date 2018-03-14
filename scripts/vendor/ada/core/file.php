@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 14.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,6 +22,14 @@
             $this->path = Clean::path($path);
         }
 
+        public function copy(string $path): bool {
+            return (bool) @copy($this->path, $path);
+        }
+
+        public function create(string $contents = ''): bool {
+            return $this->write($contents);
+        }
+
         public function delete(): bool {
             $this->setPerms(0777);
             return (bool) @unlink($this->path);
@@ -31,20 +39,20 @@
             return is_file($this->path);
         }
 
-        public function getEditTime(): int {
-            return (int) @filemtime($this->path);
-        }
-
         public function getBasename(): string {
             return pathinfo($this->path, PATHINFO_BASENAME);
         }
 
-        public function getDir(): string {
-            return pathinfo($this->path, PATHINFO_DIRNAME) . Path::DS;
+        public function getEditTime(): int {
+            return (int) @filemtime($this->path);
         }
 
         public function getExt(): string {
             return pathinfo($this->path, PATHINFO_EXTENSION);
+        }
+
+        public function getFolder(): Folder {
+            return Folder::init(pathinfo($this->path, PATHINFO_DIRNAME));
         }
 
         public function getMimeType(string $default = ''): string {
@@ -62,8 +70,12 @@
             return pathinfo($this->path, PATHINFO_FILENAME);
         }
 
-        public function getPerms() {
-            return @fileperms($this->path);
+        public function getPath(): string {
+            return $this->path;
+        }
+
+        public function getPerms(): int {
+            return (int) @fileperms($this->path);
         }
 
         public function getSize(): int {
@@ -76,14 +88,6 @@
 
         public function isWritable(): bool {
             return is_writable($this->path);
-        }
-
-        public function copy(string $path): bool {
-            return (bool) @copy($this->path, $path);
-        }
-
-        public function create(string $contents = ''): bool {
-            return $this->write($contents);
         }
 
         public function move(string $path): bool {
@@ -116,6 +120,21 @@
             );
         }
 
+        public function setEditTime(
+            int $time        = 0,
+            int $access_time = 0
+        ): bool {
+            return (int) @touch(
+                $this->path,
+                $time > 0 ? $time : DateTime::init()->getTimestamp(),
+                $access_time
+            );
+        }
+
+        public function setPerms(int $mode): bool {
+            return (bool) @chmod($this->path, $mode);
+        }
+
         public function write(
             string $contents,
             bool   $append = false
@@ -125,20 +144,6 @@
                 $contents,
                 $append ? FILE_APPEND : 0
             );
-        }
-
-        public function setEditTime(
-            int $time        = 0,
-            int $access_time = 0
-        ): bool {
-            return (int) @touch(
-                $this->path,
-                $time > 0 ? $time : Time::init()->getTimestamp()
-            );
-        }
-
-        public function setPerms(int $mode): bool {
-            return (bool) @chmod($this->path, $mode);
         }
 
     }
