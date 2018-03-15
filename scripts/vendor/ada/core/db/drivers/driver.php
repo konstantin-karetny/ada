@@ -18,14 +18,18 @@
 
         protected
             $charset     = '',
+            $date_format = '',
             $driver      = '',
+            $fetch_mode  = [],
             $host        = '',
             $min_version = '',
             $name        = '',
             $password    = '',
+            /** @var \PDO */
             $pdo         = null,
             $pdo_params  = [],
             $prefix      = '',
+            /** @var \PDOStatement */
             $stmt        = null,
             $user        = '';
 
@@ -86,6 +90,15 @@
                 );
             }
             return $this->isConnected();
+        }
+
+        public function debugDumpParams(): string {
+            if (!$this->stmt) {
+                return '';
+            }
+            ob_start();
+            $this->stmt->debugDumpParams();
+            return ob_get_clean();
         }
 
         public function delete(string $table, string $condition): bool {
@@ -151,8 +164,11 @@
                     )
                 )
             );
+            if ($this->fetch_mode) {
+                $this->stmt->setFetchMode(...$this->fetch_mode);
+            }
             try {
-                return (bool) $this->stmt->execute($inp_params);
+                $res = (bool) $this->stmt->execute($inp_params);
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     (
@@ -163,6 +179,11 @@
                     3
                 );
             }
+            $this->fetch_mode = [];
+            $this->stmt->setFetchMode(
+                $this->getPdoParam(\PDO::ATTR_DEFAULT_FETCH_MODE)
+            );
+            return $res;
         }
 
         public function fetchCell(
@@ -170,7 +191,7 @@
             string $filter  = 'auto',
             string $default = null
         ) {
-            $res = reset($this->selectRow($query, \PDO::FETCH_NUM, []));
+            $res = reset($this->fetchRow($query, \PDO::FETCH_NUM, []));
             return \Ada\Core\Clean::value($res === false ? $default : $res);
         }
 
@@ -181,7 +202,7 @@
             array  $default = []
         ): array {
             $this->exec($query);
-            $res = $this->loadRows($query, \PDO::FETCH_ASSOC, $key);
+            $res = $this->fetchRows($query, \PDO::FETCH_ASSOC, $key);
             if (!key_exists($column, reset($res))) {
                 throw new \Ada\Core\Exception(
                     'Unknown column \'' . $column . '\'. Query: \'' . trim($query) . '\'',
@@ -212,6 +233,7 @@
                     4
                 );
             }
+            $this->stmt->closeCursor();
             return \Ada\Core\Type::set(
                 $res === false ? $default : $res,
                 'auto',
@@ -238,6 +260,7 @@
                     4
                 );
             }
+            $this->stmt->closeCursor();
             $res = \Ada\Core\Type::set(
                 $res === false ? $default : $res,
                 'auto',
@@ -408,6 +431,10 @@
             return $this->charset;
         }
 
+        public function getDateFormat(): string {
+            return $this->date_format;
+        }
+
         public function getColumnsCount(): int {
             return (int) ($this->stmt ? $this->stmt->columnCount() : 0);
         }
@@ -474,6 +501,10 @@
 
         public function getVersion(): string {
             return (string) $this->getPdoParam(\PDO::ATTR_SERVER_VERSION);
+        }
+
+        public function setFetchMode(int $mode) {
+            $this->fetch_mode = func_get_args();
         }
 
     }

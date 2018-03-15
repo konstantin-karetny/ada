@@ -13,12 +13,13 @@
 
         const
             DEFAULT_PARAMS = [
-                'charset'    => 'utf8',
-                'driver'     => 'mysql',
-                'host'       => '127.0.0.1',
-                'name'       => '',
-                'password'   => '',
-                'pdo_params' => [
+                'charset'     => 'utf8',
+                'date_format' => 'Y-m-d H:i:s',
+                'driver'      => 'mysql',
+                'host'        => '127.0.0.1',
+                'name'        => '',
+                'password'    => '',
+                'pdo_params'  => [
                     \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
                     \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
                 ],

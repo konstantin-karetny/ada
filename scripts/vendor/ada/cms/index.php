@@ -16,6 +16,12 @@
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
 
+    class Test {
+        private
+            $id,
+            $name;
+    }
+
 
     $db = Db::init(
         1,
@@ -25,7 +31,13 @@
         ]
     );
 
-    exit(var_dump( $db->getVersion() ));
+    exit(var_dump(
+        $db->fetchRow('SELECT * FROM ' . $db->t('test'), \PDO::FETCH_BOTH),
+        $db->setFetchMode(\PDO::FETCH_CLASS, '\Ada\Core\Test'),
+        $db->fetchRow('SELECT * FROM ' . $db->t('test') . ' WHERE ' . $db->q('name') . ' = ' . $db->esc('Test 1'), \PDO::FETCH_CLASS),
+        $db->debugDumpParams(),
+        $db->getPdoParam(\PDO::ATTR_DEFAULT_FETCH_MODE)
+    ));
 
 
     //$handler = new SessionHandlerDb;
