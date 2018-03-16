@@ -31,12 +31,17 @@
         ]
     );
 
+
+    $table  = $db->getTable('test');
+    $column = $table->getColumn('state');
+    $column->setLength(255);
+    $column->setType('varchar');
+    $column->setCollation('utf8_general_ci');
+    $column->setDefaultValue('defffffff');
+
     exit(var_dump(
-        $db->fetchRow('SELECT * FROM ' . $db->t('test'), \PDO::FETCH_BOTH),
-        $db->setFetchMode(\PDO::FETCH_CLASS, '\Ada\Core\Test'),
-        $db->fetchRow('SELECT * FROM ' . $db->t('test') . ' WHERE ' . $db->q('name') . ' = ' . $db->esc('Test 1'), \PDO::FETCH_CLASS),
-        $db->debugDumpParams(),
-        $db->getPdoParam(\PDO::ATTR_DEFAULT_FETCH_MODE)
+        $column->create($table->getColumn('id')),
+        $db->debugDumpParams()
     ));
 
 

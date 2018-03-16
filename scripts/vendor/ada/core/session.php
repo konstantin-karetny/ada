@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -40,11 +40,7 @@
             SessionHandler $handler    = null
         ): self {
             static $res;
-            return $res
-                ?  $res
-                : (
-                   $res = new self($ini_params, $handler)
-                );
+            return $res ?? $res = new self($ini_params, $handler);
         }
 
         protected function __construct(

@@ -495,6 +495,10 @@
             return $this->prefix;
         }
 
+        public function getTable(string $name): \Ada\Core\Db\Table {
+            return \Ada\Core\Db\Table::init($name, $this);
+        }
+
         public function getUser(): string {
             return $this->user;
         }

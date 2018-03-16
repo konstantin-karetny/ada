@@ -1,2 +1,7 @@
-﻿Table (database)
+﻿C:\OSPanel\domains\joomla\libraries\joomla\database\driver.php
+
+Table (database)
 https://en.wikipedia.org/wiki/Table_(database)
+
+... используйте utf8mb4_unicode_ci. С базой у вас тоже должно быть установлено соединение в режиме utf8mb4
+https://ru.stackoverflow.com/questions/757733/Выбор-кодировки-для-mysql
