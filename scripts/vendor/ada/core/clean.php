@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -32,6 +32,15 @@
             return (string) filter_var(trim($val), FILTER_SANITIZE_EMAIL);
         }
 
+        public static function float($val, bool $abs = true): float {
+            $res = filter_var(
+                $val,
+                FILTER_SANITIZE_NUMBER_FLOAT,
+                FILTER_FLAG_ALLOW_FRACTION
+            );
+            return (float) ($abs ? abs($res) : $res);
+        }
+
         public static function html($val, bool $abs = true): string {
             $val = trim($val);
             return (string) (
@@ -48,21 +57,12 @@
             return (int) ($abs ? abs($res) : $res);
         }
 
-        public static function float($val, bool $abs = true): float {
-            $res = filter_var(
-                $val,
-                FILTER_SANITIZE_NUMBER_FLOAT,
-                FILTER_FLAG_ALLOW_FRACTION
-            );
-            return (float) ($abs ? abs($res) : $res);
-        }
-
         public static function null() {
             return null;
         }
 
-        public static function path($val): string {
-            return Path::clean($val);
+        public static function path($val, bool $validate_ext = false): string {
+            return Path::clean($val, $validate_ext);
         }
 
         public static function string($val): string {

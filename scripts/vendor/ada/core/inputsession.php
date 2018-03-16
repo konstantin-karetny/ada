@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -75,6 +75,14 @@
             return static::get($name, 'email', $default, $namespace);
         }
 
+        public static function getFloat(
+            string $name,
+            float  $default   = 0,
+            string $namespace = Session::DEFAULT_NAMESPACE
+        ): float {
+            return static::get($name, 'float', $default, $namespace);
+        }
+
         public static function getHtml(
             string $name,
             string $default   = '',
@@ -89,14 +97,6 @@
             string $namespace = Session::DEFAULT_NAMESPACE
         ): int {
             return static::get($name, 'int', $default, $namespace);
-        }
-
-        public static function getFloat(
-            string $name,
-            float  $default   = 0,
-            string $namespace = Session::DEFAULT_NAMESPACE
-        ): float {
-            return static::get($name, 'float', $default, $namespace);
         }
 
         public static function getPath(

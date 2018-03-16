@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 14.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,32 +9,39 @@
 
     namespace Ada\Core;
 
-    class Folder extends Proto {
+    class Dir extends Proto {
 
         protected
             $path = '';
 
         public static function init(string $path): self {
-            return new self($path);
+            return new static($path);
         }
 
         public function __construct(string $path) {
             $this->path = Clean::path($path);
         }
 
+        public function contents(): array {
+            return array_merge(
+                $this->dirs(),
+                $this->files()
+            );
+        }
+
         public function copy(string $path): bool {
             if (!$this->exists()) {
                 return false;
             }
-            $folder = static::init($path);
-            if ($folder->exists() || !$folder->create()) {
+            $dir = static::init($path);
+            if ($dir->exists() || !$dir->create()) {
                 return false;
             }
             $res  = [];
-            $path = $folder->getPath();
-            foreach ($this->folders() as $subfolder) {
+            $path = $dir->getPath();
+            foreach ($this->dirs() as $subdir) {
                 $res[] = static::init(
-                    $path . Path::DS . $subfolder->getName()
+                    $path . Path::DS . $subdir->getName()
                 )->create();
             }
             foreach ($this->files() as $file) {
@@ -45,15 +52,8 @@
             return !in_array(false, $res);
         }
 
-        public function contents(): array {
-            return array_merge(
-                $this->folders(),
-                $this->files()
-            );
-        }
-
         public function create(int $mode = 0755): bool {
-            $parent = $this->getFolder();
+            $parent = $this->getDir();
             if (!$parent->exists()) {
                 $parent->create($mode);
             }
@@ -62,13 +62,28 @@
 
         public function delete(): bool {
             $this->setPerms(0777);
-            foreach ($this->folders() as $folder) {
-                $folder->delete();
+            foreach ($this->dirs() as $dir) {
+                $dir->delete();
             }
             foreach ($this->files() as $file) {
                 $file->delete();
             }
             return (bool) @rmdir($this->path);
+        }
+
+        public function dirs(): array {
+            $res = [];
+            if (!$this->exists()) {
+                return $res;
+            }
+            foreach (new \DirectoryIterator($this->path) as $iter) {
+                if ($iter->isDir() && !$iter->isDot()) {
+                    $path       = Clean::path($iter->getPathname());
+                    $res[$path] = static::init($path);
+                }
+            }
+            ksort($res);
+            return $res;
         }
 
         public function exists(): bool {
@@ -90,27 +105,12 @@
             return $res;
         }
 
-        public function folders(): array {
-            $res = [];
-            if (!$this->exists()) {
-                return $res;
-            }
-            foreach (new \DirectoryIterator($this->path) as $iter) {
-                if ($iter->isDir() && !$iter->isDot()) {
-                    $path       = Clean::path($iter->getPathname());
-                    $res[$path] = static::init($path);
-                }
-            }
-            ksort($res);
-            return $res;
+        public function getDir(): self {
+            return static::init(pathinfo($this->path, PATHINFO_DIRNAME));
         }
 
         public function getEditTime(): int {
             return (int) @stat($this->path)['mtime'];
-        }
-
-        public function getFolder(): self {
-            return static::init(pathinfo($this->path, PATHINFO_DIRNAME));
         }
 
         public function getName(): string {

@@ -16,11 +16,7 @@
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
 
-    class Test {
-        private
-            $id,
-            $name;
-    }
+
 
 
     $db = Db::init(
@@ -31,8 +27,12 @@
         ]
     );
 
-
     $table  = $db->getTable('test');
+
+    exit(var_dump( $table ));
+
+
+
     $column = $table->getColumn('state');
     $column->setLength(255);
     $column->setType('varchar');
@@ -41,7 +41,7 @@
 
     exit(var_dump(
         $column->create($table->getColumn('id')),
-        $db->debugDumpParams()
+        $db->debugInfo()
     ));
 
 

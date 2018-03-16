@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 05.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,12 +22,16 @@
             );
         }
 
-        public static function toCamelCase(string $val): string {
-            return (string) str_replace(
+        public static function toCamelCase(
+            string $val,
+            bool   $ucfirst = true
+        ): string {
+            $res = (string) str_replace(
                 ' ',
                 '',
                 ucwords(static::separateWith($val))
             );
+            return $ucfirst ? $res : lcfirst($res);
         }
 
     }

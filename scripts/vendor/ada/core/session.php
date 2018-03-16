@@ -12,12 +12,11 @@
     class Session extends InputSession {
 
         protected const
-            SELF_NAMESPACE    = '9be28143618f21b9456528c2ee825873',
             DEFAULT_NAMESPACE = '_',
-            NAMESPACE_PREFIX  = '_';
+            NAMESPACE_PREFIX  = '_',
+            SELF_NAMESPACE    = '9be28143618f21b9456528c2ee825873';
 
         protected
-            $new        = true,
             $handler    = null,
             $ini_params = [
                 'cache_limiter'    => 'none',
@@ -33,14 +32,15 @@
                 'use_only_cookies' => true,
                 'use_strict_mode'  => true,
                 'use_trans_sid'    => false
-            ];
+            ],
+            $new        = true;
 
         public static function init(
             array          $ini_params = [],
             SessionHandler $handler    = null
         ): self {
             static $res;
-            return $res ?? $res = new self($ini_params, $handler);
+            return $res ?? $res = new static($ini_params, $handler);
         }
 
         protected function __construct(
@@ -131,6 +131,38 @@
             );
         }
 
+        public function getHandler(): SessionHandler {
+            return $this->handler;
+        }
+
+        public function getId(): string {
+            return session_id();
+        }
+
+        public function getIniParam(string $name) {
+            return $this->ini_params[strtolower(Clean::cmd($name))] ?? null;
+        }
+
+        public function getIniParams(): array {
+            return $this->ini_params;
+        }
+
+        public function getName(): string {
+            return session_name();
+        }
+
+        public function getState(): int {
+            return session_status();
+        }
+
+        public function isNew(): bool {
+            return $this->new;
+        }
+
+        public function isStarted(): bool {
+            return $this->getState() == 2;
+        }
+
         public function regenerateId($delete_old_session = false): bool {
             if (!$this->isStarted()) {
                 return false;
@@ -186,38 +218,6 @@
             );
             session_write_close();
             return true;
-        }
-
-        public function getId(): string {
-            return session_id();
-        }
-
-        public function getIniParam(string $name) {
-            return $this->ini_params[strtolower(Clean::cmd($name))] ?? null;
-        }
-
-        public function getIniParams(): array {
-            return $this->ini_params;
-        }
-
-        public function getName(): string {
-            return session_name();
-        }
-
-        public function getHandler(): SessionHandler {
-            return $this->handler;
-        }
-
-        public function isNew(): bool {
-            return $this->new;
-        }
-
-        public function getState(): int {
-            return session_status();
-        }
-
-        public function isStarted(): bool {
-            return $this->getState() == 2;
         }
 
         protected function generateName(): string {

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,9 +12,12 @@
     class Url extends Proto {
 
         const
-            SCHEMES = [
-                'http',
-                'https'
+            DEFAULT_PARTS = [
+                'scheme',
+                'host',
+                'path',
+                'query',
+                'fragment'
             ],
             PARTS = [
                 'scheme',
@@ -26,12 +29,9 @@
                 'query',
                 'fragment'
             ],
-            DEFAULT_PARTS = [
+            ROOT_DEFAULT_PARTS = [
                 'scheme',
-                'host',
-                'path',
-                'query',
-                'fragment'
+                'host'
             ],
             ROOT_PARTS = [
                 'scheme',
@@ -40,9 +40,9 @@
                 'host',
                 'port'
             ],
-            ROOT_DEFAULT_PARTS = [
-                'scheme',
-                'host'
+            SCHEMES = [
+                'http',
+                'https'
             ],
             SPECIAL_CHARS_CODES = [
                 '!'  => '%21',
@@ -70,20 +70,19 @@
                 '>'  => '%3E'
             ];
 
-        protected
-            $scheme   = '',
-            $user     = '',
-            $password = '',
-            $host     = '',
-            $port     = 80,
-            $path     = '',
-            $query    = '',
-            $fragment = '',
-            $vars     = [];
+        protected static
+            $default_root = '';
 
-        public static function init(string $url = ''): self {
-            return new self($url);
-        }
+        protected
+            $fragment     = '',
+            $host         = '',
+            $password     = '',
+            $path         = '',
+            $port         = 80,
+            $query        = '',
+            $scheme       = '',
+            $user         = '',
+            $vars         = [];
 
         public function __construct(string $url = '') {
             $url = $url === '' ? static::current() : $url;
@@ -131,14 +130,19 @@
         }
 
         public static function current() {
-            $res = 'http';
-            if (
-                Server::get('HTTPS', 'string', 'off')                   !== 'off' ||
-                Server::get('HTTP_X_FORWARDED_PROTO', 'string', 'http') !== 'http'
-            ) {
-                $res .= 's';
+            if (static::getDefaultRoot()) {
+                $res = static::getDefaultRoot();
             }
-            $res .= '://' . static::clean(Server::get('HTTP_HOST'));
+            else {
+                $res = 'http';
+                if (
+                    Server::get('HTTPS', 'string', 'off')                   !== 'off' ||
+                    Server::get('HTTP_X_FORWARDED_PROTO', 'string', 'http') !== 'http'
+                ) {
+                    $res .= 's';
+                }
+                $res .= '://' . static::clean(Server::get('HTTP_HOST'));
+            }
             if (Server::get('PHP_SELF') && Server::get('REQUEST_URI')) {
                 $res .= static::clean(Server::get('REQUEST_URI'));
             }
@@ -149,6 +153,14 @@
                 }
             }
             return static::clean($res);
+        }
+
+        public static function getDefaultRoot(): string {
+            return static::$default_root;
+        }
+
+        public static function init(string $url = ''): self {
+            return new static($url);
         }
 
         public static function isInternal(string $url): bool {
@@ -189,8 +201,148 @@
             header('Refresh: ' . $delay . $uri);
         }
 
+        public static function setDefaultRoot(string $default_root) {
+            if (!static::$default_root) {
+                static::$default_root = static::init($default_root)->toString();
+            }
+        }
+
+        protected static function decode(string $url): string {
+            return urldecode(
+                str_replace(
+                    array_keys(static::SPECIAL_CHARS_CODES),
+                    array_values(static::SPECIAL_CHARS_CODES),
+                    $url
+                )
+            );
+        }
+
+        protected static function encode(string $url): string {
+            return str_replace(
+                array_values(static::SPECIAL_CHARS_CODES),
+                array_keys(static::SPECIAL_CHARS_CODES),
+                urlencode($url)
+            );
+        }
+
+        public function getFragment(): string {
+            return $this->fragment;
+        }
+
+        public function getHost(): string {
+            return $this->host;
+        }
+
+        public function getPassword(): string {
+            return $this->password;
+        }
+
+        public function getPath(): string {
+            return $this->path;
+        }
+
+        public function getPort(): int {
+            return $this->port;
+        }
+
+        public function getQuery(): string {
+            return $this->query;
+        }
+
+        public function getRoot(array $parts = self::ROOT_DEFAULT_PARTS): string {
+            return $this->toString(
+                array_intersect(static::ROOT_PARTS, $parts)
+            );
+        }
+
+        public function getScheme(): string {
+            return $this->scheme;
+        }
+
+        public function getUser(): string {
+            return $this->user;
+        }
+
+        public function getVar(
+            string $name,
+            string $filter  = 'auto',
+                   $default = ''
+        ) {
+            return Clean::value(
+                $this->vars[Clean::cmd($name)] ?? $default,
+                $filter
+            );
+        }
+
+        public function getVars(string $filter  = 'auto'): array {
+            return Clean::values($this->vars, $filter);
+        }
+
         public function isSSL(): bool {
             return $this->scheme == 'https';
+        }
+
+        public function setFragment(string $fragment) {
+            $this->fragment = static::clean($fragment);
+        }
+
+        public function setHost(string $host) {
+            $host = static::clean($host);
+            if ($host == '') {
+                throw new Exception('Host can not be empty', 5);
+            }
+            $this->host = $host;
+        }
+
+        public function setPassword(string $password) {
+            $this->password = static::clean($password);
+        }
+
+        public function setPath(string $path) {
+            $this->path = static::clean($path);
+        }
+
+        public function setPort(int $port) {
+            $this->port = $port;
+        }
+
+        public function setQuery(string $query) {
+            $this->setVars($this->parseQuery($query));
+        }
+
+        public function setRoot(string $root) {
+            $root_obj = static::init($root);
+            foreach (static::ROOT_PARTS as $part) {
+                $this->{'set' . ucfirst($part)}(
+                    $root_obj->{'get' . ucfirst($part)}()
+                );
+            }
+        }
+
+        public function setScheme(string $scheme) {
+            $scheme = static::clean($scheme);
+            if ($scheme == '') {
+                throw new Exception('Scheme can not be empty', 3);
+            }
+            if (!in_array($scheme, static::SCHEMES)) {
+                throw new Exception('Unknown scheme \'' . $scheme . '\'', 4);
+            }
+            $this->scheme = $scheme;
+        }
+
+        public function setUser(string $user) {
+            $this->user = static::clean($user);
+        }
+
+        public function setVar(string $name, string $value) {
+            $this->vars[Clean::cmd($name)] = static::clean($value);
+            $this->query                   = $this->buildQuery($this->vars);
+        }
+
+        public function setVars(array $vars) {
+            foreach ($vars as $k => $v) {
+                $this->setVar($k, $v);
+            }
         }
 
         public function toString(array $parts = self::DEFAULT_PARTS): string {
@@ -223,113 +375,6 @@
             return $res;
         }
 
-        public function getScheme(): string {
-            return $this->scheme;
-        }
-
-        public function getUser(): string {
-            return $this->user;
-        }
-
-        public function getPassword(): string {
-            return $this->password;
-        }
-
-        public function getHost(): string {
-            return $this->host;
-        }
-
-        public function getPort(): int {
-            return $this->port;
-        }
-
-        public function getPath(): string {
-            return $this->path;
-        }
-
-        public function getQuery(): string {
-            return $this->query;
-        }
-
-        public function getFragment(): string {
-            return $this->fragment;
-        }
-
-        public function getVar(
-            string $name,
-            string $filter  = 'auto',
-                   $default = ''
-        ) {
-            return Clean::value(
-                $this->vars[Clean::cmd($name)] ?? $default,
-                $filter
-            );
-        }
-
-        public function getVars(string $filter  = 'auto'): array {
-            return Clean::values($this->vars, $filter);
-        }
-
-        public function getRoot(array $parts = self::ROOT_DEFAULT_PARTS): string {
-            return $this->toString(
-                array_intersect(static::ROOT_PARTS, $parts)
-            );
-        }
-
-        public function setScheme(string $scheme) {
-            $scheme = static::clean($scheme);
-            if ($scheme == '') {
-                throw new Exception('Scheme can not be empty', 3);
-            }
-            if (!in_array($scheme, static::SCHEMES)) {
-                throw new Exception('Unknown scheme \'' . $scheme . '\'', 4);
-            }
-            $this->scheme = $scheme;
-        }
-
-        public function setUser(string $user) {
-            $this->user = static::clean($user);
-        }
-
-        public function setPassword(string $password) {
-            $this->password = static::clean($password);
-        }
-
-        public function setHost(string $host) {
-            $host = static::clean($host);
-            if ($host == '') {
-                throw new Exception('Host can not be empty', 5);
-            }
-            $this->host = $host;
-        }
-
-        public function setPort(int $port) {
-            $this->port = $port;
-        }
-
-        public function setPath(string $path) {
-            $this->path = static::clean($path);
-        }
-
-        public function setQuery(string $query) {
-            $this->setVars($this->parseQuery($query));
-        }
-
-        public function setFragment(string $fragment) {
-            $this->fragment = static::clean($fragment);
-        }
-
-        public function setVar(string $name, string $value) {
-            $this->vars[Clean::cmd($name)] = static::clean($value);
-            $this->query                   = $this->buildQuery($this->vars);
-        }
-
-        public function setVars(array $vars) {
-            foreach ($vars as $k => $v) {
-                $this->setVar($k, $v);
-            }
-        }
-
         public function unsetVar(string $name): bool {
             $name = Clean::cmd($name);
             if (isset($this->vars[$name])) {
@@ -340,31 +385,8 @@
             return false;
         }
 
-        public function setRoot(string $root) {
-            $root_obj = static::init($root);
-            foreach (static::ROOT_PARTS as $part) {
-                $this->{'set' . ucfirst($part)}(
-                    $root_obj->{'get' . ucfirst($part)}()
-                );
-            }
-        }
-
-        protected static function encode(string $url): string {
-            return str_replace(
-                array_values(static::SPECIAL_CHARS_CODES),
-                array_keys(static::SPECIAL_CHARS_CODES),
-                urlencode($url)
-            );
-        }
-
-        protected static function decode(string $url): string {
-            return urldecode(
-                str_replace(
-                    array_keys(static::SPECIAL_CHARS_CODES),
-                    array_values(static::SPECIAL_CHARS_CODES),
-                    $url
-                )
-            );
+        protected function buildQuery(array $vars): string {
+            return http_build_query($vars);
         }
 
         protected function parse(string $url): array {
@@ -382,10 +404,6 @@
             $res = [];
             parse_str($query, $res);
             return $res;
-        }
-
-        protected function buildQuery(array $vars): string {
-            return http_build_query($vars);
         }
 
     }

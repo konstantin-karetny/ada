@@ -9,32 +9,52 @@
 
     namespace Ada\Core\Db;
 
-    class Table extends \Ada\Core\Proto {
+    abstract class Table extends \Ada\Core\Proto {
 
         protected
             $columns = [],
             $db      = null,
             $name    = '';
 
-        public static function init(
-            string         $name,
-            Drivers\Driver $db
-        ): self {
+        public static function init(string $name, Driver $db) {
             static $res;
-            return $res ?? $res = new self($name, $db);
+            return $res ?? $res = new static($name, $db);
         }
 
-        protected function __construct(
-            string         $name,
-            Drivers\Driver $db
-        ) {
-            $this->db   = $db;
-            $this->name = trim($name);
+        protected function __construct(string $name, Driver $db) {
+            $this->db      = $db;
+            $this->name    = \Ada\Core\Clean::cmd($name);
+            $this->columns = $this->detectColumns();
+        }
+
+        public function getColumn(string $name): Column {
+            if (isset($this->columns[$name])) {
+                return $this->columns[$name];
+            }
+            $class = $this->getDb()->getNameSpace() . '\Column';
+            return new $class($this, $name);
+        }
+
+        public function getColumns(): array {
+            return $this->columns;
+        }
+
+        public function getDb(): Driver {
+            return $this->db;
+        }
+
+        public function getName(): string {
+            return $this->name;
+        }
+
+        protected  function detectColumns(): array {
+            $res = [];
+            $db  = $this->getDb();
             foreach (
-                $db->fetchRows('SHOW FULL COLUMNS FROM ' . $db->t($this->name)
+                $db->fetchRows('SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
             ) as $params) {
                 $type_length = explode('(', rtrim($params['Type'], ')'));
-                $column      = new Column($this, (string) $params['Field']);
+                $column      = $this->getColumn($params['Field']);
                 $column->setIsAutoIncrement(
                     stripos('auto_increment', $params['Extra']) !== false
                 );
@@ -44,28 +64,9 @@
                 $column->setIsNull($params['Null'] != 'NO');
                 $column->setIsPrimaryKey($params['Key'] == 'PRI');
                 $column->setType((string) $type_length[0]);
-                $this->columns[$column->getName()] = $column;
+                $res[$column->getName()] = $column;
             }
-        }
-
-        public function getColumn(string $name): Column {
-            if (isset($this->columns[$name])) {
-                return $this->columns[$name];
-            }
-            $res = new Column($this, $name);
             return $res;
-        }
-
-        public function getColumns(): array {
-            return $this->columns;
-        }
-
-        public function getDb(): Drivers\Driver {
-            return $this->db;
-        }
-
-        public function getName(): string {
-            return $this->name;
         }
 
     }

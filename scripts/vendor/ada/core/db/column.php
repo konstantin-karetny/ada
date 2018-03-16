@@ -9,16 +9,16 @@
 
     namespace Ada\Core\Db;
 
-    class Column extends \Ada\Core\Proto {
+    abstract class Column extends \Ada\Core\Proto {
 
         protected
-            $is_auto_increment = false,
             $collation         = '',
             $default_value     = null,
-            $length            = '',
-            $name              = '',
+            $is_auto_increment = false,
             $is_null           = false,
             $is_primary_key    = false,
+            $length            = '',
+            $name              = '',
             $table             = false,
             $type              = 'int';
 
@@ -61,19 +61,11 @@
 
         }
 
-        public function update(): bool {
-
-        }
-
-        public function isAutoIncrement(): bool {
-            return $this->is_auto_increment;
-        }
-
         public function getCollation(): string {
             return $this->collation;
         }
 
-        public function getDb(): Drivers\Driver {
+        public function getDb(): Driver {
             return $this->getTable()->getDb();
         }
 
@@ -89,14 +81,6 @@
             return $this->name;
         }
 
-        public function isNull(): bool {
-            return $this->is_null;
-        }
-
-        public function isPrimaryKey(): bool {
-            return $this->is_primary_key;
-        }
-
         public function getTable(): \Ada\Core\Db\Table {
             return $this->table;
         }
@@ -105,8 +89,16 @@
             return $this->type;
         }
 
-        public function setIsAutoIncrement(bool $is_auto_increment) {
-            $this->is_auto_increment = $is_auto_increment;
+        public function isAutoIncrement(): bool {
+            return $this->is_auto_increment;
+        }
+
+        public function isNull(): bool {
+            return $this->is_null;
+        }
+
+        public function isPrimaryKey(): bool {
+            return $this->is_primary_key;
         }
 
         public function setCollation(string $collation) {
@@ -114,15 +106,11 @@
         }
 
         public function setDefaultValue($default_value) {
-            $this->default_value = $default_value;
+            $this->default_value = \Ada\Core\Type::set($default_value);
         }
 
-        public function setLength(string $length) {
-            $this->length = \Ada\Core\Clean::value($length);
-        }
-
-        public function setName(string $name) {
-            $this->name = \Ada\Core\Clean::cmd($name);
+        public function setIsAutoIncrement(bool $is_auto_increment) {
+            $this->is_auto_increment = $is_auto_increment;
         }
 
         public function setIsNull(bool $is_null) {
@@ -133,8 +121,20 @@
             $this->is_primary_key = $is_primary_key;
         }
 
+        public function setLength(string $length) {
+            $this->length = \Ada\Core\Clean::value($length);
+        }
+
+        public function setName(string $name) {
+            $this->name = \Ada\Core\Clean::cmd($name);
+        }
+
         public function setType(string $type) {
             $this->type = \Ada\Core\Clean::cmd($type);
+        }
+
+        public function update(): bool {
+
         }
 
     }

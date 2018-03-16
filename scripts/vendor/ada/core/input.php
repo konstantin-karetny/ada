@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -45,6 +45,13 @@
             return static::get($name, 'email', $default);
         }
 
+        public static function getFloat(
+            string $name,
+            float  $default = 0
+        ): float {
+            return static::get($name, 'float', $default);
+        }
+
         public static function getFrstExisting(
             array  $names,
             string $filter  = 'auto',
@@ -70,13 +77,6 @@
             int $default = 0
         ): int {
             return static::get($name, 'int', $default);
-        }
-
-        public static function getFloat(
-            string $name,
-            float  $default = 0
-        ): float {
-            return static::get($name, 'float', $default);
         }
 
         public static function getPath(

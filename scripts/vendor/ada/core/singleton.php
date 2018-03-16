@@ -30,10 +30,10 @@
 
         protected function __construct() {}
 
+        protected function __clone() {}
+
         public function getId() {
             return $this->id;
         }
-
-        private function __clone() {}
 
     }

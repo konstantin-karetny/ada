@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 14.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,15 +15,24 @@
             $path = '';
 
         public static function init(string $path): self {
-            return new self($path);
+            return new static($path);
         }
 
         public function __construct(string $path) {
             $this->path = Clean::path($path);
         }
 
-        public function copy(string $path): bool {
-            return (bool) @copy($this->path, $path);
+        public function copy(
+            string $path,
+            bool   $validate_ext = true
+        ): self {
+            $res = static::init(Clean::path($path, $validate_ext));
+            $dir = $res->getDir();
+            if (!$dir->exists() && !$dir->create()) {
+                return $res;
+            }
+            @copy($this->path, $res->getPath());
+            return $res;
         }
 
         public function create(string $contents = ''): bool {
@@ -43,16 +52,16 @@
             return pathinfo($this->path, PATHINFO_BASENAME);
         }
 
+        public function getDir(): Dir {
+            return Dir::init(pathinfo($this->path, PATHINFO_DIRNAME));
+        }
+
         public function getEditTime(): int {
             return (int) @filemtime($this->path);
         }
 
         public function getExt(): string {
             return pathinfo($this->path, PATHINFO_EXTENSION);
-        }
-
-        public function getFolder(): Folder {
-            return Folder::init(pathinfo($this->path, PATHINFO_DIRNAME));
         }
 
         public function getMimeType(string $default = ''): string {
@@ -90,12 +99,17 @@
             return is_writable($this->path);
         }
 
-        public function move(string $path): bool {
-            if (!@rename($this->path, $path)) {
-                return false;
+        public function move(
+            string $path,
+            bool   $validate_ext = true
+        ): self {
+            $res = static::init(Clean::path($path, $validate_ext));
+            $dir = $res->getDir();
+            if (!$dir->exists() && !$dir->create()) {
+                return $res;
             }
-            $this->path = Clean::path($path);
-            return true;
+            @rename($this->path, $res->getPath());
+            return $res;
         }
 
         public function parseIni(

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 05.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,16 +12,40 @@
     class Path extends Proto {
 
         const
-            DS = '/';
+            DS       = '/',
+            EXTS_MAP = [
+                'jpeg' => 'jpg'
+            ];
 
-        public static function clean(string $path): string {
-            return strtolower(
+        public static function clean(
+            string $path,
+            bool   $validate_ext = false
+        ): string {
+            $res = strtolower(
                 (string) preg_replace(
                     '/[\/\\\]+/',
                     static::DS,
                     trim($path, " \t\n\r\0\x0B\\/")
                 )
             );
+            return
+                $validate_ext
+                    ? (string) preg_replace(
+                        array_map(
+                            function($el) {
+                                return '/\.' . $el . '$/';
+                            },
+                            array_keys(static::EXTS_MAP)
+                        ),
+                        array_map(
+                            function($el) {
+                                return '.' . $el;
+                            },
+                            array_values(static::EXTS_MAP)
+                        ),
+                        static::clean($path)
+                    )
+                    : $res;
         }
 
     }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -51,59 +51,6 @@
                     );
                 }
             }
-        }
-
-        public function detectAuth(): string {
-            return Server::getFrstExisting(
-                [
-                    'HTTP_AUTHORIZATION',
-                    'REDIRECT_HTTP_AUTHORIZATION'
-                ],
-                'string',
-                $this->auth
-            );
-        }
-
-        public function detectBrowser(): string {
-            return Server::getString('HTTP_USER_AGENT', $this->browser);
-        }
-
-        public function detectCacheControl(): string {
-            return Server::getString('HTTP_CACHE_CONTROL', $this->cache_control);
-        }
-
-        public function detectCharset(): string {
-            return Server::getString('HTTP_ACCEPT_CHARSET', $this->charset);
-        }
-
-        public function detectContentType(): string {
-            return Server::getString('HTTP_ACCEPT', $this->content_type);
-        }
-
-        public function detectEncoding(): string {
-            return Server::getString('HTTP_ACCEPT_ENCODING', $this->encoding);
-        }
-
-        public function detectIp(bool $proxy = false): string {
-            if (!$proxy) {
-                return Server::getString('REMOTE_ADDR');
-            }
-            return Server::getFrstExisting(
-                [
-                    'HTTP_CLIENT_IP',
-                    'HTTP_X_FORWARDED_FOR'
-                ]
-            );
-        }
-
-        public function detectLang(): string {
-            return strtolower(
-                substr(
-                    Server::getString('HTTP_ACCEPT_LANGUAGE', $this->lang),
-                    0,
-                    2
-                )
-            );
         }
 
         public function getAuth(): string {
@@ -176,6 +123,59 @@
 
         public function setLang(string $lang) {
             $this->lang = $lang;
+        }
+
+        protected function detectAuth(): string {
+            return Server::getFrstExisting(
+                [
+                    'HTTP_AUTHORIZATION',
+                    'REDIRECT_HTTP_AUTHORIZATION'
+                ],
+                'string',
+                $this->auth
+            );
+        }
+
+        protected function detectBrowser(): string {
+            return Server::getString('HTTP_USER_AGENT', $this->browser);
+        }
+
+        protected function detectCacheControl(): string {
+            return Server::getString('HTTP_CACHE_CONTROL', $this->cache_control);
+        }
+
+        protected function detectCharset(): string {
+            return Server::getString('HTTP_ACCEPT_CHARSET', $this->charset);
+        }
+
+        protected function detectContentType(): string {
+            return Server::getString('HTTP_ACCEPT', $this->content_type);
+        }
+
+        protected function detectEncoding(): string {
+            return Server::getString('HTTP_ACCEPT_ENCODING', $this->encoding);
+        }
+
+        protected function detectIp(bool $proxy = false): string {
+            if (!$proxy) {
+                return Server::getString('REMOTE_ADDR');
+            }
+            return Server::getFrstExisting(
+                [
+                    'HTTP_CLIENT_IP',
+                    'HTTP_X_FORWARDED_FOR'
+                ]
+            );
+        }
+
+        protected function detectLang(): string {
+            return strtolower(
+                substr(
+                    Server::getString('HTTP_ACCEPT_LANGUAGE', $this->lang),
+                    0,
+                    2
+                )
+            );
         }
 
     }
