@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -18,7 +18,6 @@
         protected
             $locales_ext      = 'ini',
             $locales_path     = __DIR__ . '/datetime/locales';
-
 
         public static function getDefaultFormat(): string {
             return static::$default_format;
