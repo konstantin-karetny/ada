@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 14.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -16,20 +16,21 @@
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
 
-
-
-
     $db = Db::init(
-        1,
+        '',
         [
            'name'   => 'ada',
            'prefix' => 'ada_'
         ]
     );
 
+
+
     $table  = $db->getTable('test');
 
     exit(var_dump( $table ));
+
+
 
 
 

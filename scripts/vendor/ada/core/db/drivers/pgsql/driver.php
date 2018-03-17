@@ -14,4 +14,8 @@
         protected
             $min_version = '10.0';
 
+        public static function init(string $id = '', array $params = []): self {
+            return parent::init($id, $params);
+        }
+
     }

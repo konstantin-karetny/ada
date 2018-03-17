@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -136,20 +136,20 @@
             else {
                 $res = 'http';
                 if (
-                    Server::get('HTTPS', 'string', 'off')                   !== 'off' ||
-                    Server::get('HTTP_X_FORWARDED_PROTO', 'string', 'http') !== 'http'
+                    Server::getString('HTTPS', 'off')                   !== 'off' ||
+                    Server::getString('HTTP_X_FORWARDED_PROTO', 'http') !== 'http'
                 ) {
                     $res .= 's';
                 }
-                $res .= '://' . static::clean(Server::get('HTTP_HOST'));
+                $res .= '://' . static::clean(Server::getString('HTTP_HOST'));
             }
-            if (Server::get('PHP_SELF') && Server::get('REQUEST_URI')) {
-                $res .= static::clean(Server::get('REQUEST_URI'));
+            if (Server::getString('PHP_SELF') && Server::getString('REQUEST_URI')) {
+                $res .= static::clean(Server::getString('REQUEST_URI'));
             }
             else {
-                $res .= static::clean(Server::get('SCRIPT_NAME'));
-                if (Server::get('QUERY_STRING')) {
-                    $res .= '?' . static::clean(Server::get('QUERY_STRING'));
+                $res .= static::clean(Server::getString('SCRIPT_NAME'));
+                if (Server::getString('QUERY_STRING')) {
+                    $res .= '?' . static::clean(Server::getString('QUERY_STRING'));
                 }
             }
             return static::clean($res);
@@ -225,6 +225,16 @@
             );
         }
 
+        public function delVar(string $name): bool {
+            $name = Clean::cmd($name);
+            if (isset($this->vars[$name])) {
+                unset($this->vars[$name]);
+                $this->query = $this->buildQuery($this->vars);
+                return true;
+            }
+            return false;
+        }
+
         public function getFragment(): string {
             return $this->fragment;
         }
@@ -265,7 +275,7 @@
 
         public function getVar(
             string $name,
-            string $filter  = 'auto',
+            string $filter,
                    $default = ''
         ) {
             return Clean::value(
@@ -274,8 +284,8 @@
             );
         }
 
-        public function getVars(string $filter  = 'auto'): array {
-            return Clean::values($this->vars, $filter);
+        public function getVars(string $filter = ''): array {
+            return $filter ? Clean::values($this->vars, $filter) : $this->vars;
         }
 
         public function isSSL(): bool {
@@ -373,16 +383,6 @@
                 $res .= '#' . $this->fragment;
             }
             return $res;
-        }
-
-        public function unsetVar(string $name): bool {
-            $name = Clean::cmd($name);
-            if (isset($this->vars[$name])) {
-                unset($this->vars[$name]);
-                $this->query = $this->buildQuery($this->vars);
-                return true;
-            }
-            return false;
         }
 
         protected function buildQuery(array $vars): string {

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 14.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,7 +9,9 @@
 
     namespace Ada\Core\Db;
 
-    abstract class Driver extends \Ada\Core\Singleton {
+    abstract class Driver extends \Ada\Core\Proto {
+
+        use \Ada\Core\Traits\Singleton;
 
         const
             DSN_LINE     = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
@@ -34,11 +36,11 @@
             $stmt        = null,
             $user        = '';
 
-        public static function init(string $id = '', array $params = []): self {
-            return parent::init($id, $params);
+        public static function init(string $id = '', array $params = []) {
+            return static::initSingleton($id, true, $params);
         }
 
-        protected function __construct(string $id, array $params) {
+        protected function __construct(array $params) {
             foreach (array_keys(\Ada\Core\Db::DEFAULT_PARAMS) as $k) {
                 $this->$k = \Ada\Core\Type::set($params[$k]);
             }
@@ -190,13 +192,13 @@
 
         public function fetchCell(
             string $query,
-            string $filter  = 'auto',
+            string $type    = 'auto',
             string $default = null
         ) {
             $res = reset($this->fetchRow($query, \PDO::FETCH_NUM, []));
-            return \Ada\Core\Clean::value(
+            return \Ada\Core\Type::set(
                 $res === false ? $default : $res,
-                $filter
+                $type
             );
         }
 
@@ -526,16 +528,13 @@
         }
 
 
-        protected  function detectCollation(): string {
-            return $this->fetchCell(
-                '
-                    SELECT ' . $this->q('DEFAULT_COLLATION_NAME') . '
-                    FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
-                    WHERE '  . $this->q('SCHEMA_NAME') . '
-                    LIKE ' . $this->esc($this->getName()) . '
-                ',
-                'cmd'
-            );
+        protected function detectCollation(): string {
+            return $this->fetchCell('
+                SELECT ' . $this->q('DEFAULT_COLLATION_NAME') . '
+                FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
+                WHERE '  . $this->q('SCHEMA_NAME') . '
+                LIKE ' . $this->esc($this->getName()) . '
+            ');
         }
 
     }

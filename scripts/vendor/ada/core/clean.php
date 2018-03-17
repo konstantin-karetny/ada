@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -61,6 +61,13 @@
             return null;
         }
 
+        public static function object($object, string $filter) {
+            foreach ($object as $k => $v) {
+                $object->$k = static::value($v, $filter);
+            }
+            return $object;
+        }
+
         public static function path($val, bool $validate_ext = false): string {
             return Path::clean($val, $validate_ext);
         }
@@ -73,33 +80,27 @@
             return Url::clean($val);
         }
 
-        public static function value($val, string $filter = 'auto') {
-            $filter = strtolower(trim($filter));
-            if ($filter == 'auto') {
-                $filter = Type::get($val);
-            }
-            if (!method_exists(__CLASS__, $filter)) {
+        public static function value($val, string $filter) {
+            $method = strtolower(trim($filter));
+            if (!method_exists(__CLASS__, $method)) {
                 throw new Exception('Wrong filter name \'' . $filter . '\'', 1);
             }
-            return static::$filter($val);
+            return static::$method($val);
         }
 
-        public static function values($set, string $filter = 'auto') {
-            if (!is_array($set) && !is_object($set)) {
-                $set = Type::set($set, 'array');
-            }
-            $is_array = is_array($set);
-            foreach ($set as $k => $v) {
-                $v = (
-                    is_array($v) || is_object($v)
-                        ? static::values($v, $filter)
+        public static function values(
+            array  $array,
+            string $filter,
+            bool   $recursively = false
+        ): array {
+            foreach ($array as $k => $v) {
+                $array[$k] = (
+                    is_array($v)
+                        ? ($recursively ? static::values($v, $filter) : $v)
                         : static::value($v, $filter)
                 );
-                $is_array
-                    ? $set[$k] = $v
-                    : $set->$k = $v;
             }
-            return $set;
+            return $array;
         }
 
         public static function word($val): string {

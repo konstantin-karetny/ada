@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,7 +13,7 @@
 
         public static function get(
             string $name,
-            string $filter  = 'auto',
+            string $filter,
                    $default = ''
         ) {
             return Clean::value(
@@ -24,13 +24,11 @@
 
         public static function getArray(
             string $name,
-            string $filter  = 'auto',
-                   $default = []
+            string $filter  = '',
+            array  $default = []
         ): array {
-            return Clean::values(
-                $_POST[Clean::cmd($name)] ?? $default,
-                $filter
-            );
+            $res = Type::set($_POST[Clean::cmd($name)] ?? $default);
+            return $filter ? Clean::values($res, $filter) : $res;
         }
 
     }

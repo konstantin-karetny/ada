@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,9 +9,9 @@
 
     namespace Ada\Core;
 
-    class Session extends InputSession {
+    class Session extends Session\Input {
 
-        protected const
+        const
             DEFAULT_NAMESPACE = '_',
             NAMESPACE_PREFIX  = '_',
             SELF_NAMESPACE    = '9be28143618f21b9456528c2ee825873';
@@ -33,19 +33,20 @@
                 'use_strict_mode'  => true,
                 'use_trans_sid'    => false
             ],
-            $new        = true;
+            $new        = true,
+            $read_only  = false;
 
         public static function init(
-            array          $ini_params = [],
-            SessionHandler $handler    = null
+            array           $ini_params = [],
+            Session\Handler $handler    = null
         ): self {
             static $res;
             return $res ?? $res = new static($ini_params, $handler);
         }
 
         protected function __construct(
-            array          $ini_params = [],
-            SessionHandler $handler    = null
+            array           $ini_params = [],
+            Session\Handler $handler    = null
         ) {
             $this->new        = !Cookie::getBool($this->generateName());
             $this->ini_params = Type::set(
@@ -126,12 +127,12 @@
                 false,
                 [
                     $this->clear(),
-                    Cookie::unset($this->getName())
+                    Cookie::del($this->getName())
                 ]
             );
         }
 
-        public function getHandler(): SessionHandler {
+        public function getHandler(): Session\Handler {
             return $this->handler;
         }
 
@@ -159,8 +160,13 @@
             return $this->new;
         }
 
+        public function isReadOnly(): bool {
+            return $this->read_only;
+        }
+
         public function isStarted(): bool {
-            return $this->getState() == 2;
+            $state = $this->getState();
+            return $state == 2 || ($state == 1 && $this->isReadOnly());
         }
 
         public function regenerateId($delete_old_session = false): bool {
@@ -184,6 +190,7 @@
             if ($this->isStarted()) {
                 return true;
             }
+            $this->read_only = $read_only;
             register_shutdown_function([$this, 'stop']);
             $ini_params = $this->getIniParams();
             if ($this->handler) {
@@ -217,6 +224,7 @@
                 static::SELF_NAMESPACE
             );
             session_write_close();
+            $this->read_only = false;
             return true;
         }
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,7 +9,9 @@
 
     namespace Ada\Core;
 
-    class Client extends Singleton {
+    class Client extends Proto {
+
+        use Traits\Singleton;
 
         const
             SIGNATURE_PARTS = [
@@ -29,27 +31,31 @@
             $ip            = '',
             $lang          = 'en';
 
-        public static function init(string $id = ''): self {
-            return parent::init($id);
+        public static function init(bool $current = true): self {
+            return
+                $current
+                    ? static::initSingleton('', true, ...func_get_args())
+                    : new static($current);
         }
 
-        protected function __construct(string $id) {
-            if (!$id) {
-                foreach ([
-                    'auth',
-                    'browser',
-                    'cache_control',
-                    'charset',
-                    'content_type',
-                    'encoding',
-                    'ip',
-                    'lang'
-                ] as $prop) {
-                    $method = ucfirst(Strings::toCamelCase($prop));
-                    $this->{'set' . $method}(
-                        $this->{'detect' . $method}()
-                    );
+        protected function __construct(bool $current = true) {
+            if (!$current) {
+                return;
+            }
+            foreach ($this as $prop => $val) {
+                $method   = Strings::toCamelCase($prop);
+                $detector = 'detect' . $method;
+                if (!method_exists($this, $detector)) {
+                    continue;
                 }
+                switch ($prop) {
+                    case 'ip':
+                        $val = $this->$detector(false, $val);
+                        break;
+                    default:
+                        $val = $this->$detector($val);
+                }
+                $this->{'set' . $method}($val);
             }
         }
 
@@ -88,7 +94,7 @@
         public function getSignature(array $parts = self::SIGNATURE_PARTS): string {
             $line = implode($parts);
             foreach ($parts as $prop) {
-                $line .= $this->{'get' . ucfirst(Strings::toCamelCase($prop))}();
+                $line .= $this->{'get' . Strings::toCamelCase($prop)}();
             }
             return Hash::asMd5($line);
         }
@@ -125,38 +131,41 @@
             $this->lang = $lang;
         }
 
-        protected function detectAuth(): string {
+        protected function detectAuth(string $default = ''): string {
             return Server::getFrstExisting(
                 [
                     'HTTP_AUTHORIZATION',
                     'REDIRECT_HTTP_AUTHORIZATION'
                 ],
                 'string',
-                $this->auth
+                $default
             );
         }
 
-        protected function detectBrowser(): string {
-            return Server::getString('HTTP_USER_AGENT', $this->browser);
+        protected function detectBrowser(string $default = ''): string {
+            return Server::getString('HTTP_USER_AGENT', $default);
         }
 
-        protected function detectCacheControl(): string {
-            return Server::getString('HTTP_CACHE_CONTROL', $this->cache_control);
+        protected function detectCacheControl(string $default = ''): string {
+            return Server::getString('HTTP_CACHE_CONTROL', $default);
         }
 
-        protected function detectCharset(): string {
-            return Server::getString('HTTP_ACCEPT_CHARSET', $this->charset);
+        protected function detectCharset(string $default = ''): string {
+            return Server::getString('HTTP_ACCEPT_CHARSET', $default);
         }
 
-        protected function detectContentType(): string {
-            return Server::getString('HTTP_ACCEPT', $this->content_type);
+        protected function detectContentType(string $default = ''): string {
+            return Server::getString('HTTP_ACCEPT', $default);
         }
 
-        protected function detectEncoding(): string {
-            return Server::getString('HTTP_ACCEPT_ENCODING', $this->encoding);
+        protected function detectEncoding(string $default = ''): string {
+            return Server::getString('HTTP_ACCEPT_ENCODING', $default);
         }
 
-        protected function detectIp(bool $proxy = false): string {
+        protected function detectIp(
+            bool   $proxy   = false,
+            string $default = ''
+        ): string {
             if (!$proxy) {
                 return Server::getString('REMOTE_ADDR');
             }
@@ -164,14 +173,16 @@
                 [
                     'HTTP_CLIENT_IP',
                     'HTTP_X_FORWARDED_FOR'
-                ]
+                ],
+                'string',
+                $default
             );
         }
 
-        protected function detectLang(): string {
+        protected function detectLang(string $default = ''): string {
             return strtolower(
                 substr(
-                    Server::getString('HTTP_ACCEPT_LANGUAGE', $this->lang),
+                    Server::getString('HTTP_ACCEPT_LANGUAGE', $default),
                     0,
                     2
                 )

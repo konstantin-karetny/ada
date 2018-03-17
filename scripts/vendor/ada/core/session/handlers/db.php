@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 18.02.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Db\Handlers;
 
-    class SessionHandlerDb extends SessionHandler {
+    class Db extends \Ada\Core\Session\Handler {
 
         public function close(): bool {
             exit(var_dump( __METHOD__ ));

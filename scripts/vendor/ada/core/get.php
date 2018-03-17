@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,9 +11,13 @@
 
     class Get extends Input {
 
+        public static function del(string $name): bool {
+            return Url::init()->delVar($name);
+        }
+
         public static function get(
             string $name,
-            string $filter  = 'auto',
+            string $filter,
                    $default = ''
         ) {
             return Url::init()->getVar($name, $filter, $default);
@@ -21,10 +25,6 @@
 
         public static function set(string $name, string $value) {
             Url::init()->setVar($name, $value);
-        }
-
-        public static function unset(string $name): bool {
-            return Url::init()->unsetVar($name);
         }
 
     }

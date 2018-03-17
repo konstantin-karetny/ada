@@ -122,7 +122,7 @@
         }
 
         public function setLength(string $length) {
-            $this->length = \Ada\Core\Clean::value($length);
+            $this->length = \Ada\Core\Type::set($length);
         }
 
         public function setName(string $name) {

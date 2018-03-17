@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -31,7 +31,7 @@
             if (!$dir->exists() && !$dir->create()) {
                 return $res;
             }
-            @copy($this->path, $res->getPath());
+            @copy($this->getPath(), $res->getPath());
             return $res;
         }
 
@@ -41,42 +41,42 @@
 
         public function delete(): bool {
             $this->setPerms(0777);
-            return (bool) @unlink($this->path);
+            return (bool) @unlink($this->getPath());
         }
 
         public function exists(): bool {
-            return is_file($this->path);
+            return is_file($this->getPath());
         }
 
         public function getBasename(): string {
-            return pathinfo($this->path, PATHINFO_BASENAME);
+            return pathinfo($this->getPath(), PATHINFO_BASENAME);
         }
 
         public function getDir(): Dir {
-            return Dir::init(pathinfo($this->path, PATHINFO_DIRNAME));
+            return Dir::init(pathinfo($this->getPath(), PATHINFO_DIRNAME));
         }
 
         public function getEditTime(): int {
-            return (int) @filemtime($this->path);
+            return (int) @filemtime($this->getPath());
         }
 
         public function getExt(): string {
-            return pathinfo($this->path, PATHINFO_EXTENSION);
+            return pathinfo($this->getPath(), PATHINFO_EXTENSION);
         }
 
         public function getMimeType(string $default = ''): string {
             return (
                 $this->exists() && class_exists('finfo')
-                ? $this->mime_type = (new \finfo())->file(
-                    $this->path,
-                    FILEINFO_MIME_TYPE
-                )
-                : $default
+                    ? $this->mime_type = (new \finfo())->file(
+                        $this->getPath(),
+                        FILEINFO_MIME_TYPE
+                    )
+                    : $default
             );
         }
 
         public function getName(): string {
-            return pathinfo($this->path, PATHINFO_FILENAME);
+            return pathinfo($this->getPath(), PATHINFO_FILENAME);
         }
 
         public function getPath(): string {
@@ -84,19 +84,19 @@
         }
 
         public function getPerms(): int {
-            return (int) @fileperms($this->path);
+            return (int) @fileperms($this->getPath());
         }
 
         public function getSize(): int {
-            return (int) @filesize($this->path);
+            return (int) @filesize($this->getPath());
         }
 
         public function isReadable(): bool {
-            return is_readable($this->path);
+            return is_readable($this->getPath());
         }
 
         public function isWritable(): bool {
-            return is_writable($this->path);
+            return is_writable($this->getPath());
         }
 
         public function move(
@@ -108,7 +108,7 @@
             if (!$dir->exists() && !$dir->create()) {
                 return $res;
             }
-            @rename($this->path, $res->getPath());
+            @rename($this->getPath(), $res->getPath());
             return $res;
         }
 
@@ -117,7 +117,7 @@
             int  $scanner_mode     = INI_SCANNER_TYPED
         ) {
             return (array) @parse_ini_file(
-                $this->path,
+                $this->getPath(),
                 $process_sections,
                 $scanner_mode
             );
@@ -127,33 +127,45 @@
             int $offset  = 0,
             int $maxlen  = null
         ): string {
-            return (string) @(
-                is_null($maxlen)
-                ? file_get_contents($this->path, false, null, $offset)
-                : file_get_contents($this->path, false, null, $offset, $maxlen)
-            );
+            $args = [
+                $this->getPath(),
+                false,
+                null,
+                $offset
+            ];
+            if ($maxlen) {
+                array_push($args, $maxlen);
+            }
+            return (string) @file_get_contents(...$args);
         }
 
         public function setEditTime(int $time = 0): bool {
             return (bool) @touch(
-                $this->path,
+                $this->getPath(),
                 $time > 0 ? $time : DateTime::init()->getTimestamp()
             );
         }
 
         public function setPerms(int $mode): bool {
-            return (bool) @chmod($this->path, $mode);
+            return (bool) @chmod($this->getPath(), $mode);
         }
 
         public function write(
             string $contents,
-            bool   $append = false
+            bool   $append       = false,
+            bool   $validate_ext = true
         ): bool {
-            return (bool) @file_put_contents(
-                $this->path,
+            $this->path = Clean::path($this->getPath(), $validate_ext);
+            $dir        = $this->getDir();
+            if (!$dir->exists() && !$dir->create()) {
+                return false;
+            }
+            @file_put_contents(
+                $this->getPath(),
                 $contents,
                 $append ? FILE_APPEND : 0
             );
+            return $this->exists();
         }
 
     }

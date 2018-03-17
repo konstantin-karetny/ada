@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 09.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,9 +11,18 @@
 
     class Cookie extends Input {
 
+        public static function del(string $name): bool {
+            $name = Clean::cmd($name);
+            if (!isset($_COOKIE[$name])) {
+                return true;
+            }
+            unset($_COOKIE[$name]);
+            return (bool) setcookie($name, '', time() - 1);
+        }
+
         public static function get(
             string $name,
-            string $filter  = 'auto',
+            string $filter,
                    $default = ''
         ) {
             return Clean::value(
@@ -30,6 +39,7 @@
             bool   $httponly = false
         ): bool {
             $name           = Clean::cmd($name);
+            $value          = Type::set($value);
             $_COOKIE[$name] = $value;
             return (bool) setcookie(
                 $name,
@@ -39,15 +49,6 @@
                 Url::init()->isSSL(),
                 $httponly
             );
-        }
-
-        public static function unset(string $name): bool {
-            $name = Clean::cmd($name);
-            if (!isset($_COOKIE[$name])) {
-                return true;
-            }
-            unset($_COOKIE[$name]);
-            return (bool) setcookie($name, '', time() - 1);
         }
 
     }

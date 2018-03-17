@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 07.02.2018
+    * @version   1.0.0 16.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,22 +11,25 @@
 
     class Files extends Proto {
 
-        public static function get(string $name, $default = []): array {
+        public static function get(
+            string $name,
+            array  $default = []
+        ): array {
             $name = Clean::cmd($name);
             if (!isset($_FILES[$name])) {
-                return (array) $default;
+                return $default;
             }
-            $files = [];
+            $res = [];
             foreach ($_FILES[$name] as $prop => $values) {
                 foreach ($values as $k => $v) {
-                    $files[$k][$prop] = $v;
+                    $res[$k][$prop] = $v;
                 }
             }
             return array_map(
                 function($el) {
                     return UploadedFile::init($el);
                 },
-                $files
+                $res
             );
         }
 

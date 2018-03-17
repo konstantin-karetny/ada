@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,7 +13,7 @@
 
         abstract public static function get(
             string $name,
-            string $filter  = 'auto',
+            string $filter,
                    $default = null
         );
 
@@ -54,7 +54,7 @@
 
         public static function getFrstExisting(
             array  $names,
-            string $filter  = 'auto',
+            string $filter,
             string $default = ''
         ): string {
             foreach ($names as $name) {

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 17.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,14 +11,19 @@
 
     abstract class Table extends \Ada\Core\Proto {
 
+        use \Ada\Core\Traits\Singleton;
+
         protected
             $columns = [],
             $db      = null,
             $name    = '';
 
         public static function init(string $name, Driver $db) {
-            static $res;
-            return $res ?? $res = new static($name, $db);
+            return static::initSingleton(
+                $db->getPrefix() . $name,
+                true,
+                ...func_get_args()
+            );
         }
 
         protected function __construct(string $name, Driver $db) {
@@ -47,7 +52,7 @@
             return $this->name;
         }
 
-        protected  function detectColumns(): array {
+        protected function detectColumns(): array {
             $res = [];
             $db  = $this->getDb();
             foreach (
