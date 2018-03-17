@@ -70,6 +70,7 @@
                 return false;
             }
             session_abort();
+			$this->read_only = false;
             return true;
         }
 
@@ -115,8 +116,10 @@
             if (!$this->isStarted()) {
                 return false;
             }
-            session_unset();
-            return session_destroy();
+			session_unset();
+			$res             = session_destroy();
+			$this->read_only = false;
+            return $res;
         }
 
         public function delete(): bool {
@@ -176,12 +179,12 @@
             return session_regenerate_id($delete_old_session);
         }
 
-        public function restart(): bool {
+        public function restart(bool $read_only = false): bool {
             return !in_array(
                 false,
                 [
                     $this->stop(),
-                    $this->start()
+                    $this->start($read_only)
                 ]
             );
         }
@@ -190,7 +193,6 @@
             if ($this->isStarted()) {
                 return true;
             }
-            $this->read_only = $read_only;
             register_shutdown_function([$this, 'stop']);
             $ini_params = $this->getIniParams();
             if ($this->handler) {
@@ -202,6 +204,9 @@
                     'read_and_close' => $read_only
                 ]
             );
+			if ($res) {
+				$this->read_only = $read_only;
+			}
             if (!$this->check()) {
                 $this->delete();
                 return false;
@@ -224,7 +229,7 @@
                 static::SELF_NAMESPACE
             );
             session_write_close();
-            $this->read_only = false;
+			$this->read_only = false;
             return true;
         }
 
