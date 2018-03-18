@@ -98,7 +98,7 @@
 
         public function debugInfo(): array {
             if (!$this->stmt) {
-                return '';
+                return [];
             }
             ob_start();
             $this->stmt->debugDumpParams();

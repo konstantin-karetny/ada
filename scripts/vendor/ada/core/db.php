@@ -24,8 +24,8 @@
                 'host'        => '127.0.0.1',
                 'name'        => '',
                 'password'    => '',
-                'prefix'     => '',
-                'user'       => 'root'
+                'prefix'      => '',
+                'user'        => 'root'
             ];
 
         public static function getDrivers(bool $supported_only = false): array {

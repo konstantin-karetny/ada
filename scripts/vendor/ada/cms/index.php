@@ -15,6 +15,16 @@
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
+    exit(var_dump(
+
+        DateTime::preset([
+            'timezone' => 'Europe/Moscow',
+            'format'   => 'Y',
+            'zz'   => 'Y'
+        ])
+
+    ));
+
 
     $db = Db::init(
         '',
