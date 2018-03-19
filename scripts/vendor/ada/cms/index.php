@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/cms
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 19.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -17,11 +17,18 @@
 
     exit(var_dump(
 
-        DateTime::preset([
-            'timezone' => 'Europe/Moscow',
-            'format'   => 'Y',
-            'zz'   => 'Y'
+
+
+        Db::init(0, [
+           'name'   => 'ada',
+           'prefix' => 'ada_',
+           'prefixz' => 'ada_'
         ])
+
+
+
+
+        //, Db::init(1)
 
     ));
 

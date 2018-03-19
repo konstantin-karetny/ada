@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 19.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,35 +14,63 @@
         use \Ada\Core\Traits\Singleton;
 
         const
-            DSN_LINE     = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
             ESC_TAG      = ':',
-            Q            = '`';
+            PRESETS      = [
+                'attributes',
+                'charset',
+                'date_format',
+                'dsn_format',
+                'driver',
+                'host',
+                'name',
+                'password',
+                'prefix',
+                'quote',
+                'user'
+            ];
 
         protected
-            $attributes  = [],
-            $charset     = '',
-            $collation   = '',
-            $date_format = '',
-            $driver      = '',
+            $attributes  = [
+                \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
+            ],
+            $charset     = 'utf8mb4',
+            $collation   = 'utf8mb4_unicode_ci',
+            $date_format = 'Y-m-d H:i:s',
+            $dsn_format  = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
+            $driver      = 'mysql',
             $fetch_mode  = [],
-            $host        = '',
+            $host        = '127.0.0.1',
             $min_version = '',
             $name        = '',
             $password    = '',
             /** @var \PDO */
             $pdo         = null,
             $prefix      = '',
+            $quote       = '`',
             /** @var \PDOStatement */
             $stmt        = null,
-            $user        = '';
+            $user        = 'root';
 
-        public static function init(string $id = '', array $params = []) {
-            return static::initSingleton($id, true, $params);
+        public static function init(int $id = 0, array $presets = []) {
+            if ($presets) {
+                static::$insts[]        = new static($presets);
+                end(static::$insts);
+                $id                     = key(static::$insts);
+                static::$insts[$id]->id = $id;
+            }
+            return static::initSingleton($id, true, $presets);
         }
 
-        protected function __construct(array $params) {
-            foreach (array_keys(\Ada\Core\Db::DEFAULT_PARAMS) as $k) {
-                $this->$k = \Ada\Core\Type::set($params[$k]);
+        protected function __construct(array $presets) {
+            foreach (array_intersect_key(
+                $presets,
+                static::getPresets()
+            ) as $k => $v) {
+                $this->$k = \Ada\Core\Type::set(
+                    $v,
+                    \Ada\Core\Type::get($this->$k)
+                );
             }
             if (
                 version_compare(
@@ -59,6 +87,8 @@
                     1
                 );
             }
+            end(static::$insts);
+            $this->id        = key(static::$insts) + 1;
             $this->collation = $this->detectCollation();
         }
 
@@ -80,16 +110,24 @@
             if ($this->isConnected()) {
                 return true;
             }
+            $error = 'Failed to connect to a database';
+            if ($this->getName() === '') {
+                exit(var_dump( $this->getName() ));
+                throw new \Ada\Core\Exception(
+                    $error . '. No database name',
+                    1
+                );
+            }
             try {
                 $this->pdo = new \PDO(
-                    $this->getDsn(),
+                    $this->getDsnLine(),
                     $this->getUser(),
                     $this->getPassword(),
                     $this->getAttributes()
                 );
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    'Failed to connect to a database. ' . $e->getMessage(),
+                    $error . '. ' . $e->getMessage(),
                     1
                 );
             }
@@ -330,18 +368,18 @@
             return $this->driver;
         }
 
-        public function getDsn(): string {
-            $props = get_object_vars($this);
-            return str_replace(
-                array_map(
-                    function($el) {
-                        return '%' . $el . '%';
-                    },
-                    array_keys($props)
-                ),
-                array_values($props),
-                static::DSN_LINE
-            );
+        public function getDsnLine(bool $filled = true): string {
+            $res = $this->dsn_format;
+            if (!$filled) {
+                return $res;
+            }
+            foreach (get_object_vars($this) as $k => $v) {
+                $search = '%' . $k . '%';
+                if (stripos($res, $search) !== false) {
+                    $res = str_replace($search, $v, $res);
+                }
+            }
+            return $res;
         }
 
         public function getHost(): string {
@@ -366,6 +404,10 @@
 
         public function getPrefix(): string {
             return $this->prefix;
+        }
+
+        public function getQuote(): string {
+            return $this->quote;
         }
 
         public function getTable(string $name): \Ada\Core\Db\Table {
@@ -438,19 +480,25 @@
             return (
                 (
                     strpos($name, '.') === false
-                        ? (static::Q . $name . static::Q)
+                        ? ($this->getQuote() . $name . $this->getQuote())
                         : implode(
                             '.',
                             array_map(
                                 function($el) {
-                                    return static::Q . $el . static::Q;
+                                    return (
+                                        $this->getQuote() .
+                                        $el .
+                                        $this->getQuote()
+                                    );
                                 },
                                 explode('.', $name)
                             )
                         )
                 ) .
                 (
-                    $as ? (' AS ' . static::Q . $as . static::Q) : ''
+                    $as
+                        ? (' AS ' . $this->getQuote() . $as . $this->getQuote())
+                        : ''
                 )
             );
         }
