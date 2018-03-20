@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 19.03.2018
+    * @version   1.0.0 20.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -27,13 +27,11 @@
             return $res;
         }
 
-        public static function init(
-            int   $id      = 0,
-            array $presets = []
-        ): Db\Driver {
+        public static function init(int $id  = 0, array $new = []): Db\Driver {
             $class = (
-                __CLASS__ . '\Drivers\\' .
-                ($presets['driver'] ?? Db\Driver::getPresets()['driver']) .
+                __CLASS__ .
+                '\Drivers\\' .
+                ($new['driver'] ?? Db\Driver::getPresets()['driver']) .
                 '\Driver'
             );
             return $class::init(...func_get_args());

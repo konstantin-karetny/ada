@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 20.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -71,7 +71,9 @@
             ];
 
         protected static
-            $default_root = '';
+            $current      = '',
+            $default_root = '',
+            $inited       = '';
 
         protected
             $fragment     = '',
@@ -83,16 +85,6 @@
             $scheme       = '',
             $user         = '',
             $vars         = [];
-
-        public function __construct(string $url = '') {
-            $url = $url === '' ? static::current() : $url;
-            if (!static::check($url)) {
-                throw new Exception('Wrong url \'' . $url . '\'', 1);
-            }
-            foreach ($this->parse(static::clean($url)) as $k => $v) {
-                $this->{'set' . ucfirst($k)}($v);
-            }
-        }
 
         public static function check(string $url, $options = null): bool {
             if (filter_var($url, FILTER_VALIDATE_URL, $options)) {
@@ -129,32 +121,6 @@
             return static::decode($res);
         }
 
-        public static function current() {
-            if (static::getDefaultRoot()) {
-                $res = static::getDefaultRoot();
-            }
-            else {
-                $res = 'http';
-                if (
-                    Server::getString('HTTPS', 'off')                   !== 'off' ||
-                    Server::getString('HTTP_X_FORWARDED_PROTO', 'http') !== 'http'
-                ) {
-                    $res .= 's';
-                }
-                $res .= '://' . static::clean(Server::getString('HTTP_HOST'));
-            }
-            if (Server::getString('PHP_SELF') && Server::getString('REQUEST_URI')) {
-                $res .= static::clean(Server::getString('REQUEST_URI'));
-            }
-            else {
-                $res .= static::clean(Server::getString('SCRIPT_NAME'));
-                if (Server::getString('QUERY_STRING')) {
-                    $res .= '?' . static::clean(Server::getString('QUERY_STRING'));
-                }
-            }
-            return static::clean($res);
-        }
-
         public static function getDefaultRoot(): string {
             return static::$default_root;
         }
@@ -163,48 +129,14 @@
             return new static($url);
         }
 
-        public static function isInternal(string $url): bool {
-            return static::init($url)->getRoot() == static::init()->getRoot();
-        }
-
-        public static function redirect(
-            string  $url                = '',
-            int     $delay              = 0,
-            bool    $replace            = true,
-            int     $http_response_code = 302
-        ) {
-            $url = static::clean($url);
-            $url = $url ? $url : static::current();
-            if (headers_sent()) {
-                echo (
-                    '<script>document.location.href="' .
-                    str_replace('"', '&apos;', $url) .
-                    '";</script>'
-                );
-                return;
+        public static function setDefaultRoot(string $default_root): bool {
+            if (static::$inited) {
+                return false;
             }
-            header('Cache-Control: no-cache, no-store, must-revalidate');
-            header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
-            header(
-                'Refresh: ' . ($delay > 0 ? $delay : 0) . '; ' . $url,
-                $replace,
-                $http_response_code
-            );
-        }
-
-        public static function refresh($delay = 0, $uri = '', $caching = false) {
-            if($uri !== '') $uri = '; URL=' . $uri;
-            if(!$caching) {
-                header("Cache-Control: no-cache, must-revalidate");
-                header("Expires: Wed, 13 Dec 1989 04:00:00 GMT");
-            }
-            header('Refresh: ' . $delay . $uri);
-        }
-
-        public static function setDefaultRoot(string $default_root) {
-            if (!static::$default_root) {
-                static::$default_root = static::init($default_root)->toString();
-            }
+            static::$default_root = static::init($default_root)->getRoot();
+            static::$current      = '';
+            static::$inited       = false;
+            return true;
         }
 
         protected static function decode(string $url): string {
@@ -223,6 +155,20 @@
                 array_keys(static::SPECIAL_CHARS_CODES),
                 urlencode($url)
             );
+        }
+
+        public function __construct(string $url = '') {
+            if (static::$current === '') {
+                static::$current = $this->detectCurrent();
+            }
+            $url = $url === '' ? static::$current : $url;
+            if (!static::check($url)) {
+                throw new Exception('Wrong url \'' . $url . '\'', 1);
+            }
+            foreach ($this->parse(static::clean($url)) as $k => $v) {
+                $this->{'set' . ucfirst($k)}($v);
+            }
+            static::$inited = true;
         }
 
         public function delVar(string $name): bool {
@@ -288,8 +234,34 @@
             return $filter ? Clean::values($this->vars, $filter) : $this->vars;
         }
 
+        public function isInternal(): bool {
+            return $this->getRoot() == static::init()->getRoot();
+        }
+
         public function isSSL(): bool {
             return $this->scheme == 'https';
+        }
+
+        public function redirect(
+            int     $delay              = 0,
+            bool    $replace            = true,
+            int     $http_response_code = 302
+        ) {
+            if (headers_sent()) {
+                echo (
+                    '<script>document.location.href="' .
+                    str_replace('"', '&apos;', $this->toString()) .
+                    '";</script>'
+                );
+                return;
+            }
+            header('Cache-Control: no-cache, no-store, must-revalidate');
+            header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
+            header(
+                'Refresh: ' . ($delay > 0 ? $delay : 0) . '; ' . $this->toString(),
+                $replace,
+                $http_response_code
+            );
         }
 
         public function setFragment(string $fragment) {
@@ -387,6 +359,32 @@
 
         protected function buildQuery(array $vars): string {
             return http_build_query($vars);
+        }
+
+        protected function detectCurrent(): string {
+            if (static::getDefaultRoot()) {
+                $res = static::getDefaultRoot();
+            }
+            else {
+                $res = 'http';
+                if (
+                    Server::getString('HTTPS', 'off')                   !== 'off' ||
+                    Server::getString('HTTP_X_FORWARDED_PROTO', 'http') !== 'http'
+                ) {
+                    $res .= 's';
+                }
+                $res .= '://' . static::clean(Server::getString('HTTP_HOST'));
+            }
+            if (Server::getString('PHP_SELF') && Server::getString('REQUEST_URI')) {
+                $res .= static::clean(Server::getString('REQUEST_URI'));
+            }
+            else {
+                $res .= static::clean(Server::getString('SCRIPT_NAME'));
+                if (Server::getString('QUERY_STRING')) {
+                    $res .= '?' . static::clean(Server::getString('QUERY_STRING'));
+                }
+            }
+            return static::clean($res);
         }
 
         protected function parse(string $url): array {

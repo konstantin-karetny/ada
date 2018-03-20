@@ -15,20 +15,12 @@
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
+    Url::setDefaultRoot('https://www.google.com/search?source=hp');
+
+
     exit(var_dump(
 
-
-
-        Db::init(0, [
-           'name'   => 'ada',
-           'prefix' => 'ada_',
-           'prefixz' => 'ada_'
-        ])
-
-
-
-
-        //, Db::init(1)
+        Url::init('http://ada')->isInternal()
 
     ));
 

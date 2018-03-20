@@ -11,6 +11,7 @@
 
     abstract class Driver extends \Ada\Core\Proto {
 
+        use \Ada\Core\Traits\Preset;
         use \Ada\Core\Traits\Singleton;
 
         const
@@ -52,26 +53,21 @@
             $stmt        = null,
             $user        = 'root';
 
-        public static function init(int $id = 0, array $presets = []) {
-            if ($presets) {
-                static::$insts[]        = new static($presets);
+        public static function init(int $id = 0, array $new = []) {
+            if ($new) {
+                static::$insts[]        = new static($new);
                 end(static::$insts);
                 $id                     = key(static::$insts);
                 static::$insts[$id]->id = $id;
             }
-            return static::initSingleton($id, true, $presets);
+            return static::initSingleton($id);
         }
 
-        protected function __construct(array $presets) {
-            foreach (array_intersect_key(
-                $presets,
-                static::getPresets()
-            ) as $k => $v) {
-                $this->$k = \Ada\Core\Type::set(
-                    $v,
-                    \Ada\Core\Type::get($this->$k)
-                );
+        protected function __construct(array $new) {
+            if (!$new) {
+                return;
             }
+            $this->preset($new);
             if (
                 version_compare(
                     $this->getVersion(),
@@ -112,7 +108,6 @@
             }
             $error = 'Failed to connect to a database';
             if ($this->getName() === '') {
-                exit(var_dump( $this->getName() ));
                 throw new \Ada\Core\Exception(
                     $error . '. No database name',
                     1

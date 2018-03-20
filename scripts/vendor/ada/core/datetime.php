@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 20.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,58 +12,76 @@
     class DateTime extends \DateTime {
 
         protected static
-            $default_format   = '',
-            $default_timezone = null;
+            $default_format        = 'Y-m-d H:i:s',
+            $default_timezone      = null,
+            $default_timezone_name = '',
+            $inited                = false;
 
         protected
-            $locales_ext      = 'ini',
-            $locales_path     = __DIR__ . '/datetime/locales';
+            $locales_ext           = 'ini',
+            $locales_path          = __DIR__ . '/datetime/locales';
 
         public static function getDefaultFormat(): string {
             return static::$default_format;
         }
 
         public static function getDefaultTimezone(): DateTimeZone {
-            return static::$default_timezone;
+            return
+                (
+                    static::$default_timezone &&
+                    static::$default_timezone->getName() == static::getDefaultTimezoneName()
+                )
+                    ? static::$default_timezone
+                    : static::$default_timezone = DateTimeZone::init(
+                        static::getDefaultTimezoneName()
+                    );
+        }
+
+        public static function getDefaultTimezoneName(): string {
+            return
+                static::$default_timezone_name
+                    ? static::$default_timezone_name
+                    : static::$default_timezone_name = date_default_timezone_get();
         }
 
         public static function init(
             string $time        = 'now',
-            string $timezone_id = ''
+            string $timezone_name = ''
         ): self {
             return new static(...func_get_args());
         }
 
-        public static function setDefaultFormat(string $format) {
-            if (!static::$default_format) {
-                static::$default_format = $format;
+        public static function setDefaultFormat(string $default_format): bool {
+            if (static::$inited) {
+                return false;
             }
+            static::$default_format = $default_format;
+            return true;
         }
 
-        public static function setDefaultTimezone(string $timezone_id) {
-            if (!static::$default_timezone) {
-                static::$default_timezone = DateTimeZone::init($timezone_id);
-                date_default_timezone_set(static::$default_timezone->getName());
+        public static function setDefaultTimezoneName(
+            string $default_timezone_name
+        ): bool {
+            if (static::$inited) {
+                return false;
             }
+            static::$default_timezone    = DateTimeZone::init($default_timezone_name);
+            static::$default_timezone_name = static::$default_timezone->getName();
+            return true;
         }
 
         public function __construct(
             string $time        = 'now',
-            string $timezone_id = ''
+            string $timezone_name = ''
         ) {
-            if (!static::$default_format) {
-                static::setDefaultFormat('Y-m-d H:i:s');
-            }
-            if (!static::$default_timezone) {
-                static::setDefaultTimezone(date_default_timezone_get());
-            }
             parent::__construct(
                 $time,
-                $timezone_id
-                    ? DateTimeZone::init($timezone_id)
-                    : static::getDefaultTimezone()
+                $timezone_name
+                    ? DateTimeZone::init($timezone_name)
+                    : $this->getDefaultTimezone()
             );
             $this->locales_path = Clean::path($this->locales_path);
+            static::$inited     = true;
         }
 
         public function format($format = '', string $locale_id = 'en'): string {
