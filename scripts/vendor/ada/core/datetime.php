@@ -45,7 +45,7 @@
         }
 
         public static function init(
-            string $time        = 'now',
+            string $time          = 'now',
             string $timezone_name = ''
         ): self {
             return new static(...func_get_args());
@@ -65,13 +65,14 @@
             if (static::$inited) {
                 return false;
             }
-            static::$default_timezone    = DateTimeZone::init($default_timezone_name);
+            static::$default_timezone      = DateTimeZone::init($default_timezone_name);
             static::$default_timezone_name = static::$default_timezone->getName();
+            date_default_timezone_set(static::$default_timezone_name);
             return true;
         }
 
         public function __construct(
-            string $time        = 'now',
+            string $time          = 'now',
             string $timezone_name = ''
         ) {
             parent::__construct(

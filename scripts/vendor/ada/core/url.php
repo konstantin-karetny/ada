@@ -160,6 +160,11 @@
         public function __construct(string $url = '') {
             if (static::$current === '') {
                 static::$current = $this->detectCurrent();
+                if (static::getDefaultRoot()) {
+                    static::$current = static::init(static::$current);
+                    static::$current->setRoot(static::getDefaultRoot());
+                    static::$current = static::$current->toString();
+                }
             }
             $url = $url === '' ? static::$current : $url;
             if (!static::check($url)) {
@@ -243,9 +248,9 @@
         }
 
         public function redirect(
-            int     $delay              = 0,
-            bool    $replace            = true,
-            int     $http_response_code = 302
+            int  $delay              = 0,
+            bool $replace            = true,
+            int  $http_response_code = 302
         ) {
             if (headers_sent()) {
                 echo (
@@ -362,26 +367,25 @@
         }
 
         protected function detectCurrent(): string {
-            if (static::getDefaultRoot()) {
-                $res = static::getDefaultRoot();
+            $res = 'http';
+            if (
+                strtolower(trim(
+                    Server::getString('HTTPS', 'off')
+                )) !== 'off' ||
+                strtolower(trim(
+                    Server::getString('HTTP_X_FORWARDED_PROTO', 'http')
+                )) !== 'http'
+            ) {
+                $res .= 's';
+            }
+            $res .= '://' . Server::getUrl('HTTP_HOST');
+            if (Server::getBool('PHP_SELF') && Server::getBool('REQUEST_URI')) {
+                $res .= '/' . Server::getUrl('REQUEST_URI');
             }
             else {
-                $res = 'http';
-                if (
-                    Server::getString('HTTPS', 'off')                   !== 'off' ||
-                    Server::getString('HTTP_X_FORWARDED_PROTO', 'http') !== 'http'
-                ) {
-                    $res .= 's';
-                }
-                $res .= '://' . static::clean(Server::getString('HTTP_HOST'));
-            }
-            if (Server::getString('PHP_SELF') && Server::getString('REQUEST_URI')) {
-                $res .= static::clean(Server::getString('REQUEST_URI'));
-            }
-            else {
-                $res .= static::clean(Server::getString('SCRIPT_NAME'));
-                if (Server::getString('QUERY_STRING')) {
-                    $res .= '?' . static::clean(Server::getString('QUERY_STRING'));
+                $res .= Server::getUrl('SCRIPT_NAME');
+                if (Server::getBool('QUERY_STRING')) {
+                    $res .= '?' . Server::getUrl('QUERY_STRING');
                 }
             }
             return static::clean($res);
@@ -394,6 +398,25 @@
                     continue;
                 }
                 $res[$k] = Type::set(static::clean($v), Type::get($this->$k));
+            }
+            if ($res['host'] !== Server::getUrl('HTTP_HOST')) {
+                return $res;
+            }
+            $script_path = File::init(
+                Server::getPath(
+                    (
+                        strpos(php_sapi_name(), 'cgi') !== false &&
+                        Server::getBool('REQUEST_URI') === ''  &&
+                        !ini_get('cgi.fix_pathinfo')
+                    )
+                        ? 'PHP_SELF'
+                        : 'SCRIPT_NAME'
+                )
+            )->getDir()->getPath();
+            if ($script_path && strpos($res['path'] ?? '', $script_path) === 0) {
+                $length       = strlen($script_path);
+                $res['host'] .= '/' . substr($res['path'], 0, $length);
+                $res['path']  = substr($res['path'], $length);
             }
             return $res;
         }
