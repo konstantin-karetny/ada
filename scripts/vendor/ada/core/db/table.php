@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 21.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,11 +14,11 @@
         use \Ada\Core\Traits\Singleton;
 
         protected
-            $columns = [],
+            $columns = null,
             $db      = null,
             $name    = '';
 
-        public static function init(string $name, Driver $db) {
+        public static function init(string $name, $db) {
             return static::initSingleton(
                 $db->getPrefix() . $name,
                 true,
@@ -27,21 +27,21 @@
         }
 
         protected function __construct(string $name, Driver $db) {
-            $this->db      = $db;
-            $this->name    = \Ada\Core\Clean::cmd($name);
-            $this->columns = $this->detectColumns();
+            $this->db   = $db;
+            $this->id   =
+            $this->name = \Ada\Core\Clean::cmd($name);
         }
 
         public function getColumn(string $name): Column {
-            if (isset($this->columns[$name])) {
-                return $this->columns[$name];
-            }
-            $class = $this->getDb()->getNameSpace() . '\Column';
-            return new $class($this, $name);
+            $columns = $this->getColumns();
+            return $columns[$name];
         }
 
         public function getColumns(): array {
-            return $this->columns;
+            return
+                $this->columns === null
+                    ? $this->columns = $this->detectColumns()
+                    : $this->columns;
         }
 
         public function getDb(): Driver {
@@ -53,13 +53,14 @@
         }
 
         protected function detectColumns(): array {
-            $res = [];
-            $db  = $this->getDb();
+            $res   = [];
+            $db    = $this->getDb();
+            $class = $db->getNameSpace() . '\Column';
             foreach (
                 $db->fetchRows('SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
             ) as $params) {
                 $type_length = explode('(', rtrim($params['Type'], ')'));
-                $column      = $this->getColumn($params['Field']);
+                $column      = $class::init($params['Field'], $this);
                 $column->setIsAutoIncrement(
                     stripos('auto_increment', $params['Extra']) !== false
                 );

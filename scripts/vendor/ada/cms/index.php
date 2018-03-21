@@ -16,19 +16,18 @@
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
 
-    $db = Db::init(
-        '',
-        [
-           'name'   => 'ada',
-           'prefix' => 'ada_'
-        ]
-    );
+
+    Db::add([
+        'name'   => 'ada',
+        'prefix' => 'ada_'
+    ]);
+    $db = Db::init();
 
 
 
-    $table  = $db->getTable('test');
+    $table = $db->getTable('test');
 
-    exit(var_dump( $table ));
+    exit(var_dump( $table->getColumns() ));
 
 
 

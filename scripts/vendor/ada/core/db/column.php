@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 21.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,7 +22,11 @@
             $table             = false,
             $type              = 'int';
 
-        public function __construct(\Ada\Core\Db\Table $table, string $name) {
+        public static function init(string $name, Table $table) {
+            return new static($name, $table);
+        }
+
+        public function __construct(string $name, Table $table) {
             $this->table = $table;
             $this->setName($name);
         }
@@ -81,7 +85,7 @@
             return $this->name;
         }
 
-        public function getTable(): \Ada\Core\Db\Table {
+        public function getTable(): Table {
             return $this->table;
         }
 

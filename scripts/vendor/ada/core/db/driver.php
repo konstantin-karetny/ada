@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 19.03.2018
+    * @version   1.0.0 21.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,12 +11,9 @@
 
     abstract class Driver extends \Ada\Core\Proto {
 
-        use \Ada\Core\Traits\Preset;
-        use \Ada\Core\Traits\Singleton;
-
         const
             ESC_TAG      = ':',
-            PRESETS      = [
+            ADD_PARAMS   = [
                 'attributes',
                 'charset',
                 'date_format',
@@ -36,7 +33,7 @@
                 \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
             ],
             $charset     = 'utf8mb4',
-            $collation   = 'utf8mb4_unicode_ci',
+            $collation   = null,
             $date_format = 'Y-m-d H:i:s',
             $dsn_format  = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
             $driver      = 'mysql',
@@ -53,21 +50,20 @@
             $stmt        = null,
             $user        = 'root';
 
-        public static function init(int $id = 0, array $new = []) {
-            if ($new) {
-                static::$insts[]        = new static($new);
-                end(static::$insts);
-                $id                     = key(static::$insts);
-                static::$insts[$id]->id = $id;
-            }
-            return static::initSingleton($id);
+        public static function init(array $params) {
+            return new static($params);
         }
 
-        protected function __construct(array $new) {
-            if (!$new) {
-                return;
+        protected function __construct(array $params) {
+            foreach (array_intersect_key(
+                $params,
+                array_flip(static::ADD_PARAMS)
+            ) as $k => $v) {
+                $this->$k = \Ada\Core\Type::set(
+                    $v,
+                    \Ada\Core\Type::get($this->$k)
+                );
             }
-            $this->preset($new);
             if (
                 version_compare(
                     $this->getVersion(),
@@ -83,9 +79,6 @@
                     1
                 );
             }
-            end(static::$insts);
-            $this->id        = key(static::$insts) + 1;
-            $this->collation = $this->detectCollation();
         }
 
         public function closeTransaction(): bool {
@@ -348,7 +341,10 @@
         }
 
         public function getCollation(): string {
-            return $this->collation;
+            return
+                $this->collation === null
+                    ? $this->collation = $this->detectCollation()
+                    : $this->collation;
         }
 
         public function getColumnsCount(): int {

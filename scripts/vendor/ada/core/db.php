@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 20.03.2018
+    * @version   1.0.0 21.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -10,6 +10,23 @@
     namespace Ada\Core;
 
     class Db extends Proto {
+
+        use \Ada\Core\Traits\Singleton;
+
+        const
+            DEFAULT_DRIVER = 'mysql';
+
+        public static function add(array $params): int {
+            $class = (
+                __CLASS__ .
+                '\Drivers\\' .
+                ($params['driver'] ?? static::DEFAULT_DRIVER) .
+                '\Driver'
+            );
+            static::$insts[] = $class::init(...func_get_args());
+            end(static::$insts);
+            return key(static::$insts);
+        }
 
         public static function getDrivers(bool $supported_only = false): array {
             $res = array_map('strtolower', (array) \PDO::getAvailableDrivers());
@@ -27,14 +44,8 @@
             return $res;
         }
 
-        public static function init(int $id  = 0, array $new = []): Db\Driver {
-            $class = (
-                __CLASS__ .
-                '\Drivers\\' .
-                ($new['driver'] ?? Db\Driver::getPresets()['driver']) .
-                '\Driver'
-            );
-            return $class::init(...func_get_args());
+        public static function init(int $id  = 0): Db\Driver {
+            return static::initSingleton($id);
         }
 
     }
