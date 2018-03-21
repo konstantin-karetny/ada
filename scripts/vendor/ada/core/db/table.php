@@ -14,7 +14,7 @@
         use \Ada\Core\Traits\Singleton;
 
         protected
-            $columns = null,
+            $columns,
             $db      = null,
             $name    = '';
 
@@ -34,14 +34,18 @@
 
         public function getColumn(string $name): Column {
             $columns = $this->getColumns();
+            if (!isset($columns[$name])) {
+                throw new \Ada\Core\Exception(
+                    'Uncknown column \'' . $name . '\' ' .
+                    'in table \'' . $this->getName() . '\'',
+                    1
+                );
+            }
             return $columns[$name];
         }
 
         public function getColumns(): array {
-            return
-                $this->columns === null
-                    ? $this->columns = $this->detectColumns()
-                    : $this->columns;
+            return $this->columns ?? $this->columns = $this->detectColumns();
         }
 
         public function getDb(): Driver {

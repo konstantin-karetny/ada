@@ -26,8 +26,8 @@
 
 
     $table = $db->getTable('test');
-
-    exit(var_dump( $table->getColumns() ));
+    $table->getColumns();
+    exit(var_dump( $table ));
 
 
 

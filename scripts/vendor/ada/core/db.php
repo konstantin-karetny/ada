@@ -25,7 +25,7 @@
             );
             static::$insts[] = $class::init(...func_get_args());
             end(static::$insts);
-            return key(static::$insts);
+            return (int) key(static::$insts);
         }
 
         public static function getDrivers(bool $supported_only = false): array {

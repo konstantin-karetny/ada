@@ -33,7 +33,7 @@
                 \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
             ],
             $charset     = 'utf8mb4',
-            $collation   = null,
+            $collation,
             $date_format = 'Y-m-d H:i:s',
             $dsn_format  = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
             $driver      = 'mysql',
@@ -103,7 +103,7 @@
             if ($this->getName() === '') {
                 throw new \Ada\Core\Exception(
                     $error . '. No database name',
-                    1
+                    2
                 );
             }
             try {
@@ -116,7 +116,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     $error . '. ' . $e->getMessage(),
-                    1
+                    2
                 );
             }
             return $this->isConnected();
@@ -341,10 +341,7 @@
         }
 
         public function getCollation(): string {
-            return
-                $this->collation === null
-                    ? $this->collation = $this->detectCollation()
-                    : $this->collation;
+            return $this->collation ?? $this->collation = $this->detectCollation();
         }
 
         public function getColumnsCount(): int {

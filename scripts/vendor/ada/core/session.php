@@ -65,6 +65,15 @@
             session_name($this->generateName());
         }
 
+        public function __debugInfo() {
+            var_dump($this);
+            return [
+                'name'  => $this->getName(),
+                'id'    => $this->getId(),
+                'state' => $this->getState()
+            ];
+        }
+
         public function abort(): bool {
             if (!$this->isStarted()) {
                 return false;
@@ -248,15 +257,6 @@
                 Clean::cmd(static::NAMESPACE_PREFIX) .
                 Clean::cmd($namespace == '' ? static::DEFAULT_NAMESPACE : $namespace)
             );
-        }
-
-        public function __debugInfo() {
-            var_dump($this);
-            return [
-                'name'  => $this->getName(),
-                'id'    => $this->getId(),
-                'state' => $this->getState()
-            ];
         }
 
     }

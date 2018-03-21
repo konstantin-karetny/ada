@@ -19,7 +19,7 @@
             $is_primary_key    = false,
             $length            = '',
             $name              = '',
-            $table             = false,
+            $table             = null,
             $type              = 'int';
 
         public static function init(string $name, Table $table) {
@@ -27,8 +27,8 @@
         }
 
         public function __construct(string $name, Table $table) {
-            $this->table = $table;
             $this->setName($name);
+            $this->table = $table;
         }
 
         public function create(self $after = null): bool {
