@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Mar 16, 2018 at 01:15 PM
+-- Generation Time: Mar 22, 2018 at 06:06 PM
 -- Server version: 5.7.20
 -- PHP Version: 7.1.12
 
@@ -19,25 +19,25 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `ada`
+-- Database: `joom`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ada_langs`
+-- Table structure for table `joom_langs`
 --
 
-CREATE TABLE `ada_langs` (
+CREATE TABLE `joom_langs` (
   `id` int(11) NOT NULL,
   `code` varchar(2) COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `ada_langs`
+-- Dumping data for table `joom_langs`
 --
 
-INSERT INTO `ada_langs` (`id`, `code`) VALUES
+INSERT INTO `joom_langs` (`id`, `code`) VALUES
 (1, 'en'),
 (2, 'ru'),
 (3, 'uk');
@@ -45,20 +45,20 @@ INSERT INTO `ada_langs` (`id`, `code`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ada_test`
+-- Table structure for table `joom_test`
 --
 
-CREATE TABLE `ada_test` (
+CREATE TABLE `joom_test` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `text` text COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `ada_test`
+-- Dumping data for table `joom_test`
 --
 
-INSERT INTO `ada_test` (`id`, `name`, `text`) VALUES
+INSERT INTO `joom_test` (`id`, `name`, `text`) VALUES
 (1, 'Test 1', 'Lorem 1 ipsum dolor sit amet'),
 (2, 'Test 2', 'Lorem 2 ipsum dolor sit amet'),
 (3, 'Test 3', 'Lorem 3 ipsum dolor sit amet');
@@ -66,10 +66,10 @@ INSERT INTO `ada_test` (`id`, `name`, `text`) VALUES
 -- --------------------------------------------------------
 
 --
--- Table structure for table `ada_tpls`
+-- Table structure for table `joom_tpls`
 --
 
-CREATE TABLE `ada_tpls` (
+CREATE TABLE `joom_tpls` (
   `id` int(11) NOT NULL,
   `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `side` tinyint(4) NOT NULL,
@@ -79,10 +79,10 @@ CREATE TABLE `ada_tpls` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `ada_tpls`
+-- Dumping data for table `joom_tpls`
 --
 
-INSERT INTO `ada_tpls` (`id`, `name`, `side`, `active`, `state`, `params`) VALUES
+INSERT INTO `joom_tpls` (`id`, `name`, `side`, `active`, `state`, `params`) VALUES
 (1, 'default', 0, 1, 1, ''),
 (2, 'default', 1, 1, 1, '');
 
@@ -91,21 +91,21 @@ INSERT INTO `ada_tpls` (`id`, `name`, `side`, `active`, `state`, `params`) VALUE
 --
 
 --
--- Indexes for table `ada_langs`
+-- Indexes for table `joom_langs`
 --
-ALTER TABLE `ada_langs`
+ALTER TABLE `joom_langs`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `ada_test`
+-- Indexes for table `joom_test`
 --
-ALTER TABLE `ada_test`
+ALTER TABLE `joom_test`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `ada_tpls`
+-- Indexes for table `joom_tpls`
 --
-ALTER TABLE `ada_tpls`
+ALTER TABLE `joom_tpls`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -113,21 +113,21 @@ ALTER TABLE `ada_tpls`
 --
 
 --
--- AUTO_INCREMENT for table `ada_langs`
+-- AUTO_INCREMENT for table `joom_langs`
 --
-ALTER TABLE `ada_langs`
+ALTER TABLE `joom_langs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `ada_test`
+-- AUTO_INCREMENT for table `joom_test`
 --
-ALTER TABLE `ada_test`
+ALTER TABLE `joom_test`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
--- AUTO_INCREMENT for table `ada_tpls`
+-- AUTO_INCREMENT for table `joom_tpls`
 --
-ALTER TABLE `ada_tpls`
+ALTER TABLE `joom_tpls`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 COMMIT;
 

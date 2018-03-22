@@ -19,8 +19,8 @@
 
 
     Db::add([
-        'name'   => 'ada',
-        'prefix' => 'ada_'
+        'name'   => 'joom',
+        'prefix' => 'joom_'
     ]);
     $db = Db::init();
 
