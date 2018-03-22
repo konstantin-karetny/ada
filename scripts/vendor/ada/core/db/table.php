@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 21.03.2018
+    * @version   1.0.0 22.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,24 +11,25 @@
 
     abstract class Table extends \Ada\Core\Proto {
 
-        use \Ada\Core\Traits\Singleton;
+        protected static
+            $insts   = [];
 
         protected
             $columns,
             $db      = null,
+            $engine  = '',
             $name    = '';
 
         public static function init(string $name, $db) {
-            return static::initSingleton(
-                $db->getPrefix() . $name,
-                true,
-                ...func_get_args()
-            );
+
+
+
+            $id = $db->getPrefix() . $name;
+            return static::$insts[$id] = new static(...func_get_args());
         }
 
         protected function __construct(string $name, Driver $db) {
             $this->db   = $db;
-            $this->id   =
             $this->name = \Ada\Core\Clean::cmd($name);
         }
 

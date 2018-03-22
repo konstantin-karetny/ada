@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   ada/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 22.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,7 +11,8 @@
 
     class Client extends Proto {
 
-        use Traits\Singleton;
+        protected static
+            $cache;
 
         const
             SIGNATURE_PARTS = [
@@ -22,40 +23,41 @@
             ];
 
         protected
-            $auth          = '',
-            $browser       = '',
-            $cache_control = 'no-cache',
-            $charset       = 'UTF-8',
-            $content_type  = 'text/html',
-            $encoding      = '',
-            $ip            = '',
-            $lang          = 'en';
+            $auth           = '',
+            $browser        = '',
+            $cache_control  = 'no-cache',
+            $charset        = 'UTF-8',
+            $content_type   = 'text/html',
+            $encoding       = '',
+            $ip             = '',
+            $lang           = 'en';
 
         public static function init(bool $current = true): self {
-            return
-                $current
-                    ? static::initSingleton('', true, ...func_get_args())
-                    : new static($current);
+            return new static($current);
         }
 
-        protected function __construct(bool $current = true) {
+        public function __construct(bool $current = true) {
             if (!$current) {
                 return;
             }
-            foreach ($this as $prop => $val) {
-                $method   = Strings::toCamelCase($prop);
-                $detector = 'detect' . $method;
-                if (!method_exists($this, $detector)) {
-                    continue;
+            if (!static::$cache) {
+                foreach ($this as $prop => $v) {
+                    $detector = 'detect' . Strings::toCamelCase($prop);
+                    if (!method_exists($this, $detector)) {
+                        continue;
+                    }
+                    switch ($prop) {
+                        case 'ip':
+                            $v = $this->$detector(false, $v);
+                            break;
+                        default:
+                            $v = $this->$detector($v);
+                    }
+                    static::$cache[$prop] = $v;
                 }
-                switch ($prop) {
-                    case 'ip':
-                        $val = $this->$detector(false, $val);
-                        break;
-                    default:
-                        $val = $this->$detector($val);
-                }
-                $this->{'set' . $method}($val);
+            }
+            foreach (static::$cache as $prop => $v) {
+                $this->{'set' . Strings::toCamelCase($prop)}($v);
             }
         }
 

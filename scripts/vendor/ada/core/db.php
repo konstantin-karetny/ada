@@ -11,7 +11,8 @@
 
     class Db extends Proto {
 
-        use \Ada\Core\Traits\Singleton;
+        protected static
+            $insts         = [];
 
         const
             DEFAULT_DRIVER = 'mysql';
@@ -44,8 +45,14 @@
             return $res;
         }
 
-        public static function init(int $id  = 0): Db\Driver {
-            return static::initSingleton($id);
+        public static function init(int $id = 0): Db\Driver {
+            if (!isset(static::$insts[$id])) {
+                throw new Exception(
+                    'No database added with identifier \'' . $id . '\'',
+                    1
+                );
+            }
+            return static::$insts[$id];
         }
 
     }
