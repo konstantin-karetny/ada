@@ -12,10 +12,21 @@
     class Driver extends \Ada\Core\Db\Driver {
 
         protected
-            $min_version = '10.0';
+            $min_version = '9.6',
+            $dsn_format  = '%driver%:host=%host%;port=%port%;dbname=%name%;user=%user%;password=%password%',
+            $port        = 5432;
 
         public static function init(array $params): self {
             return new static($params);
+        }
+
+        protected function detectCollation(): string {
+            return $this->fetchCell('
+                SELECT ' . $this->q('DEFAULT_COLLATION_NAME') . '
+                FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
+                WHERE '  . $this->q('SCHEMA_NAME') . '
+                LIKE '   . $this->esc($this->getName()) . '
+            ');
         }
 
     }

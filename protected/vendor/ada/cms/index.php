@@ -23,13 +23,19 @@
         'name'   => 'project',
         'prefix' => 'pj_'
     ]);
-    $db = Db::init();
+    Db::add([
+        'driver' => 'pgsql',
+        'name'   => 'project',
+        'prefix' => 'pj_',
+        'user'   => 'postgres',
+    ]);
+    $db = Db::init(1);
 
 
 
-    $table = $db->getTable('testz');
+    $table = $db->getTable('ids');
     $table->getColumns();
-    exit(var_dump( $table->create() ));
+    exit(var_dump( $table ));
 
 
 

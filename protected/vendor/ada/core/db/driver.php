@@ -45,6 +45,7 @@
             $password    = '',
             /** @var \PDO */
             $pdo         = null,
+            $port        = 3306,
             $prefix      = '',
             $quote       = '`',
             /** @var \PDOStatement */
@@ -399,6 +400,10 @@
             return $this->prefix;
         }
 
+        public function getPort(): int {
+            return $this->port;
+        }
+
         public function getQuote(): string {
             return $this->quote;
         }
@@ -574,7 +579,7 @@
                 SELECT ' . $this->q('DEFAULT_COLLATION_NAME') . '
                 FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
                 WHERE '  . $this->q('SCHEMA_NAME') . '
-                LIKE ' . $this->esc($this->getName()) . '
+                LIKE '   . $this->esc($this->getName()) . '
             ');
         }
 
