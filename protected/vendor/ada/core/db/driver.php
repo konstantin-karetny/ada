@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.03.2018
+    * @version   1.0.0 23.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -32,25 +32,25 @@
                 \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
                 \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
             ],
-            $cached      = [],
-            $charset     = 'utf8mb4',
+            $charset     = 'utf8',
             $collation   = 'utf8mb4_unicode_ci',
             $date_format = 'Y-m-d H:i:s',
-            $dsn_format  = '%driver%:host=%host%;dbname=%name%;charset=%charset%',
-            $driver      = 'mysql',
+            $dsn_format  = '',
+            $driver      = \Ada\Core\Db::DEFAULT_DRIVER,
             $fetch_mode  = [],
-            $host        = '127.0.0.1',
+            $host        = 'localhost',
             $min_version = '',
             $name        = '',
             $password    = '',
             /** @var \PDO */
             $pdo         = null,
-            $port        = 3306,
+            $port        = 0,
             $prefix      = '',
             $quote       = '`',
             /** @var \PDOStatement */
             $stmt        = null,
-            $user        = 'root';
+            $user        = '',
+            $version     = '';
 
         public static function init(array $params) {
             return new static($params);
@@ -66,6 +66,7 @@
                     \Ada\Core\Type::get($this->$k)
                 );
             }
+            $this->load();
             if (
                 version_compare(
                     $this->getVersion(),
@@ -343,11 +344,7 @@
         }
 
         public function getCollation(): string {
-            if (in_array('collation', $this->cached)) {
-                return $this->collation;
-            }
-            array_push($this->cached, 'collation');
-            return $this->collation = $this->detectCollation();
+            return $this->collation;
         }
 
         public function getColumnsCount(): int {
@@ -418,7 +415,7 @@
         }
 
         public function getVersion(): string {
-            return (string) $this->getAttribute(\PDO::ATTR_SERVER_VERSION);
+            return $this->version;
         }
 
         public function insert(string $table, array $data): bool {
@@ -573,14 +570,9 @@
             );
         }
 
-
-        protected function detectCollation(): string {
-            return $this->fetchCell('
-                SELECT ' . $this->q('DEFAULT_COLLATION_NAME') . '
-                FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
-                WHERE '  . $this->q('SCHEMA_NAME') . '
-                LIKE '   . $this->esc($this->getName()) . '
-            ');
+        protected function load(): bool {
+            $this->version = (string) $this->getAttribute(\PDO::ATTR_SERVER_VERSION);
+            return true;
         }
 
     }

@@ -25,11 +25,13 @@
     ]);
     Db::add([
         'driver' => 'pgsql',
-        'name'   => 'project',
+        'name'   => 'postgres',
         'prefix' => 'pj_',
         'user'   => 'postgres',
     ]);
     $db = Db::init(1);
+
+    exit(var_dump( Db::init(0), Db::init(1) ));
 
 
 
