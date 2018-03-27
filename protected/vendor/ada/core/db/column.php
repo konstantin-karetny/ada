@@ -28,8 +28,7 @@
 
         public function __construct(string $name, Table $table) {
             $this->setName($name);
-            $this->table     = $table;
-            $this->collation = $table->getCollation();
+            $this->table = $table;
         }
 
         public function create(self $after = null): bool {

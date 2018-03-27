@@ -7,6 +7,6 @@
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Db\Drivers\MySQL;
+    namespace Ada\Core\Db\Drivers\PgSQL;
 
     class Column extends \Ada\Core\Db\Column {}

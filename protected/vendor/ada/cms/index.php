@@ -19,6 +19,11 @@
 
 
 
+
+
+
+
+
     Db::add([
         'name'   => 'project',
         'prefix' => 'pj_'
@@ -31,7 +36,7 @@
     ]);
     $db = Db::init(1);
 
-    exit(var_dump( Db::init(0), Db::init(1) ));
+    exit(var_dump( Db::init(1)->getTable('test')->getColumns() ));
 
 
 

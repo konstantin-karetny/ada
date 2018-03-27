@@ -23,7 +23,6 @@
         }
 
         protected function load(): bool {
-            parent::load();
             $res = $this->fetchRow('
                 SELECT ' .
                     $this->q('DEFAULT_CHARACTER_SET_NAME') . ', ' .
@@ -34,6 +33,9 @@
             ');
             $this->charset   = $res['DEFAULT_CHARACTER_SET_NAME'];
             $this->collation = $res['DEFAULT_COLLATION_NAME'];
+            $this->version   = (string) $this->getAttribute(
+                \PDO::ATTR_SERVER_VERSION
+            );
             return true;
         }
 

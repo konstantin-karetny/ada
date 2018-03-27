@@ -405,9 +405,12 @@
             return $this->quote;
         }
 
-        public function getTable(string $name): \Ada\Core\Db\Table {
+        public function getTable(
+            string $name,
+            bool   $cached = true
+        ): \Ada\Core\Db\Table {
             $class = $this->getNameSpace() . '\Table';
-            return $class::init($name, $this);
+            return $class::init($name, $this, $cached);
         }
 
         public function getUser(): string {
@@ -570,9 +573,6 @@
             );
         }
 
-        protected function load(): bool {
-            $this->version = (string) $this->getAttribute(\PDO::ATTR_SERVER_VERSION);
-            return true;
-        }
+        abstract protected function load(): bool;
 
     }

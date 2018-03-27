@@ -12,35 +12,24 @@
     abstract class Table extends \Ada\Core\Proto {
 
         protected static
-            $insts          = [];
+            $cache   = [];
 
         protected
-            $auto_increment  = 0,
-            $cache           = [],
-            $charset         = '',
-            $collation       = '',
-            $columns         = [],
-            $create_datetime = '',
-            $db              = null,
-            $engine          = 'InnoDB',
-            $exists          = false,
-            $name            = '',
-            $rows_qty        = 0,
-            $size            = 0;
+            $charset = '',
+            $columns = [],
+            $db      = null,
+            $exists  = false,
+            $name    = '';
 
-        public static function init(string $name, $db) {
-            $id = $db->getPrefix() . $name;
-            return
-                static::$insts[$id]
-                    ?? static::$insts[$id] = new static(...func_get_args());
+        public static function init(string $name, $db, bool $cached) {
+            return new static(...func_get_args());
         }
 
-        protected function __construct(string $name, Driver $db) {
-            $this->db        = $db;
-            $this->charset   = $db->getCharset();
-            $this->collation = $db->getCollation();
-            $this->name      = \Ada\Core\Clean::cmd($name);
-            $this->exists    = $this->load();
+        protected function __construct(string $name, Driver $db, bool $cached) {
+            $this->db      = $db;
+            $this->charset = $db->getCharset();
+            $this->name    = \Ada\Core\Clean::cmd($name);
+            $this->exists  = $this->load($cached);
         }
 
         public function create(): bool {
@@ -97,16 +86,8 @@
             return $this->exists;
         }
 
-        public function getAutoIncrement(): int {
-            return $this->auto_increment;
-        }
-
         public function getCharset(): string {
             return $this->charset;
-        }
-
-        public function getCollation(): string {
-            return $this->collation;
         }
 
         public function getColumn(string $name): Column {
@@ -122,47 +103,23 @@
         }
 
         public function getColumns(): array {
-            if (isset($this->cache['columns'])) {
+            if (isset(static::$cache['columns'])) {
                 return $this->columns;
             }
-            $this->cache['columns'] = true;
+            static::$cache['columns'] = true;
             return $this->columns = $this->loadColumns();
-        }
-
-        public function getCreateDatetime(): string {
-            return $this->create_datetime;
         }
 
         public function getDb(): Driver {
             return $this->db;
         }
 
-        public function getEngine(): string {
-            return $this->engine;
-        }
-
         public function getName(bool $prefix = false): string {
             return ($prefix ? $this->getDb()->getPrefix() : '') . $this->name;
         }
 
-        public function getRowsQty(): int {
-            return $this->rows_qty;
-        }
-
-        public function getSize(): int {
-            return $this->size;
-        }
-
-        public function setAutoIncrement(int $auto_increment) {
-            $this->auto_increment = $auto_increment;
-        }
-
         public function setCharset(string $charset) {
             $this->charset = \Ada\Core\Clean::cmd($charset);
-        }
-
-        public function setCollation(string $collation) {
-            $this->collation = \Ada\Core\Clean::cmd($collation);
         }
 
         public function setColumn(Column $column) {
@@ -175,70 +132,28 @@
             }
         }
 
-        public function setEngine(string $engine) {
-            $this->engine = \Ada\Core\Clean::cmd($engine);
+        protected function cache(string $name, $value = null) {
+            $db      = $this->getDb();
+            $driver  = $db->getDriver();
+            $db_name = $db->getName();
+            $t_name  = $this->getName(true);
+            if (!isset(static::$cache[$driver])) {
+                static::$cache[$driver] = [];
+            }
+            if (!isset(static::$cache[$driver][$db_name])) {
+                static::$cache[$driver][$db_name] = [];
+            }
+            if (!isset(static::$cache[$driver][$db_name][$t_name])) {
+                static::$cache[$driver][$db_name][$t_name] = [];
+            }
+            if ($value === null) {
+                return static::$cache[$driver][$db_name][$t_name][$name] ?? null;
+            }
+            static::$cache[$driver][$db_name][$t_name][$name] = $value;
         }
 
-        protected function load(): bool {
-            if (isset($this->cache['load'])) {
-                return $this->cache['load'];
-            }
-            $db   = $this->getDb();
-            $info = (array) $db->fetchRow(
-                'SHOW TABLE STATUS LIKE ' . $db->esc($this->getName(true))
-            );
-            if (!$info) {
-                return $this->cache['load'] = false;
-            }
-            foreach ($info as $k => $v) {
-                switch ($k) {
-                    case 'Auto_increment':
-                        $this->setAutoIncrement($v);
-                        break;
-                    case 'Collation':
-                        $this->setCollation($v);
-                        break;
-                    case 'Create_time':
-                        $this->create_datetime = (string) $v;
-                        break;
-                    case 'Engine':
-                        $this->setEngine($v);
-                        break;
-                    case 'Rows':
-                        $this->rows_qty = (int) $v;
-                        break;
-                    case 'Data_length':
-                        $this->size = (int) $v;
-                        break;
-                }
-            }
-            return $this->cache['load'] = true;
-        }
+        abstract protected function load(bool $cached): bool;
 
-        protected function loadColumns(): array {
-            $res = [];
-            if (!$this->exists()) {
-                return $res;
-            }
-            $db    = $this->getDb();
-            $class = $db->getNameSpace() . '\Column';
-            foreach (
-                $db->fetchRows('SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
-            ) as $params) {
-                $type_length = explode('(', rtrim($params['Type'], ')'));
-                $column      = $class::init($params['Field'], $this);
-                $column->setIsAutoIncrement(
-                    stripos('auto_increment', $params['Extra']) !== false
-                );
-                $column->setCollation((string) $params['Collation']);
-                $column->setDefaultValue($params['Default']);
-                $column->setLength($type_length[1] ?? '');
-                $column->setIsNull($params['Null'] != 'NO');
-                $column->setIsPrimaryKey($params['Key'] == 'PRI');
-                $column->setType((string) $type_length[0]);
-                $res[$column->getName()] = $column;
-            }
-            return $res;
-        }
+        abstract protected function loadColumns(): array;
 
     }
