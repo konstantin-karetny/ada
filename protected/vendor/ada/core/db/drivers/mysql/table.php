@@ -78,8 +78,12 @@
                 $column->setCollation($params['Collation']);
                 $column->setDefaultValue($params['Default']);
                 $column->setLength($type_length[1] ?? '');
-                $column->setIsNull($params['Null'] != 'NO');
-                $column->setIsPrimaryKey($params['Key'] == 'PRI');
+                $column->setIsNull(
+                    strtoupper(trim($params['Null'])) != 'NO'
+                );
+                $column->setIsPrimaryKey(
+                    strtoupper(trim($params['Key'])) == 'PRI'
+                );
                 $column->setType($type_length[0]);
                 $res[$column->getName()] = $column;
             }
