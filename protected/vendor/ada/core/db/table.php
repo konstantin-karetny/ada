@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.03.2018
+    * @version   1.0.0 28.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -90,8 +90,8 @@
             return $this->charset;
         }
 
-        public function getColumn(string $name): Column {
-            $columns = $this->getColumns();
+        public function getColumn(string $name, bool $cached = true): Column {
+            $columns = $this->getColumns($cached);
             if (!isset($columns[$name])) {
                 throw new \Ada\Core\Exception(
                     'Uncknown column \'' . $name . '\' ' .
@@ -102,12 +102,9 @@
             return $columns[$name];
         }
 
-        public function getColumns(): array {
-            if (isset(static::$cache['columns'])) {
-                return $this->columns;
-            }
-            static::$cache['columns'] = true;
-            return $this->columns = $this->loadColumns();
+        public function getColumns(bool $cached = true): array {
+            $this->loadColumns($cached);
+            return $this->columns;
         }
 
         public function getDb(): Driver {
@@ -152,8 +149,8 @@
             static::$cache[$driver][$db_name][$t_name][$name] = $value;
         }
 
-        abstract protected function load(bool $cached): bool;
+        abstract protected function load(bool $cached = true): bool;
 
-        abstract protected function loadColumns(): array;
+        abstract protected function loadColumns(bool $cached = true): bool;
 
     }

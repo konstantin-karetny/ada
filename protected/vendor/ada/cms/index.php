@@ -36,7 +36,14 @@
     ]);
     $db = Db::init(1);
 
-    exit(var_dump( Db::init(1)->getTable('test')->getColumns() ));
+    $t1 = Db::init(0)->getTable('test');
+    $t1->getColumns();
+    $t2 = Db::init(0)->getTable('test');
+    $t2->getColumns();
+
+
+
+    exit(var_dump( $t1, $t2 ));
 
 
 

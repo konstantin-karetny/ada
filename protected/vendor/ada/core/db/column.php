@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.03.2018
+    * @version   1.0.0 28.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -17,6 +17,7 @@
             $is_auto_increment = false,
             $is_null           = false,
             $is_primary_key    = false,
+            $is_unique_key     = false,
             $length            = '',
             $name              = '',
             $table             = null,
@@ -27,7 +28,7 @@
         }
 
         public function __construct(string $name, Table $table) {
-            $this->setName($name);
+            $this->name  = \Ada\Core\Clean::cmd($name);
             $this->table = $table;
         }
 
@@ -101,6 +102,10 @@
             return $this->is_primary_key;
         }
 
+        public function isUniqueKey(): bool {
+            return $this->is_unique_key;
+        }
+
         public function setCollation(string $collation) {
             $this->collation = \Ada\Core\Clean::cmd($collation);
         }
@@ -121,12 +126,12 @@
             $this->is_primary_key = $is_primary_key;
         }
 
-        public function setLength(string $length) {
-            $this->length = \Ada\Core\Type::set($length);
+        public function setIsUniqueKey(bool $is_unique_key) {
+            $this->is_unique_key = $is_unique_key;
         }
 
-        public function setName(string $name) {
-            $this->name = \Ada\Core\Clean::cmd($name);
+        public function setLength(string $length) {
+            $this->length = \Ada\Core\Type::set($length);
         }
 
         public function setType(string $type) {

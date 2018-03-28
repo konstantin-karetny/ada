@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.03.2018
+    * @version   1.0.0 28.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -36,58 +36,66 @@
             $this->engine = \Ada\Core\Clean::cmd($engine);
         }
 
-        protected function load(bool $cached): bool {
-            if ($cached && $this->cache(__FUNCTION__)) {
-                return $this->cache(__FUNCTION__);
+        protected function load(bool $cached = true): bool {
+            $cache = $this->cache(__FUNCTION__);
+            if ($cached && $cache) {
+                $load = $cache;
             }
-            $db   = $this->getDb();
-            $load = (array) $db->fetchRow(
-                'SHOW TABLE STATUS LIKE ' . $db->esc($this->getName(true))
-            );
-            if (!$load) {
-                return false;
+            else {
+                $db  = $this->getDb();
+                $row = $db->fetchRow(
+                    'SHOW TABLE STATUS LIKE ' . $db->esc($this->getName(true))
+                );
+                if (!$row) {
+                    return false;
+                }
+                $load = [
+                    'collation' => (string) $row['Collation'],
+                    'engine'    => (string) $row['Engine']
+                ];
+                $this->cache(__FUNCTION__, $load);
             }
             foreach ($load as $k => $v) {
-                switch ($k) {
-                    case 'Collation':
-                        $this->setCollation($v);
-                        break;
-                    case 'Engine':
-                        $this->setEngine($v);
-                        break;
-                }
+                $this->{'set' . \Ada\Core\Strings::toCamelCase($k)}($v);
             }
-            $this->cache(__FUNCTION__, $load);
             return true;
         }
 
-        protected function loadColumns(): array {
-            $res = [];
+        protected function loadColumns(bool $cached = true): bool {
             if (!$this->exists()) {
-                return $res;
+                return false;
             }
-            $db = $this->getDb();
-            foreach ($db->fetchRows('
-                SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
-            ) as $params) {
-                $type_length = explode('(', rtrim($params['Type'], ')'));
-                $column      = Column::init($params['Field'], $this);
-                $column->setIsAutoIncrement(
-                    stripos('auto_increment', $params['Extra']) !== false
-                );
-                $column->setCollation($params['Collation']);
-                $column->setDefaultValue($params['Default']);
-                $column->setLength($type_length[1] ?? '');
-                $column->setIsNull(
-                    strtoupper(trim($params['Null'])) != 'NO'
-                );
-                $column->setIsPrimaryKey(
-                    strtoupper(trim($params['Key'])) == 'PRI'
-                );
-                $column->setType($type_length[0]);
-                $res[$column->getName()] = $column;
+            $cache = $this->cache(__FUNCTION__);
+            if ($cached && $cache) {
+                $columns = $cache;
             }
-            return $res;
+            else {
+                $db      = $this->getDb();
+                $columns = [];
+                foreach ($db->fetchRows(
+                    'SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
+                ) as $row) {
+                    $type_length = explode('(', rtrim($row['Type'], ')'));
+                    $column      = Column::init($row['Field'], $this);
+                    $column->setIsAutoIncrement(
+                        stripos('auto_increment', $row['Extra']) !== false
+                    );
+                    $column->setCollation((string) $row['Collation']);
+                    $column->setDefaultValue($row['Default']);
+                    $column->setLength($type_length[1] ?? '');
+                    $column->setIsNull(
+                        strtoupper(trim($row['Null'])) != 'NO'
+                    );
+                    $column->setIsPrimaryKey(
+                        strtoupper(trim($row['Key'])) == 'PRI'
+                    );
+                    $column->setType($type_length[0]);
+                    $columns[] = $column;
+                }
+                $this->cache(__FUNCTION__, $columns);
+            }
+            $this->setColumns($columns);
+            return true;
         }
 
     }
