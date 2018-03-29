@@ -11,6 +11,61 @@
 
     class Table extends \Ada\Core\Db\Table {
 
+        public function create(): bool {
+            $db          = $this->getDb();
+            $query       = 'CREATE TABLE ' . $db->t($this->getName()) . ' (';
+            $constraints = '';
+            foreach ($this->getColumns() as $column) {
+                $query .= '
+                    ' . (
+                    $db->q($column->getName()) . ' ' .
+                    (
+                        $column->getIsAutoIncrement()
+                            ? 'serial'
+                            : (
+                                $column->getType() .
+                                (
+                                    !$column->getLength()
+                                        ? ''
+                                        : '(' . $db->esc($column->getLength()) . ')'
+                                ) .
+                                (
+                                    !$column->getDefaultValue()
+                                        ? ''
+                                        : ' DEFAULT ' . $db->esc($column->getDefaultValue())
+                                ) .
+                                (
+                                    !$column->getCollation()
+                                        ? ''
+                                        : ' COLLATE ' . $db->esc($column->getCollation())
+                                )
+                            )
+                    ) .
+                    (
+                        ($column->getIsNull() ? '' : ' NOT') . ' NULL'
+                    )
+                ) . ',';
+                if ($column->getIsPrimaryKey()) {
+                    $constraints .= ('
+                          CONSTRAINT '   . $db->t($this->getName()    . '_PK') .
+                        ' PRIMARY KEY (' . $db->q($column->getName()) . '),'
+                    );
+                }
+                if ($column->getIsUniqueKey()) {
+                    $constraints .= ('
+                          CONSTRAINT '   . $db->t($this->getName()    . '_UN') .
+                        ' UNIQUE ('      . $db->q($column->getName()) . '),'
+                    );
+                }
+            }
+            $query = (
+                rtrim($query, ",") .
+                (!$constraints ? '' : ',' . rtrim($constraints, ',')) . '
+                )'
+            );
+            return $db->exec($query);
+        }
+
         protected function load(bool $cached = true): bool {
             return true;
         }
@@ -61,7 +116,7 @@
                                 'integer'
                             ]
                         ) &&
-                        !$column->isNull() &&
+                        !$column->getIsNull() &&
                         stripos($column->getDefaultValue(), 'nextval') === 0
                     );
                     $columns[] = $column;

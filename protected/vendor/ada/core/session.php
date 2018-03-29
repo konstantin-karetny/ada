@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -17,8 +17,8 @@
             SELF_NAMESPACE    = '9be28143618f21b9456528c2ee825873';
 
         protected
-            $handler    = null,
-            $ini_params = [
+            $handler          = null,
+            $ini_params       = [
                 'cache_limiter'    => 'none',
                 'cookie_domain'    => '',
                 'cookie_lifetime'  => 0,
@@ -33,8 +33,8 @@
                 'use_strict_mode'  => true,
                 'use_trans_sid'    => false
             ],
-            $new        = true,
-            $read_only  = false;
+            $new              = true,
+            $read_only        = false;
 
         public static function init(
             array           $ini_params = [],

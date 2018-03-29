@@ -16,7 +16,7 @@
             $dsn_format  = '%driver%:host=%host%;port=%port%;dbname=%name%;user=%user%;password=%password%',
             $port        = 5432,
             $user        = 'postgres',
-            $quote       = '';
+            $quote       = '"';
 
         public static function init(array $params): self {
             return new static($params);

@@ -45,7 +45,7 @@
                 ) . '
                 COLLATE ' . $db->esc($this->getCollation()) .
                 (
-                    ($this->isNull() ? '' : ' NOT') . ' NULL'
+                    ($this->getIsNull() ? '' : ' NOT') . ' NULL'
                 ) .
                 (
                     $this->getDefaultValue()
@@ -74,6 +74,22 @@
             return $this->default_value;
         }
 
+        public function getIsAutoIncrement(): bool {
+            return $this->is_auto_increment;
+        }
+
+        public function getIsNull(): bool {
+            return $this->is_null;
+        }
+
+        public function getIsPrimaryKey(): bool {
+            return $this->is_primary_key;
+        }
+
+        public function getIsUniqueKey(): bool {
+            return $this->is_unique_key;
+        }
+
         public function getLength() {
             return $this->length;
         }
@@ -88,22 +104,6 @@
 
         public function getType(): string {
             return $this->type;
-        }
-
-        public function isAutoIncrement(): bool {
-            return $this->is_auto_increment;
-        }
-
-        public function isNull(): bool {
-            return $this->is_null;
-        }
-
-        public function isPrimaryKey(): bool {
-            return $this->is_primary_key;
-        }
-
-        public function isUniqueKey(): bool {
-            return $this->is_unique_key;
         }
 
         public function setCollation(string $collation) {
@@ -135,11 +135,7 @@
         }
 
         public function setType(string $type) {
-            $this->type = \Ada\Core\Clean::cmd($type);
-        }
-
-        public function update(): bool {
-
+            $this->type = trim(preg_replace('/[^ a-z0-9_\.-]/i', '', $type));
         }
 
     }

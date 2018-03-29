@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,7 +12,7 @@
     class UploadedFile extends Proto {
 
         const
-            ERRORS = [
+            ERRORS      = [
                 UPLOAD_ERR_OK         => 'There is no error, the file uploaded with success',
                 UPLOAD_ERR_INI_SIZE   => 'The uploaded file exceeds the maximum failszie',
                 UPLOAD_ERR_FORM_SIZE  => (

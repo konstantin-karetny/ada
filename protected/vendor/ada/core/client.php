@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,9 +11,6 @@
 
     class Client extends Proto {
 
-        protected static
-            $cache;
-
         const
             SIGNATURE_PARTS = [
                 'browser',
@@ -21,6 +18,9 @@
                 'encoding',
                 'lang'
             ];
+
+        protected static
+            $cache;
 
         protected
             $auth           = '',
@@ -42,7 +42,7 @@
             }
             if (!static::$cache) {
                 foreach ($this as $prop => $v) {
-                    $detector = 'detect' . Strings::toCamelCase($prop);
+                    $detector = 'detect' . Str::toCamelCase($prop);
                     if (!method_exists($this, $detector)) {
                         continue;
                     }
@@ -57,7 +57,7 @@
                 }
             }
             foreach (static::$cache as $prop => $v) {
-                $this->{'set' . Strings::toCamelCase($prop)}($v);
+                $this->{'set' . Str::toCamelCase($prop)}($v);
             }
         }
 
@@ -96,7 +96,7 @@
         public function getSignature(array $parts = self::SIGNATURE_PARTS): string {
             $line = implode($parts);
             foreach ($parts as $prop) {
-                $line .= $this->{'get' . Strings::toCamelCase($prop)}();
+                $line .= $this->{'get' . Str::toCamelCase($prop)}();
             }
             return Hash::asMd5($line);
         }

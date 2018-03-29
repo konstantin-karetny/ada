@@ -386,7 +386,7 @@
         }
 
         public function getNameSpace(): string {
-            return __NAMESPACE__ . '\Drivers\\' . $this->getDriver();
+            return preg_replace('/[^\\\]+$/', '', get_class($this));
         }
 
         public function getPassword(): string {
@@ -409,7 +409,7 @@
             string $name,
             bool   $cached = true
         ): \Ada\Core\Db\Table {
-            $class = $this->getNameSpace() . '\Table';
+            $class = $this->getNameSpace() . 'Table';
             return $class::init($name, $this, $cached);
         }
 

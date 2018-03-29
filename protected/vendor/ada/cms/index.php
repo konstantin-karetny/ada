@@ -12,13 +12,10 @@
 
     require_once 'includes/autoload.php';
 
+    //cache for Client, DateTime and other
     //db
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
-
-
-
-
 
 
 
@@ -34,16 +31,17 @@
         'prefix' => 'pj_',
         'user'   => 'postgres',
     ]);
-    $db = Db::init(1);
 
     $t1 = Db::init(0)->getTable('test');
     $t1->getColumns();
-    $t2 = Db::init(0)->getTable('test');
+    $t2 = Db::init(1)->getTable('test');
     $t2->getColumns();
 
 
+    $t11 = Db::init(1)->getTable('test2');
+    $t11->setColumns($t2->getColumns());
 
-    exit(var_dump( $t1, $t2 ));
+    exit(var_dump( $t11->create() ));
 
 
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,14 +12,14 @@
     class Url extends Proto {
 
         const
-            DEFAULT_PARTS = [
+            DEFAULT_PARTS       = [
                 'scheme',
                 'host',
                 'path',
                 'query',
                 'fragment'
             ],
-            PARTS = [
+            PARTS               = [
                 'scheme',
                 'user',
                 'password',
@@ -29,18 +29,18 @@
                 'query',
                 'fragment'
             ],
-            ROOT_DEFAULT_PARTS = [
+            ROOT_DEFAULT_PARTS  = [
                 'scheme',
                 'host'
             ],
-            ROOT_PARTS = [
+            ROOT_PARTS          = [
                 'scheme',
                 'user',
                 'password',
                 'host',
                 'port'
             ],
-            SCHEMES = [
+            SCHEMES             = [
                 'http',
                 'https'
             ],
@@ -63,7 +63,7 @@
                 '['  => '%5B',
                 ']'  => '%5D'
             ],
-            UNSAFE_CHARS_CODES = [
+            UNSAFE_CHARS_CODES  = [
                 '\'' => '%27',
                 '"'  => '%22',
                 '<'  => '%3C',
@@ -71,20 +71,20 @@
             ];
 
         protected static
-            $current      = '',
-            $default_root = '',
-            $inited       = '';
+            $current            = '',
+            $default_root       = '',
+            $inited             = '';
 
         protected
-            $fragment     = '',
-            $host         = '',
-            $password     = '',
-            $path         = '',
-            $port         = 80,
-            $query        = '',
-            $scheme       = '',
-            $user         = '',
-            $vars         = [];
+            $fragment           = '',
+            $host               = '',
+            $password           = '',
+            $path               = '',
+            $port               = 80,
+            $query              = '',
+            $scheme             = '',
+            $user               = '',
+            $vars               = [];
 
         public static function check(string $url, $options = null): bool {
             if (filter_var($url, FILTER_VALIDATE_URL, $options)) {

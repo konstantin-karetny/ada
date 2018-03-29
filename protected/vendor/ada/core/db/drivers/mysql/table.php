@@ -11,29 +11,80 @@
 
     class Table extends \Ada\Core\Db\Table {
 
-        protected
-            $collation = '',
-            $engine    = 'InnoDB';
+        const
+            DEFAULT_ENGINE = 'InnoDB';
 
         protected function __construct(string $name, Driver $db, bool $cached) {
             $this->collation = $db->getCollation();
+            $this->engine    = static::DEFAULT_ENGINE;
             parent::__construct($name, $db, $cached);
         }
 
-        public function getCollation(): string {
-            return $this->collation;
-        }
-
-        public function getEngine(): string {
-            return $this->engine;
-        }
-
-        public function setCollation(string $collation) {
-            $this->collation = \Ada\Core\Clean::cmd($collation);
-        }
-
-        public function setEngine(string $engine) {
-            $this->engine = \Ada\Core\Clean::cmd($engine);
+        public function create(): bool {
+            $db          = $this->getDb();
+            $query       = 'CREATE TABLE ' . $db->t($this->getName()) . ' (';
+            $constraints = '';
+            foreach ($this->getColumns() as $column) {
+                $query .= '
+                    ' . (
+                    $db->q($column->getName()) . ' ' .
+                    $column->getType() .
+                    (
+                        !$column->getLength()
+                            ? ''
+                            : '(' . $db->esc($column->getLength()) . ')'
+                    ) .
+                    (
+                        !$column->getDefaultValue()
+                            ? ''
+                            : ' DEFAULT ' . $db->esc($column->getDefaultValue())
+                    ) .
+                    (
+                        !$column->getCollation()
+                            ? ''
+                            : ' COLLATE ' . $db->esc($column->getCollation())
+                    ) .
+                    (
+                        ($column->getIsNull() ? '' : ' NOT') . ' NULL'
+                    ) .
+                    (
+                        $column->getIsAutoIncrement() ? ' AUTO_INCREMENT' : ''
+                    )
+                ) . ',';
+                if ($column->getIsPrimaryKey()) {
+                    $constraints .= ('
+                          CONSTRAINT '   . $db->t($this->getName()    . '_PK') .
+                        ' PRIMARY KEY (' . $db->q($column->getName()) . '),'
+                    );
+                }
+                if ($column->getIsUniqueKey()) {
+                    $constraints .= ('
+                          CONSTRAINT '   . $db->t($this->getName()    . '_UN') .
+                        ' UNIQUE KEY ('  . $db->q($column->getName()) . '),'
+                    );
+                }
+            }
+            $query = (
+                rtrim($query, ",") .
+                (!$constraints ? '' : ',' . rtrim($constraints, ',')) . '
+                )' .
+                (
+                    !$this->getEngine()
+                        ? ''
+                        : ' ENGINE = ' . $db->esc($this->getEngine())
+                ) .
+                (
+                    !$this->getCharset()
+                        ? ''
+                        : ' DEFAULT CHARSET = ' . $db->esc($this->getCharset())
+                ) .
+                (
+                    !$this->getCollation()
+                        ? ''
+                        : ' COLLATE = ' . $db->esc($this->getCollation())
+                )
+            );
+            return $db->exec($query);
         }
 
         protected function load(bool $cached = true): bool {
@@ -56,7 +107,7 @@
                 $this->cache(__FUNCTION__, $load);
             }
             foreach ($load as $k => $v) {
-                $this->{'set' . \Ada\Core\Strings::toCamelCase($k)}($v);
+                $this->{'set' . \Ada\Core\Str::toCamelCase($k)}($v);
             }
             return true;
         }
@@ -88,6 +139,9 @@
                     );
                     $column->setIsPrimaryKey(
                         strtoupper(trim($row['Key'])) == 'PRI'
+                    );
+                    $column->setIsUniqueKey(
+                        strtoupper(trim($row['Key'])) == 'UNI'
                     );
                     $column->setType($type_length[0]);
                     $columns[] = $column;

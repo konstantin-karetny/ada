@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -43,7 +43,7 @@
         public static function renderGetters(array $props) {
             foreach ($props as $k => $v) {
                 echo '
-                    public function get' . Strings::toCamelCase($k) . '(): ' . Type::get($v) . ' {
+                    public function get' . Str::toCamelCase($k) . '(): ' . Type::get($v) . ' {
                         return $this->' . $k . ';
                     }
                 ';
@@ -53,7 +53,7 @@
         public static function renderSetters(array $props) {
             foreach ($props as $k => $v) {
                 echo '
-                    public function set' . Strings::toCamelCase($k) . '(' . Type::get($v) . ' $' . $k . '): ' . Type::get($v) . ' {
+                    public function set' . Str::toCamelCase($k) . '(' . Type::get($v) . ' $' . $k . '): ' . Type::get($v) . ' {
                         $this->' . $k . ' = $' . $k . ';
                     }
                 ';
