@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -47,6 +47,7 @@
             $port        = 0,
             $prefix      = '',
             $quote       = '`',
+            $schema      = '',
             /** @var \PDOStatement */
             $stmt        = null,
             $user        = '',
@@ -134,11 +135,11 @@
             return explode("\n", trim(ob_get_clean()));
         }
 
-        public function delete(string $table, string $condition): bool {
-            return $this->exec(
-                'DELETE FROM ' .
-                $this->t($table) .
-                'WHERE ' . $condition
+        public function deleteRow(string $table, string $condition): bool {
+            return $this->exec('
+                DELETE FROM ' .
+                $this->t($table) . '
+                WHERE ' . $condition
             );
         }
 
@@ -148,7 +149,7 @@
             return !$this->isConnected();
         }
 
-        public function esc(string $val) {
+        public function e(string $val) {
             if (is_numeric($val)) {
                 return $val * 1;
             }
@@ -224,7 +225,8 @@
             string $type    = 'auto',
             string $default = null
         ) {
-            $res = reset($this->fetchRow($query, \PDO::FETCH_NUM, []));
+            $row = $this->fetchRow($query, \PDO::FETCH_NUM, []);
+            $res = reset($row);
             return \Ada\Core\Type::set(
                 $res === false ? $default : $res,
                 $type
@@ -393,16 +395,20 @@
             return $this->password;
         }
 
-        public function getPrefix(): string {
-            return $this->prefix;
-        }
-
         public function getPort(): int {
             return $this->port;
         }
 
+        public function getPrefix(): string {
+            return $this->prefix;
+        }
+
         public function getQuote(): string {
             return $this->quote;
+        }
+
+        public function getSchema(): string {
+            return $this->schema;
         }
 
         public function getTable(
@@ -421,12 +427,23 @@
             return $this->version;
         }
 
-        public function insert(string $table, array $data): bool {
-            return $this->exec(
-                'INSERT INTO ' .
-                $this->t($table) .
-                $this->sqlSet($data)
-            );
+        public function insertRow(string $table, array $row): bool {
+            return $this->exec('
+                INSERT INTO ' .
+                $this->t($table) . '
+                (' .
+                    implode(
+                        ', ',
+                        array_map([$this, 'q'], array_keys($row))
+                    ) . '
+                )
+                VALUES(' .
+                    implode(
+                        ', ',
+                        array_map([$this, 'e'], $row)
+                    ) . '
+                )
+            ');
         }
 
         public function isConnected(): bool {
@@ -537,40 +554,31 @@
         public function sqlIn(array $array): string {
             $res = array_map(
                 function($el) {
-                    return $this->esc($el);
+                    return $this->e($el);
                 },
                 $array
             );
             return $res ? (' IN(' . implode(', ', $res) . ') ') : '';
         }
 
-        public function sqlSet(array $array): string {
-            $res = [];
-            foreach ($array as $k => $v) {
-                $res[] = (
-                    $this->q($k) .
-                    ' = ' .
-                    $this->esc(\Ada\Core\Type::set($v, 'string'))
-                );
-            }
-            return $res ? (' SET ' . implode(', ', $res) . ' ') : '';
-        }
-
         public function t(string $table, string $as = ''): string {
             return $this->q($this->getPrefix() . $table, $as);
         }
 
-        public function update(
+        public function updateRow(
             string $table,
-            array  $data,
+            array  $row,
             string $condition
         ): bool {
-            return $this->exec(
-                'UPDATE ' .
-                $this->t($table) .
-                $this->sqlSet($data) .
-                'WHERE ' . $condition
+            $query = 'UPDATE ' . $this->t($table) . ' SET ';
+            foreach ($row as $k => $v) {
+                $query .= $this->q($k) . ' = ' . $this->e($v) . ',';
+            }
+            $query = (
+                rtrim($query, " \t\n\r\0\x0B,") .
+                ' WHERE ' . $condition
             );
+            return $this->exec($query);
         }
 
         abstract protected function load(): bool;

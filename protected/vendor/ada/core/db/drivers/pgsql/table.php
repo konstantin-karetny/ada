@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 28.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -16,7 +16,7 @@
             $query       = 'CREATE TABLE ' . $db->t($this->getName()) . ' (';
             $constraints = '';
             foreach ($this->getColumns() as $column) {
-                $query .= '
+                $query  .= '
                     ' . (
                     $db->q($column->getName()) . ' ' .
                     (
@@ -27,17 +27,17 @@
                                 (
                                     !$column->getLength()
                                         ? ''
-                                        : '(' . $db->esc($column->getLength()) . ')'
+                                        : '(' . $db->e($column->getLength()) . ')'
                                 ) .
                                 (
                                     !$column->getDefaultValue()
                                         ? ''
-                                        : ' DEFAULT ' . $db->esc($column->getDefaultValue())
+                                        : ' DEFAULT ' . $db->e($column->getDefaultValue())
                                 ) .
                                 (
                                     !$column->getCollation()
                                         ? ''
-                                        : ' COLLATE ' . $db->esc($column->getCollation())
+                                        : ' COLLATE ' . $db->e($column->getCollation())
                                 )
                             )
                     ) .
@@ -47,36 +47,62 @@
                 ) . ',';
                 if ($column->getIsPrimaryKey()) {
                     $constraints .= ('
-                          CONSTRAINT '   . $db->t($this->getName()    . '_PK') .
-                        ' PRIMARY KEY (' . $db->q($column->getName()) . '),'
-                    );
+                        PRIMARY KEY (' . $db->q($column->getName()) . '),
+                    ');
                 }
                 if ($column->getIsUniqueKey()) {
                     $constraints .= ('
-                          CONSTRAINT '   . $db->t($this->getName()    . '_UN') .
-                        ' UNIQUE ('      . $db->q($column->getName()) . '),'
-                    );
+                        UNIQUE ('      . $db->q($column->getName()) . '),
+                    ');
                 }
             }
             $query = (
-                rtrim($query, ",") .
-                (!$constraints ? '' : ',' . rtrim($constraints, ',')) . '
+                rtrim($query, " \t\n\r\0\x0B,") .
+                (
+                    !$constraints
+                        ? ''
+                        : ',' . rtrim($constraints, " \t\n\r\0\x0B,")
+                ) . '
                 )'
             );
             return $db->exec($query);
         }
 
-        protected function load(bool $cached = true): bool {
+        protected function load(): bool {
+            $keys = [
+                'schema'
+            ];
+            if (\Ada\Core\Arr::arrayKeysExists($this->cache, $keys)) {
+                $load = array_intersect_key($this->cache, array_flip($keys));
+            }
+            else {
+                $db  = $this->getDb();
+                $row = $db->fetchRow('
+                    SELECT *
+                    FROM '  . $db->q('information_schema') . '.' . $db->q('tables') . '
+                    WHERE ' .
+                    $db->q('table_name') . ' LIKE ' . $db->e($this->getName(true))
+                );
+                if (!$row) {
+                    return false;
+                }
+                $load = [
+                    'schema' => \Ada\Core\Clean::cmd($row['table_schema'])
+                ];
+                $this->cache = array_merge($this->cache, $load);
+            }
+            foreach ($load as $k => $v) {
+                $this->$k = $v;
+            }
             return true;
         }
 
-        protected function loadColumns(bool $cached = true): bool {
+        protected function loadColumns(): bool {
             if (!$this->exists()) {
                 return false;
             }
-            $cache = $this->cache(__FUNCTION__);
-            if ($cached && $cache) {
-                $columns = $cache;
+            if (isset($this->cache['columns'])) {
+                $columns = $this->cache['columns'];
             }
             else {
                 $db      = $this->getDb();
@@ -92,7 +118,7 @@
                     ON '         . $db->q('c.table_schema')      . ' = '    . $db->q('kcu.table_schema') . '
                     AND '        . $db->q('c.table_name')        . ' = '    . $db->q('kcu.table_name') . '
                     AND '        . $db->q('c.column_name')       . ' = '    . $db->q('kcu.column_name') . '
-                    WHERE '      . $db->q('c.table_name')        . ' LIKE ' . $db->esc($this->getName(true)) . '
+                    WHERE '      . $db->q('c.table_name')        . ' LIKE ' . $db->e($this->getName(true)) . '
                 ') as $row) {
                     $column = Column::init($row['column_name'], $this);
                     $column->setCollation((string) $row['collation_name']);
@@ -121,7 +147,7 @@
                     );
                     $columns[] = $column;
                 }
-                $this->cache(__FUNCTION__, $columns);
+                $this->cache['columns'] = $columns;
             }
             $this->setColumns($columns);
             return true;

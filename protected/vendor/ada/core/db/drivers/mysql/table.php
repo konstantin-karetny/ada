@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 28.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,7 +14,11 @@
         const
             DEFAULT_ENGINE = 'InnoDB';
 
-        protected function __construct(string $name, Driver $db, bool $cached) {
+        protected function __construct(
+            string $name,
+            Driver $db,
+            bool   $cached = true
+        ) {
             $this->collation = $db->getCollation();
             $this->engine    = static::DEFAULT_ENGINE;
             parent::__construct($name, $db, $cached);
@@ -32,17 +36,17 @@
                     (
                         !$column->getLength()
                             ? ''
-                            : '(' . $db->esc($column->getLength()) . ')'
+                            : '(' . $db->e($column->getLength()) . ')'
                     ) .
                     (
                         !$column->getDefaultValue()
                             ? ''
-                            : ' DEFAULT ' . $db->esc($column->getDefaultValue())
+                            : ' DEFAULT ' . $db->e($column->getDefaultValue())
                     ) .
                     (
                         !$column->getCollation()
                             ? ''
-                            : ' COLLATE ' . $db->esc($column->getCollation())
+                            : ' COLLATE ' . $db->e($column->getCollation())
                     ) .
                     (
                         ($column->getIsNull() ? '' : ' NOT') . ' NULL'
@@ -53,49 +57,54 @@
                 ) . ',';
                 if ($column->getIsPrimaryKey()) {
                     $constraints .= ('
-                          CONSTRAINT '   . $db->t($this->getName()    . '_PK') .
-                        ' PRIMARY KEY (' . $db->q($column->getName()) . '),'
-                    );
+                        PRIMARY KEY (' . $db->q($column->getName()) . '),
+                    ');
                 }
                 if ($column->getIsUniqueKey()) {
                     $constraints .= ('
-                          CONSTRAINT '   . $db->t($this->getName()    . '_UN') .
-                        ' UNIQUE KEY ('  . $db->q($column->getName()) . '),'
-                    );
+                        UNIQUE KEY ('  . $db->q($column->getName()) . '),
+                    ');
                 }
             }
             $query = (
-                rtrim($query, ",") .
-                (!$constraints ? '' : ',' . rtrim($constraints, ',')) . '
+                rtrim($query, " \t\n\r\0\x0B,") .
+                (
+                    !$constraints
+                        ? ''
+                        : ',' . rtrim($constraints, " \t\n\r\0\x0B,")
+                ) . '
                 )' .
                 (
                     !$this->getEngine()
                         ? ''
-                        : ' ENGINE = ' . $db->esc($this->getEngine())
+                        : ' ENGINE = ' . $db->e($this->getEngine())
                 ) .
                 (
                     !$this->getCharset()
                         ? ''
-                        : ' DEFAULT CHARSET = ' . $db->esc($this->getCharset())
+                        : ' DEFAULT CHARSET = ' . $db->e($this->getCharset())
                 ) .
                 (
                     !$this->getCollation()
                         ? ''
-                        : ' COLLATE = ' . $db->esc($this->getCollation())
+                        : ' COLLATE = ' . $db->e($this->getCollation())
                 )
             );
             return $db->exec($query);
         }
 
-        protected function load(bool $cached = true): bool {
-            $cache = $this->cache(__FUNCTION__);
-            if ($cached && $cache) {
-                $load = $cache;
+        protected function load(): bool {
+            $keys = [
+                'collation',
+                'engine'
+            ];
+            if (\Ada\Core\Arr::arrayKeysExists($this->cache, $keys)) {
+                $load = array_intersect_key($this->cache, array_flip($keys));
             }
             else {
                 $db  = $this->getDb();
                 $row = $db->fetchRow(
-                    'SHOW TABLE STATUS LIKE ' . $db->esc($this->getName(true))
+                    'SHOW TABLE STATUS LIKE ' . $db->e($this->getName(true))
                 );
                 if (!$row) {
                     return false;
@@ -104,7 +113,7 @@
                     'collation' => (string) $row['Collation'],
                     'engine'    => (string) $row['Engine']
                 ];
-                $this->cache(__FUNCTION__, $load);
+                $this->cache = array_merge($this->cache, $load);
             }
             foreach ($load as $k => $v) {
                 $this->{'set' . \Ada\Core\Str::toCamelCase($k)}($v);
@@ -112,13 +121,12 @@
             return true;
         }
 
-        protected function loadColumns(bool $cached = true): bool {
+        protected function loadColumns(): bool {
             if (!$this->exists()) {
                 return false;
             }
-            $cache = $this->cache(__FUNCTION__);
-            if ($cached && $cache) {
-                $columns = $cache;
+            if (isset($this->cache['columns'])) {
+                $columns = $this->cache['columns'];
             }
             else {
                 $db      = $this->getDb();
@@ -146,7 +154,7 @@
                     $column->setType($type_length[0]);
                     $columns[] = $column;
                 }
-                $this->cache(__FUNCTION__, $columns);
+                $this->cache['columns'] = $columns;
             }
             $this->setColumns($columns);
             return true;

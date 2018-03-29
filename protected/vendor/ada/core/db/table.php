@@ -15,26 +15,36 @@
             DEFAULT_ENGINE = '';
 
         protected static
-            $cache         = [];
+            $caches        = [];
 
         protected
+            $cache         = [],
             $charset       = '',
             $collation     = '',
             $columns       = [],
             $db            = null,
             $engine        = '',
             $exists        = false,
-            $name          = '';
+            $name          = '',
+            $schema        = '';
 
-        public static function init(string $name, $db, bool $cached) {
+        public static function init(string $name, $db, bool $cached = true) {
             return new static(...func_get_args());
         }
 
-        protected function __construct(string $name, Driver $db, bool $cached) {
+        protected function __construct(
+            string $name,
+            Driver $db,
+            bool   $cached = true
+        ) {
             $this->db      = $db;
             $this->charset = $db->getCharset();
             $this->name    = \Ada\Core\Clean::cmd($name);
-            $this->exists  = $this->load($cached);
+            $this->cache   =& $this->getCache();
+            if (!$cached) {
+                $this->cache = [];
+            }
+            $this->exists  = $this->load();
         }
 
         abstract public function create();
@@ -42,6 +52,10 @@
         public function delete(): bool {
             $db = $this->getDb();
             return $db->exec('DROP TABLE ' . $db->t($this->getName()));
+        }
+
+        public function deleteRow(string $condition): bool {
+            return $this->getDb()->deleteRow($this->getName(), $condition);
         }
 
         public function exists(): int {
@@ -56,8 +70,8 @@
             return $this->collation;
         }
 
-        public function getColumn(string $name, bool $cached = true): Column {
-            $columns = $this->getColumns($cached);
+        public function getColumn(string $name): Column {
+            $columns = $this->getColumns();
             if (!isset($columns[$name])) {
                 $class = $this->getDb()->getNameSpace() . 'Column';
                 return $class::init($name, $this);
@@ -65,8 +79,8 @@
             return $columns[$name];
         }
 
-        public function getColumns(bool $cached = true): array {
-            $this->loadColumns($cached);
+        public function getColumns(): array {
+            $this->loadColumns();
             return $this->columns;
         }
 
@@ -80,6 +94,14 @@
 
         public function getName(bool $prefix = false): string {
             return ($prefix ? $this->getDb()->getPrefix() : '') . $this->name;
+        }
+
+        public function getSchema(): string {
+            return $this->schema;
+        }
+
+        public function insertRow(array $row): bool {
+            return $this->getDb()->insertRow($this->getName(), $row);
         }
 
         public function rename(string $name): bool {
@@ -101,13 +123,13 @@
         public function setColumn(Column $column) {
             $class = $this->getDb()->getNameSpace() . 'Column';
             $res   = $class::init($column->getName(), $this);
-            foreach (get_class_methods($column) as $method) {
-                if (substr($method, 0, 3) != 'get') {
+            foreach (get_class_methods($column) as $getter) {
+                if (substr($getter, 0, 3) != 'get') {
                     continue;
                 }
-                $setter = 's' . substr($method, 1);
+                $setter = 's' . substr($getter, 1);
                 if (method_exists($res, $setter)) {
-                    $res->$setter($column->$method());
+                    $res->$setter($column->$getter());
                 }
             }
             $this->columns[$res->getName()] = $res;
@@ -123,28 +145,27 @@
             $this->engine = \Ada\Core\Clean::cmd($engine);
         }
 
-        protected function cache(string $name, $value = null) {
-            $db      = $this->getDb();
-            $driver  = $db->getDriver();
-            $db_name = $db->getName();
-            $t_name  = $this->getName(true);
-            if (!isset(static::$cache[$driver])) {
-                static::$cache[$driver] = [];
-            }
-            if (!isset(static::$cache[$driver][$db_name])) {
-                static::$cache[$driver][$db_name] = [];
-            }
-            if (!isset(static::$cache[$driver][$db_name][$t_name])) {
-                static::$cache[$driver][$db_name][$t_name] = [];
-            }
-            if ($value === null) {
-                return static::$cache[$driver][$db_name][$t_name][$name] ?? null;
-            }
-            static::$cache[$driver][$db_name][$t_name][$name] = $value;
+        public function updateRow(array $row, string $condition): bool {
+            return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
-        abstract protected function load(bool $cached = true): bool;
+        protected function &getCache(): array {
+            $db  =  $this->getDb();
+            $res =& static::$caches;
+            foreach ([
+                $db->getDriver(),
+                $db->getName(),
+                $db->getSchema(),
+                $this->getName(true)
+            ] as $key) {
+                $res[$key] =  $res[$key] ?? [];
+                $res       =& $res[$key];
+            }
+            return $res;
+        }
 
-        abstract protected function loadColumns(bool $cached = true): bool;
+        abstract protected function load(): bool;
+
+        abstract protected function loadColumns(): bool;
 
     }

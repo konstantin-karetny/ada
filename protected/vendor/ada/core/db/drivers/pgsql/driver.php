@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -25,6 +25,8 @@
         protected function load(): bool {
             $this->charset   = $this->fetchCell('SHOW SERVER_ENCODING');
             $this->collation = $this->fetchCell('SHOW LC_COLLATE');
+            $search_pathes   = explode(' ', $this->fetchCell('SHOW search_path'));
+            $this->schema    = trim(array_pop($search_pathes));
             $this->version   = (string) $this->getAttribute(
                 \PDO::ATTR_SERVER_VERSION
             );

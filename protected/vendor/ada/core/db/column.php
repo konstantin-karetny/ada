@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 28.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -40,16 +40,16 @@
                 $this->getType() .
                 (
                     $this->getLength()
-                        ? ('(' . $db->esc($this->getLength()) . ')')
+                        ? ('(' . $db->e($this->getLength()) . ')')
                         : ''
                 ) . '
-                COLLATE ' . $db->esc($this->getCollation()) .
+                COLLATE ' . $db->e($this->getCollation()) .
                 (
                     ($this->getIsNull() ? '' : ' NOT') . ' NULL'
                 ) .
                 (
                     $this->getDefaultValue()
-                        ? (' DEFAULT' . $db->esc($this->getDefaultValue()))
+                        ? (' DEFAULT' . $db->e($this->getDefaultValue()))
                         : ''
                 ) .
                 (

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 23.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,6 +9,8 @@
 
     namespace Ada\Core;
 
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
 
     require_once 'includes/autoload.php';
 
@@ -16,7 +18,6 @@
     //db
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
-
 
 
 
@@ -32,6 +33,7 @@
         'user'   => 'postgres',
     ]);
 
+
     $t1 = Db::init(0)->getTable('test');
     $t1->getColumns();
     $t2 = Db::init(1)->getTable('test');
@@ -39,9 +41,8 @@
 
 
     $t11 = Db::init(1)->getTable('test2');
-    $t11->setColumns($t2->getColumns());
 
-    exit(var_dump( $t11->create() ));
+    exit(var_dump( $t11->getColumn('id') ));
 
 
 

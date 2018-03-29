@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.03.2018
+    * @version   1.0.0 29.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -29,7 +29,7 @@
                     $this->q('DEFAULT_COLLATION_NAME') . '
                 FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
                 WHERE '  . $this->q('SCHEMA_NAME') . '
-                LIKE '   . $this->esc($this->getName()) . '
+                LIKE '   . $this->e($this->getName()) . '
             ');
             $this->charset   = $res['DEFAULT_CHARACTER_SET_NAME'];
             $this->collation = $res['DEFAULT_COLLATION_NAME'];
