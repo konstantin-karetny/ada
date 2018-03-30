@@ -38,9 +38,9 @@
                             : '(' . $db->e($column->getLength()) . ')'
                     ) .
                     (
-                        !$column->getDefaultValue()
+                        $column->getDefaultValue() === null
                             ? ''
-                            : ' DEFAULT ' . $db->e($column->getDefaultValue())
+                            : ' DEFAULT ' . $column->getDefaultValue()
                     ) .
                     (
                         !$column->getCollation()
@@ -92,45 +92,16 @@
             if (!$db->exec($query)) {
                 return false;
             }
-            $this->cache = [];
-            $this->cache();
-            $this->setProps($this->cache);
+            $this->reInit();
             return true;
         }
 
-        protected function cache(): bool {
-            if (
-                isset(
-                    $this->cache['collation'],
-                    $this->cache['engine']
-                )
-            ) {
-                return true;
-            }
-            $db  = $this->getDb();
-            $row = $db->fetchRow(
-                'SHOW TABLE STATUS LIKE ' . $db->e($this->getName(true))
-            );
-            if (!$row) {
-                return false;
-            }
-            $this->cache = array_merge(
-                $this->cache,
-                [
-                    'collation' => (string) $row['Collation'],
-                    'engine'    => (string) $row['Engine'],
-                    'exists'    => true
-                ]
-            );
-            return true;
-        }
-
-        protected function cacheColumns(): bool {
-            if (isset($this->cache['columns'])) {
-                return true;
+        protected function fetchColumns(bool $cached = true): array {
+            if ($cached && isset($this->cache['columns'])) {
+                return $this->cache['columns'];
             }
             if (!$this->exists()) {
-                return false;
+                return [];
             }
             $db                     = $this->getDb();
             $this->cache['columns'] = [];
@@ -157,7 +128,41 @@
                 $column->setType($type_length[0]);
                 $this->cache['columns'][$column->getName()] = $column;
             }
-            return true;
+            return $this->cache['columns'];
+        }
+
+        protected function fetchDbData(bool $cached = true): array {
+            $keys = [
+                'charset',
+                'collation',
+                'engine',
+                'exists',
+                'schema'
+            ];
+            if ($cached && \Ada\Core\Arr::keysExist($this->cache, $keys)) {
+                return array_intersect_key($this->cache, array_flip($keys));
+            }
+            $db  = $this->getDb();
+            $row = $db->fetchRow('
+                SELECT *
+                FROM '  . $db->q('information_schema.TABLES', 't') . '
+                JOIN '  . $db->q('information_schema.COLLATION_CHARACTER_SET_APPLICABILITY', 'ccsa') . '
+                ON '    . $db->q('ccsa.COLLATION_NAME') . ' = '    . $db->q('t.TABLE_COLLATION') . '
+                WHERE ' . $db->q('t.TABLE_SCHEMA')      . ' LIKE ' . $db->e($db->getName()) . '
+                AND '   . $db->q('t.TABLE_NAME')        . ' LIKE ' . $db->e($this->getName(true)) . '
+            ');
+            if (!$row) {
+                return [];
+            }
+            $res = [
+                'charset'   => (string) $row['CHARACTER_SET_NAME'],
+                'collation' => (string) $row['COLLATION_NAME'],
+                'engine'    => (string) $row['ENGINE'],
+                'exists'    => true,
+                'schema'    => (string) $row['TABLE_SCHEMA']
+            ];
+            $this->cache = array_merge($this->cache, $res);
+            return $res;
         }
 
     }

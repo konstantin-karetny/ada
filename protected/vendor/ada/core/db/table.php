@@ -36,20 +36,21 @@
         ) {
             $this->db    = $db;
             $this->name  = \Ada\Core\Clean::cmd($name);
-            $this->setCharset($db->getCharset());
             $this->cache =& $this->getLinkToCache();
-            if (!$cached) {
-                $this->cache = [];
-            }
-            $this->cache();
-            $this->setProps($this->cache);
+            $this->setProps($this->fetchDbData($cached));
         }
 
-        abstract public function create();
+        abstract public function create(): bool;
 
         public function delete(): bool {
             $db = $this->getDb();
-            return $db->exec('DROP TABLE ' . $db->t($this->getName()));
+            if (
+                !$db->exec('DROP TABLE ' . $db->t($this->getName()))
+            ) {
+                return false;
+            }
+            $this->reInit();
+            return true;
         }
 
         public function deleteRow(string $condition): bool {
@@ -68,8 +69,8 @@
             return $this->collation;
         }
 
-        public function getColumn(string $name): Column {
-            $columns = $this->getColumns();
+        public function getColumn(string $name, bool $cached = true): Column {
+            $columns = $this->getColumns($cached);
             if (!isset($columns[$name])) {
                 $class = $this->getDb()->getNameSpace() . 'Column';
                 return $class::init($name, $this);
@@ -77,9 +78,8 @@
             return $columns[$name];
         }
 
-        public function getColumns(): array {
-            $this->cacheColumns();
-            return array_merge($this->cache['columns'] ?? [], $this->columns);
+        public function getColumns(bool $cached = true): array {
+            return array_merge($this->fetchColumns($cached), $this->columns);
         }
 
         public function getDb(): Driver {
@@ -103,11 +103,18 @@
         }
 
         public function rename(string $name): bool {
-            $db = $this->getDb();
-            return $db->exec('
-                RENAME TABLE ' . $db->t($this->name) . '
-                TO           ' . $db->t(\Ada\Core\Clean::cmd($name))
-            );
+            $db   = $this->getDb();
+            $name = \Ada\Core\Clean::cmd($name);
+            if (
+                !$db->exec('
+                    RENAME TABLE ' . $db->t($this->name) . '
+                    TO           ' . $db->t($name)
+                )
+            ) {
+                return false;
+            }
+            $this->name = $name;
+            return true;
         }
 
         public function setCharset(string $charset) {
@@ -147,6 +154,10 @@
             return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
+        abstract protected function fetchColumns(bool $cached = true): array;
+
+        abstract protected function fetchDbData(bool $cached = true): array;
+
         protected function &getLinkToCache(): array {
             $db  =  $this->getDb();
             $res =& static::$caches;
@@ -162,8 +173,11 @@
             return $res;
         }
 
-        abstract protected function cache(): bool;
-
-        abstract protected function cacheColumns(): bool;
+        protected function reInit(): bool {
+            $this->cache   = [];
+            $this->columns = [];
+            $this->setProps($this->fetchDbData());
+            return true;
+        }
 
     }

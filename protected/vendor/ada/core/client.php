@@ -38,11 +38,9 @@
         }
 
         public function __construct(bool $current = true) {
-            if (!$current) {
-                return;
+            if ($current) {
+                $this->setProps($this->fetchServerData());
             }
-            $this->cache();
-            $this->setProps(static::$cache);
         }
 
         public function getAuth(): string {
@@ -127,63 +125,62 @@
             $this->lang = $lang;
         }
 
-        protected function cache(): bool {
-            if (static::$cache) {
-                return true;
-            }
-            static::$cache = [
-                'auth'          => Server::getFrstExisting(
-                    [
-                        'HTTP_AUTHORIZATION',
-                        'REDIRECT_HTTP_AUTHORIZATION'
-                    ],
-                    'string',
-                    $this->getAuth()
-                ),
-                'browser'       => Server::getString(
-                    'HTTP_USER_AGENT',
-                    $this->getBrowser()
-                ),
-                'cache_control' => Server::getString(
-                    'HTTP_CACHE_CONTROL',
-                    $this->getCacheControl()
-                ),
-                'charset'       => Server::getString(
-                    'HTTP_ACCEPT_CHARSET',
-                    $this->getCharset()
-                ),
-                'content_type'  => Server::getString(
-                    'HTTP_ACCEPT',
-                    $this->getContentType()
-                ),
-                'encoding'      => Server::getString(
-                    'HTTP_ACCEPT_ENCODING',
-                    $this->getEncoding()
-                ),
-                'ip'            => Server::getString(
-                    'REMOTE_ADDR',
-                    $this->getIp()
-                ),
-                'ip_proxy'      => Server::getFrstExisting(
-                    [
-                        'HTTP_CLIENT_IP',
-                        'HTTP_X_FORWARDED_FOR'
-                    ],
-                    'string',
-                    $this->getIpProxy()
-                ),
-                'lang'          => strtolower(
-                    substr(
-                        Server::getString(
-                            'HTTP_ACCEPT_LANGUAGE',
-                            $this->getLang()
+        protected function fetchServerData(bool $cached = true): array {
+            return
+                $cached && static::$cache
+                    ? static::$cache
+                    : static::$cache = [
+                        'auth'          => Server::getFrstExisting(
+                            [
+                                'HTTP_AUTHORIZATION',
+                                'REDIRECT_HTTP_AUTHORIZATION'
+                            ],
+                            'string',
+                            $this->getAuth()
                         ),
-                        0,
-                        2
-                    )
-                )
-            ];
-            return true;
+                        'browser'       => Server::getString(
+                            'HTTP_USER_AGENT',
+                            $this->getBrowser()
+                        ),
+                        'cache_control' => Server::getString(
+                            'HTTP_CACHE_CONTROL',
+                            $this->getCacheControl()
+                        ),
+                        'charset'       => Server::getString(
+                            'HTTP_ACCEPT_CHARSET',
+                            $this->getCharset()
+                        ),
+                        'content_type'  => Server::getString(
+                            'HTTP_ACCEPT',
+                            $this->getContentType()
+                        ),
+                        'encoding'      => Server::getString(
+                            'HTTP_ACCEPT_ENCODING',
+                            $this->getEncoding()
+                        ),
+                        'ip'            => Server::getString(
+                            'REMOTE_ADDR',
+                            $this->getIp()
+                        ),
+                        'ip_proxy'      => Server::getFrstExisting(
+                            [
+                                'HTTP_CLIENT_IP',
+                                'HTTP_X_FORWARDED_FOR'
+                            ],
+                            'string',
+                            $this->getIpProxy()
+                        ),
+                        'lang'          => strtolower(
+                            substr(
+                                Server::getString(
+                                    'HTTP_ACCEPT_LANGUAGE',
+                                    $this->getLang()
+                                ),
+                                0,
+                                2
+                            )
+                        )
+                    ];
         }
 
     }

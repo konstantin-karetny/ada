@@ -14,10 +14,12 @@
 
     require_once 'includes/autoload.php';
 
-    //cache for Client, DateTime and other
+    //column drop default
+    //column delete
+    //column rename
     //db
     //db session handler
-    //Str Arr Obj classes
+    //Str, Arr and Obj classes
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
 
@@ -34,37 +36,23 @@
     ]);
 
 
-    exit(var_dump( Db::init(1)->getTable('test') ));
-
-
     $t1 = Db::init(0)->getTable('test');
     //$t1->getColumns();
     $t2 = Db::init(1)->getTable('test');
-    $t2->getColumns();
+    //$t2->getColumns();
 
 
-    $t11 = Db::init(1)->getTable('test2');
+    $db  = Db::init(0);
+    $t22 = $db->getTable('test2');
 
-    exit(var_dump( $t1 ));
-
-
-
-    $table = $db->getTable('ids');
-    $table->getColumns();
-    exit(var_dump( $table ));
-
-
-
-
-
-    $column = $table->getColumn('state');
+    $column = $t22->getColumn('state');
     $column->setLength(255);
     $column->setType('varchar');
-    $column->setCollation('utf8_general_ci');
-    $column->setDefaultValue('defffffff');
+    $column->setDefaultValue('false');
+    $column->setIsUniqueKey(true);
 
     exit(var_dump(
-        $column->create($table->getColumn('id')),
+        $column,
         $db->debugInfo()
     ));
 

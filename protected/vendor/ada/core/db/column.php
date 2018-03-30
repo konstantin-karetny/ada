@@ -32,31 +32,7 @@
             $this->table = $table;
         }
 
-        public function create(self $after = null): bool {
-            $db = $this->getDb();
-            return $db->exec('
-                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
-                ADD '         . $db->q($this->getName()) . ' ' .
-                $this->getType() .
-                (
-                    $this->getLength()
-                        ? ('(' . $db->e($this->getLength()) . ')')
-                        : ''
-                ) . '
-                COLLATE ' . $db->e($this->getCollation()) .
-                (
-                    ($this->getIsNull() ? '' : ' NOT') . ' NULL'
-                ) .
-                (
-                    $this->getDefaultValue()
-                        ? (' DEFAULT' . $db->e($this->getDefaultValue()))
-                        : ''
-                ) .
-                (
-                    $after ? (' AFTER ' . $db->q($after->getName())) : ''
-                )
-            );
-        }
+        abstract public function add(): bool;
 
         public function delete(): bool {
 

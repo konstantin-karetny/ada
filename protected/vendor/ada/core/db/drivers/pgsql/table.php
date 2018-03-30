@@ -30,9 +30,9 @@
                                         : '(' . $db->e($column->getLength()) . ')'
                                 ) .
                                 (
-                                    !$column->getDefaultValue()
+                                    $column->getDefaultValue() === null
                                         ? ''
-                                        : ' DEFAULT ' . $db->e($column->getDefaultValue())
+                                        : ' DEFAULT ' . $column->getDefaultValue()
                                 ) .
                                 (
                                     !$column->getCollation()
@@ -68,44 +68,16 @@
             if (!$db->exec($query)) {
                 return false;
             }
-            $this->cache = [];
-            $this->cache();
-            $this->setProps($this->cache);
+            $this->reInit();
             return true;
         }
 
-        protected function cache(): bool {
-            if (isset($this->cache['schema'])) {
-                return true;
+        protected function fetchColumns(bool $cached = true): array {
+            if ($cached && isset($this->cache['columns'])) {
+                return $this->cache['columns'];
             }
-            var_dump( __FUNCTION__ );
-            $db  = $this->getDb();
-            $row = $db->fetchRow('
-                SELECT *
-                FROM '  . $db->q('information_schema') . '.' . $db->q('tables') . '
-                WHERE ' .
-                $db->q('table_name') . ' LIKE ' . $db->e($this->getName(true))
-            );
-            if (!$row) {
-                return false;
-            }
-            $this->cache = array_merge(
-                $this->cache,
-                [
-                    'schema' => (string) $row['table_schema'],
-                    'exists' => true
-                ]
-            );
-            return true;
-        }
-
-        protected function cacheColumns(): bool {
-            if (isset($this->cache['columns'])) {
-                return true;
-            }
-            var_dump( __FUNCTION__ );
             if (!$this->exists()) {
-                return false;
+                return [];
             }
             $db                     = $this->getDb();
             $this->cache['columns'] = [];
@@ -149,7 +121,32 @@
                 );
                 $this->cache['columns'][$column->getName()] = $column;
             }
-            return true;
+            return $this->cache['columns'];
+        }
+
+        protected function fetchDbData(bool $cached = true): array {
+            $keys = [
+                'schema',
+                'exists'
+            ];
+            if ($cached && \Ada\Core\Arr::keysExist($this->cache, $keys)) {
+                return array_intersect_key($this->cache, array_flip($keys));
+            }
+            $db  = $this->getDb();
+            $row = $db->fetchRow('
+                SELECT *
+                FROM '  . $db->q('information_schema') . '.' . $db->q('tables') . '
+                WHERE ' . $db->q('table_name') . ' LIKE ' . $db->e($this->getName(true))
+            );
+            if (!$row) {
+                return [];
+            }
+            $res = [
+                'schema' => (string) $row['table_schema'],
+                'exists' => true
+            ];
+            $this->cache = array_merge($this->cache, $res);
+            return $res;
         }
 
     }

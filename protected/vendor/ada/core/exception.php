@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 12.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -20,7 +20,8 @@
             \Throwable $previous = null
         ) {
             parent::__construct($message, $code, $previous);
-            $this->context = reset($this->getTrace())['class'];
+            $trace         = $this->getTrace();
+            $this->context = reset($trace)['class'];
             $this->message = $this->context . ' error. ' . $this->message;
         }
 
