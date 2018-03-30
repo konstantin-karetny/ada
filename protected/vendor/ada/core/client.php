@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -20,7 +20,7 @@
             ];
 
         protected static
-            $cache;
+            $cache          = [];
 
         protected
             $auth           = '',
@@ -30,6 +30,7 @@
             $content_type   = 'text/html',
             $encoding       = '',
             $ip             = '',
+            $ip_proxy       = '',
             $lang           = 'en';
 
         public static function init(bool $current = true): self {
@@ -40,25 +41,8 @@
             if (!$current) {
                 return;
             }
-            if (!static::$cache) {
-                foreach ($this as $prop => $v) {
-                    $detector = 'detect' . Str::toCamelCase($prop);
-                    if (!method_exists($this, $detector)) {
-                        continue;
-                    }
-                    switch ($prop) {
-                        case 'ip':
-                            $v = $this->$detector(false, $v);
-                            break;
-                        default:
-                            $v = $this->$detector($v);
-                    }
-                    static::$cache[$prop] = $v;
-                }
-            }
-            foreach (static::$cache as $prop => $v) {
-                $this->{'set' . Str::toCamelCase($prop)}($v);
-            }
+            $this->cache();
+            $this->setProps(static::$cache);
         }
 
         public function getAuth(): string {
@@ -89,16 +73,22 @@
             return $this->ip;
         }
 
+        public function getIpProxy(): string {
+            return $this->ip_proxy;
+        }
+
         public function getLang(): string {
             return $this->lang;
         }
 
-        public function getSignature(array $parts = self::SIGNATURE_PARTS): string {
-            $line = implode($parts);
-            foreach ($parts as $prop) {
-                $line .= $this->{'get' . Str::toCamelCase($prop)}();
+        public function getSignature(
+            array $parts = self::SIGNATURE_PARTS
+        ): string {
+            $res = '';
+            foreach ($parts as $part) {
+                $res .= $part . $this->{'get' . Str::toCamelCase($part)}();
             }
-            return Hash::asMd5($line);
+            return Str::hash($res);
         }
 
         public function setAuth(string $auth) {
@@ -129,66 +119,71 @@
             $this->ip = $ip;
         }
 
+        public function setIpProxy(string $ip_proxy) {
+            $this->ip_proxy = $ip_proxy;
+        }
+
         public function setLang(string $lang) {
             $this->lang = $lang;
         }
 
-        protected function detectAuth(string $default = ''): string {
-            return Server::getFrstExisting(
-                [
-                    'HTTP_AUTHORIZATION',
-                    'REDIRECT_HTTP_AUTHORIZATION'
-                ],
-                'string',
-                $default
-            );
-        }
-
-        protected function detectBrowser(string $default = ''): string {
-            return Server::getString('HTTP_USER_AGENT', $default);
-        }
-
-        protected function detectCacheControl(string $default = ''): string {
-            return Server::getString('HTTP_CACHE_CONTROL', $default);
-        }
-
-        protected function detectCharset(string $default = ''): string {
-            return Server::getString('HTTP_ACCEPT_CHARSET', $default);
-        }
-
-        protected function detectContentType(string $default = ''): string {
-            return Server::getString('HTTP_ACCEPT', $default);
-        }
-
-        protected function detectEncoding(string $default = ''): string {
-            return Server::getString('HTTP_ACCEPT_ENCODING', $default);
-        }
-
-        protected function detectIp(
-            bool   $proxy   = false,
-            string $default = ''
-        ): string {
-            if (!$proxy) {
-                return Server::getString('REMOTE_ADDR');
+        protected function cache(): bool {
+            if (static::$cache) {
+                return true;
             }
-            return Server::getFrstExisting(
-                [
-                    'HTTP_CLIENT_IP',
-                    'HTTP_X_FORWARDED_FOR'
-                ],
-                'string',
-                $default
-            );
-        }
-
-        protected function detectLang(string $default = ''): string {
-            return strtolower(
-                substr(
-                    Server::getString('HTTP_ACCEPT_LANGUAGE', $default),
-                    0,
-                    2
+            static::$cache = [
+                'auth'          => Server::getFrstExisting(
+                    [
+                        'HTTP_AUTHORIZATION',
+                        'REDIRECT_HTTP_AUTHORIZATION'
+                    ],
+                    'string',
+                    $this->getAuth()
+                ),
+                'browser'       => Server::getString(
+                    'HTTP_USER_AGENT',
+                    $this->getBrowser()
+                ),
+                'cache_control' => Server::getString(
+                    'HTTP_CACHE_CONTROL',
+                    $this->getCacheControl()
+                ),
+                'charset'       => Server::getString(
+                    'HTTP_ACCEPT_CHARSET',
+                    $this->getCharset()
+                ),
+                'content_type'  => Server::getString(
+                    'HTTP_ACCEPT',
+                    $this->getContentType()
+                ),
+                'encoding'      => Server::getString(
+                    'HTTP_ACCEPT_ENCODING',
+                    $this->getEncoding()
+                ),
+                'ip'            => Server::getString(
+                    'REMOTE_ADDR',
+                    $this->getIp()
+                ),
+                'ip_proxy'      => Server::getFrstExisting(
+                    [
+                        'HTTP_CLIENT_IP',
+                        'HTTP_X_FORWARDED_FOR'
+                    ],
+                    'string',
+                    $this->getIpProxy()
+                ),
+                'lang'          => strtolower(
+                    substr(
+                        Server::getString(
+                            'HTTP_ACCEPT_LANGUAGE',
+                            $this->getLang()
+                        ),
+                        0,
+                        2
+                    )
                 )
-            );
+            ];
+            return true;
         }
 
     }

@@ -17,8 +17,8 @@
     //cache for Client, DateTime and other
     //db
     //db session handler
+    //Str Arr Obj classes
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
-
 
 
 
@@ -34,15 +34,18 @@
     ]);
 
 
+    exit(var_dump( Db::init(1)->getTable('test') ));
+
+
     $t1 = Db::init(0)->getTable('test');
-    $t1->getColumns();
+    //$t1->getColumns();
     $t2 = Db::init(1)->getTable('test');
     $t2->getColumns();
 
 
     $t11 = Db::init(1)->getTable('test2');
 
-    exit(var_dump( $t11->getColumn('id') ));
+    exit(var_dump( $t1 ));
 
 
 

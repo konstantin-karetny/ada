@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,25 +11,34 @@
 
     class Str extends Proto {
 
+        public static function hash(
+            string $string,
+            string $algo = 'sha1'
+        ): string {
+            $hash  = hash($algo, $string);
+            $start = strlen($hash) / 10;
+            return md5(substr($hash, $start, $start * 8));
+        }
+
         public static function separateWith(
-            string $val,
+            string $string,
             string $separator = ' '
         ): string {
             return (string) preg_replace(
                 '/[ \-_]+/',
                 $separator,
-                trim(preg_replace('/([A-Z])/', ' $1', $val))
+                trim(preg_replace('/([A-Z])/', ' $1', $string))
             );
         }
 
         public static function toCamelCase(
-            string $val,
+            string $string,
             bool   $ucfirst = true
         ): string {
             $res = (string) str_replace(
                 ' ',
                 '',
-                ucwords(static::separateWith($val))
+                ucwords(static::separateWith($string))
             );
             return $ucfirst ? $res : lcfirst($res);
         }

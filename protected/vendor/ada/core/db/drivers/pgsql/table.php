@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -65,91 +65,90 @@
                 ) . '
                 )'
             );
-            return $db->exec($query);
-        }
-
-        protected function load(): bool {
-            $keys = [
-                'schema'
-            ];
-            if (\Ada\Core\Arr::arrayKeysExists($this->cache, $keys)) {
-                $load = array_intersect_key($this->cache, array_flip($keys));
+            if (!$db->exec($query)) {
+                return false;
             }
-            else {
-                $db  = $this->getDb();
-                $row = $db->fetchRow('
-                    SELECT *
-                    FROM '  . $db->q('information_schema') . '.' . $db->q('tables') . '
-                    WHERE ' .
-                    $db->q('table_name') . ' LIKE ' . $db->e($this->getName(true))
-                );
-                if (!$row) {
-                    return false;
-                }
-                $load = [
-                    'schema' => \Ada\Core\Clean::cmd($row['table_schema'])
-                ];
-                $this->cache = array_merge($this->cache, $load);
-            }
-            foreach ($load as $k => $v) {
-                $this->$k = $v;
-            }
+            $this->cache = [];
+            $this->cache();
+            $this->setProps($this->cache);
             return true;
         }
 
-        protected function loadColumns(): bool {
+        protected function cache(): bool {
+            if (isset($this->cache['schema'])) {
+                return true;
+            }
+            var_dump( __FUNCTION__ );
+            $db  = $this->getDb();
+            $row = $db->fetchRow('
+                SELECT *
+                FROM '  . $db->q('information_schema') . '.' . $db->q('tables') . '
+                WHERE ' .
+                $db->q('table_name') . ' LIKE ' . $db->e($this->getName(true))
+            );
+            if (!$row) {
+                return false;
+            }
+            $this->cache = array_merge(
+                $this->cache,
+                [
+                    'schema' => (string) $row['table_schema'],
+                    'exists' => true
+                ]
+            );
+            return true;
+        }
+
+        protected function cacheColumns(): bool {
+            if (isset($this->cache['columns'])) {
+                return true;
+            }
+            var_dump( __FUNCTION__ );
             if (!$this->exists()) {
                 return false;
             }
-            if (isset($this->cache['columns'])) {
-                $columns = $this->cache['columns'];
+            $db                     = $this->getDb();
+            $this->cache['columns'] = [];
+            foreach ($db->fetchRows('
+                SELECT *
+                FROM '       . $db->q('information_schema.key_column_usage', 'kcu') . '
+                RIGHT JOIN ' . $db->q('information_schema.table_constraints', 'tc') . '
+                ON '         . $db->q('kcu.table_schema')    . ' = '    . $db->q('tc.table_schema') . '
+                AND '        . $db->q('kcu.table_name')      . ' = '    . $db->q('tc.table_name') . '
+                AND '        . $db->q('kcu.constraint_name') . ' = '    . $db->q('tc.constraint_name') . '
+                RIGHT JOIN ' . $db->q('information_schema.columns', 'c') . '
+                ON '         . $db->q('c.table_schema')      . ' = '    . $db->q('kcu.table_schema') . '
+                AND '        . $db->q('c.table_name')        . ' = '    . $db->q('kcu.table_name') . '
+                AND '        . $db->q('c.column_name')       . ' = '    . $db->q('kcu.column_name') . '
+                WHERE '      . $db->q('c.table_name')        . ' LIKE ' . $db->e($this->getName(true)) . '
+            ') as $row) {
+                $column = Column::init($row['column_name'], $this);
+                $column->setCollation((string) $row['collation_name']);
+                $column->setDefaultValue($row['column_default']);
+                $column->setLength((int) $row['character_maximum_length']);
+                $column->setIsNull(
+                    strtoupper(trim($row['is_nullable'])) == 'YES'
+                );
+                $column->setIsPrimaryKey(
+                    strtoupper(trim($row['constraint_type'])) == 'PRIMARY KEY'
+                );
+                $column->setIsUniqueKey(
+                    strtoupper(trim($row['constraint_type'])) == 'UNIQUE'
+                );
+                $column->setType($row['data_type']);
+                $column->setIsAutoIncrement(
+                    in_array(
+                        $column->getType(),
+                        [
+                            'bigint',
+                            'integer'
+                        ]
+                    ) &&
+                    !$column->getIsNull() &&
+                    stripos($column->getDefaultValue(), 'nextval') === 0
+                );
+                $this->cache['columns'][$column->getName()] = $column;
             }
-            else {
-                $db      = $this->getDb();
-                $columns = [];
-                    foreach ($db->fetchRows('
-                    SELECT *
-                    FROM '       . $db->q('information_schema.key_column_usage', 'kcu') . '
-                    RIGHT JOIN ' . $db->q('information_schema.table_constraints', 'tc') . '
-                    ON '         . $db->q('kcu.table_schema')    . ' = '    . $db->q('tc.table_schema') . '
-                    AND '        . $db->q('kcu.table_name')      . ' = '    . $db->q('tc.table_name') . '
-                    AND '        . $db->q('kcu.constraint_name') . ' = '    . $db->q('tc.constraint_name') . '
-                    RIGHT JOIN ' . $db->q('information_schema.columns', 'c') . '
-                    ON '         . $db->q('c.table_schema')      . ' = '    . $db->q('kcu.table_schema') . '
-                    AND '        . $db->q('c.table_name')        . ' = '    . $db->q('kcu.table_name') . '
-                    AND '        . $db->q('c.column_name')       . ' = '    . $db->q('kcu.column_name') . '
-                    WHERE '      . $db->q('c.table_name')        . ' LIKE ' . $db->e($this->getName(true)) . '
-                ') as $row) {
-                    $column = Column::init($row['column_name'], $this);
-                    $column->setCollation((string) $row['collation_name']);
-                    $column->setDefaultValue($row['column_default']);
-                    $column->setLength((int) $row['character_maximum_length']);
-                    $column->setIsNull(
-                        strtoupper(trim($row['is_nullable'])) == 'YES'
-                    );
-                    $column->setIsPrimaryKey(
-                        strtoupper(trim($row['constraint_type'])) == 'PRIMARY KEY'
-                    );
-                    $column->setIsUniqueKey(
-                        strtoupper(trim($row['constraint_type'])) == 'UNIQUE'
-                    );
-                    $column->setType($row['data_type']);
-                    $column->setIsAutoIncrement(
-                        in_array(
-                            $column->getType(),
-                            [
-                                'bigint',
-                                'integer'
-                            ]
-                        ) &&
-                        !$column->getIsNull() &&
-                        stripos($column->getDefaultValue(), 'nextval') === 0
-                    );
-                    $columns[] = $column;
-                }
-                $this->cache['columns'] = $columns;
-            }
-            $this->setColumns($columns);
             return true;
         }
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,7 +11,7 @@
 
     class Arr extends Proto {
 
-        public static function arrayKeysExists(array $array, array $keys): bool {
+        public static function keysExist(array $array, array $keys): bool {
             return !array_diff_key(array_flip($keys), $array);
         }
 

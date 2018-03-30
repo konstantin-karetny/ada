@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,8 +11,8 @@
 
     class Table extends \Ada\Core\Db\Table {
 
-        const
-            DEFAULT_ENGINE = 'InnoDB';
+        protected
+            $engine = 'InnoDB';
 
         protected function __construct(
             string $name,
@@ -20,7 +20,6 @@
             bool   $cached = true
         ) {
             $this->collation = $db->getCollation();
-            $this->engine    = static::DEFAULT_ENGINE;
             parent::__construct($name, $db, $cached);
         }
 
@@ -90,73 +89,74 @@
                         : ' COLLATE = ' . $db->e($this->getCollation())
                 )
             );
-            return $db->exec($query);
-        }
-
-        protected function load(): bool {
-            $keys = [
-                'collation',
-                'engine'
-            ];
-            if (\Ada\Core\Arr::arrayKeysExists($this->cache, $keys)) {
-                $load = array_intersect_key($this->cache, array_flip($keys));
+            if (!$db->exec($query)) {
+                return false;
             }
-            else {
-                $db  = $this->getDb();
-                $row = $db->fetchRow(
-                    'SHOW TABLE STATUS LIKE ' . $db->e($this->getName(true))
-                );
-                if (!$row) {
-                    return false;
-                }
-                $load = [
-                    'collation' => (string) $row['Collation'],
-                    'engine'    => (string) $row['Engine']
-                ];
-                $this->cache = array_merge($this->cache, $load);
-            }
-            foreach ($load as $k => $v) {
-                $this->{'set' . \Ada\Core\Str::toCamelCase($k)}($v);
-            }
+            $this->cache = [];
+            $this->cache();
+            $this->setProps($this->cache);
             return true;
         }
 
-        protected function loadColumns(): bool {
+        protected function cache(): bool {
+            if (
+                isset(
+                    $this->cache['collation'],
+                    $this->cache['engine']
+                )
+            ) {
+                return true;
+            }
+            $db  = $this->getDb();
+            $row = $db->fetchRow(
+                'SHOW TABLE STATUS LIKE ' . $db->e($this->getName(true))
+            );
+            if (!$row) {
+                return false;
+            }
+            $this->cache = array_merge(
+                $this->cache,
+                [
+                    'collation' => (string) $row['Collation'],
+                    'engine'    => (string) $row['Engine'],
+                    'exists'    => true
+                ]
+            );
+            return true;
+        }
+
+        protected function cacheColumns(): bool {
+            if (isset($this->cache['columns'])) {
+                return true;
+            }
             if (!$this->exists()) {
                 return false;
             }
-            if (isset($this->cache['columns'])) {
-                $columns = $this->cache['columns'];
+            $db                     = $this->getDb();
+            $this->cache['columns'] = [];
+            foreach ($db->fetchRows(
+                'SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
+            ) as $row) {
+                $type_length = explode('(', rtrim($row['Type'], ')'));
+                $column      = Column::init($row['Field'], $this);
+                $column->setIsAutoIncrement(
+                    stripos('auto_increment', $row['Extra']) !== false
+                );
+                $column->setCollation((string) $row['Collation']);
+                $column->setDefaultValue($row['Default']);
+                $column->setLength($type_length[1] ?? '');
+                $column->setIsNull(
+                    strtoupper(trim($row['Null'])) != 'NO'
+                );
+                $column->setIsPrimaryKey(
+                    strtoupper(trim($row['Key'])) == 'PRI'
+                );
+                $column->setIsUniqueKey(
+                    strtoupper(trim($row['Key'])) == 'UNI'
+                );
+                $column->setType($type_length[0]);
+                $this->cache['columns'][$column->getName()] = $column;
             }
-            else {
-                $db      = $this->getDb();
-                $columns = [];
-                foreach ($db->fetchRows(
-                    'SHOW FULL COLUMNS FROM ' . $db->t($this->getName())
-                ) as $row) {
-                    $type_length = explode('(', rtrim($row['Type'], ')'));
-                    $column      = Column::init($row['Field'], $this);
-                    $column->setIsAutoIncrement(
-                        stripos('auto_increment', $row['Extra']) !== false
-                    );
-                    $column->setCollation((string) $row['Collation']);
-                    $column->setDefaultValue($row['Default']);
-                    $column->setLength($type_length[1] ?? '');
-                    $column->setIsNull(
-                        strtoupper(trim($row['Null'])) != 'NO'
-                    );
-                    $column->setIsPrimaryKey(
-                        strtoupper(trim($row['Key'])) == 'PRI'
-                    );
-                    $column->setIsUniqueKey(
-                        strtoupper(trim($row['Key'])) == 'UNI'
-                    );
-                    $column->setType($type_length[0]);
-                    $columns[] = $column;
-                }
-                $this->cache['columns'] = $columns;
-            }
-            $this->setColumns($columns);
             return true;
         }
 

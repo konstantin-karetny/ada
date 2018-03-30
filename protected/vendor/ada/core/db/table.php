@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 30.03.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,22 +11,19 @@
 
     abstract class Table extends \Ada\Core\Proto {
 
-        const
-            DEFAULT_ENGINE = '';
-
         protected static
-            $caches        = [];
+            $caches    = [];
 
         protected
-            $cache         = [],
-            $charset       = '',
-            $collation     = '',
-            $columns       = [],
-            $db            = null,
-            $engine        = '',
-            $exists        = false,
-            $name          = '',
-            $schema        = '';
+            $cache     = [],
+            $charset   = '',
+            $collation = '',
+            $columns   = [],
+            $db        = null,
+            $engine    = '',
+            $exists    = false,
+            $name      = '',
+            $schema    = '';
 
         public static function init(string $name, $db, bool $cached = true) {
             return new static(...func_get_args());
@@ -37,14 +34,15 @@
             Driver $db,
             bool   $cached = true
         ) {
-            $this->db      = $db;
-            $this->charset = $db->getCharset();
-            $this->name    = \Ada\Core\Clean::cmd($name);
-            $this->cache   =& $this->getCache();
+            $this->db    = $db;
+            $this->name  = \Ada\Core\Clean::cmd($name);
+            $this->setCharset($db->getCharset());
+            $this->cache =& $this->getLinkToCache();
             if (!$cached) {
                 $this->cache = [];
             }
-            $this->exists  = $this->load();
+            $this->cache();
+            $this->setProps($this->cache);
         }
 
         abstract public function create();
@@ -80,8 +78,8 @@
         }
 
         public function getColumns(): array {
-            $this->loadColumns();
-            return $this->columns;
+            $this->cacheColumns();
+            return array_merge($this->cache['columns'] ?? [], $this->columns);
         }
 
         public function getDb(): Driver {
@@ -149,7 +147,7 @@
             return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
-        protected function &getCache(): array {
+        protected function &getLinkToCache(): array {
             $db  =  $this->getDb();
             $res =& static::$caches;
             foreach ([
@@ -164,8 +162,8 @@
             return $res;
         }
 
-        abstract protected function load(): bool;
+        abstract protected function cache(): bool;
 
-        abstract protected function loadColumns(): bool;
+        abstract protected function cacheColumns(): bool;
 
     }
