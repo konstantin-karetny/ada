@@ -17,6 +17,8 @@
     //column drop default
     //column delete
     //column rename
+	//https://www.1keydata.com/sql/sql-alter-table.html
+	//unsigned and etc.
     //db
     //db session handler
     //Str, Arr and Obj classes

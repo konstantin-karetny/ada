@@ -13,12 +13,12 @@
 
         protected
             $collation         = '',
-            $default_value     = null,
+            $default_value     = '';,
             $is_auto_increment = false,
             $is_null           = false,
             $is_primary_key    = false,
             $is_unique_key     = false,
-            $length            = '',
+            $length            = 0,
             $name              = '',
             $table             = null,
             $type              = 'int';
@@ -86,8 +86,8 @@
             $this->collation = \Ada\Core\Clean::cmd($collation);
         }
 
-        public function setDefaultValue($default_value) {
-            $this->default_value = \Ada\Core\Type::set($default_value);
+        public function setDefaultValue(string $default_value) {
+            $this->default_value = \Ada\Core\Type::set(trim($default_value));
         }
 
         public function setIsAutoIncrement(bool $is_auto_increment) {
@@ -106,12 +106,12 @@
             $this->is_unique_key = $is_unique_key;
         }
 
-        public function setLength(string $length) {
-            $this->length = \Ada\Core\Type::set($length);
+        public function setLength(int $length) {
+            $this->length = $length;
         }
 
         public function setType(string $type) {
-            $this->type = trim(preg_replace('/[^ a-z0-9_\.-]/i', '', $type));
+            $this->type = preg_replace('/[^ a-z0-9_\.-]/i', '', trim($type));
         }
 
     }

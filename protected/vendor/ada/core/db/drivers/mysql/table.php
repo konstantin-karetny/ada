@@ -38,7 +38,7 @@
                             : '(' . $db->e($column->getLength()) . ')'
                     ) .
                     (
-                        $column->getDefaultValue() === null
+                        $column->getDefaultValue() === ''
                             ? ''
                             : ' DEFAULT ' . $column->getDefaultValue()
                     ) .

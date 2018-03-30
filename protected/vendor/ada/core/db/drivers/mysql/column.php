@@ -25,7 +25,7 @@
                         : '(' . $db->e($this->getLength()) . ')'
                 ) .
                 (
-                    $this->getDefaultValue() === null
+                    $this->getDefaultValue() === ''
                         ? ''
                         : ' DEFAULT ' . $this->getDefaultValue()
                 ) .
