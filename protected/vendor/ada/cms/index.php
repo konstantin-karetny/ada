@@ -14,7 +14,6 @@
 
     require_once 'includes/autoload.php';
 
-    
     //column drop default
     //column delete
     //column rename
