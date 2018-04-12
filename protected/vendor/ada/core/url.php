@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 10.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -276,7 +276,7 @@
         public function setHost(string $host) {
             $host = static::clean($host);
             if ($host == '') {
-                throw new Exception('Host can not be empty', 5);
+                throw new Exception('Host must not be empty', 5);
             }
             $this->host = $host;
         }
@@ -309,7 +309,7 @@
         public function setScheme(string $scheme) {
             $scheme = static::clean($scheme);
             if ($scheme == '') {
-                throw new Exception('Scheme can not be empty', 3);
+                throw new Exception('Scheme must not be empty', 3);
             }
             if (!in_array($scheme, static::SCHEMES)) {
                 throw new Exception('Unknown scheme \'' . $scheme . '\'', 4);

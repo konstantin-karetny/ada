@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 13.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,8 +22,8 @@
             return new static($params);
         }
 
-        protected function load(): bool {
-            $res = $this->fetchRow('
+        protected function getProps(): array {
+            $row = $this->fetchRow('
                 SELECT ' .
                     $this->q('DEFAULT_CHARACTER_SET_NAME') . ', ' .
                     $this->q('DEFAULT_COLLATION_NAME') . '
@@ -31,12 +31,13 @@
                 WHERE '  . $this->q('SCHEMA_NAME') . '
                 LIKE '   . $this->e($this->getName()) . '
             ');
-            $this->charset   = $res['DEFAULT_CHARACTER_SET_NAME'];
-            $this->collation = $res['DEFAULT_COLLATION_NAME'];
-            $this->version   = (string) $this->getAttribute(
-                \PDO::ATTR_SERVER_VERSION
-            );
-            return true;
+            return [
+                'charset'   => trim($row['DEFAULT_CHARACTER_SET_NAME']),
+                'collation' => trim($row['DEFAULT_COLLATION_NAME']),
+                'version'   => trim($this->getAttribute(
+                    \PDO::ATTR_SERVER_VERSION
+                ))
+            ];
         }
 
     }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 13.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,7 +11,7 @@
 
     class Column extends \Ada\Core\Db\Column {
 
-        public function add(self $after = null): bool {
+        public static function create($table, array $params): self {
             $res   = [];
             $db    = $this->getDb();
             $table = $this->getTable();
@@ -59,6 +59,35 @@
                 ');
             }
             return !in_array(false, $res);
+        }
+
+        protected function getProps(): array {
+            $table = $this->getTable();
+            $db    = $table->getDb();
+            $row   = $db->fetchRow('
+                SHOW FULL COLUMNS
+                FROM ' . $db->t($table->getName()) . '
+                LIKE ' . $db->e($this->getName())
+            );
+            if (!$row) {
+                return [];
+            }
+            $key         = strtolower(trim($row['Key']));
+            $type_length = explode('(', rtrim($row['Type'], ')'));
+            $res         = [
+                'collation'         => trim($row['Collation']),
+                'default_value'     => $row['Default'],
+                'is_auto_increment' => (
+                    stripos('auto_increment', strtolower($row['Extra'])) !== false
+                ),
+                'is_nullable'       => strtolower(trim($row['Null'])) == 'yes',
+                'is_primary_key'    => $key                           == 'pri',
+                'is_unique_key'     => $key                           == 'uni',
+                'length'            => (int) ($type_length[1] ?? 0),
+                'type'              => trim($type_length[0])
+            ];
+            return $res;
+
         }
 
     }

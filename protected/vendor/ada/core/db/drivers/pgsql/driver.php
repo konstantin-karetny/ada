@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 13.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,15 +22,17 @@
             return new static($params);
         }
 
-        protected function load(): bool {
-            $this->charset   = $this->fetchCell('SHOW SERVER_ENCODING');
-            $this->collation = $this->fetchCell('SHOW LC_COLLATE');
-            $search_pathes   = explode(' ', $this->fetchCell('SHOW search_path'));
-            $this->schema    = trim(array_pop($search_pathes));
-            $this->version   = (string) $this->getAttribute(
-                \PDO::ATTR_SERVER_VERSION
-            );
-            return true;
+        protected function getProps(): array {
+            return [
+                'charset'   => trim($this->fetchCell('SHOW SERVER_ENCODING')),
+                'collation' => trim($this->fetchCell('SHOW LC_COLLATE')),
+                'schema'    => trim(
+                    explode(' ', $this->fetchCell('SHOW search_path'))[0]
+                ),
+                'version'   => trim($this->getAttribute(
+                    \PDO::ATTR_SERVER_VERSION
+                ))
+            ];
         }
 
     }

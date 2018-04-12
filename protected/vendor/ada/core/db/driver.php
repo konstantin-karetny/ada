@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 13.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -67,7 +67,7 @@
                     \Ada\Core\Type::get($this->$k)
                 );
             }
-            $this->load();
+            $this->setProps($this->getProps());
             if (
                 version_compare(
                     $this->getVersion(),
@@ -97,6 +97,11 @@
                     8
                 );
             }
+        }
+
+        public function createTable(array $params): Table {
+            $class = $this->getDb()->getNameSpace() . 'Table';
+            return $class::create($this, $params);
         }
 
         public function connect(): bool {
@@ -235,15 +240,22 @@
 
         public function fetchColumn(
             string $query,
-            string $column,
+            string $column  = '',
             string $key     = '',
             array  $default = []
         ): array {
             $this->exec($query);
             $res = $this->fetchRows($query, \PDO::FETCH_ASSOC, $key);
+            if (!$res) {
+                return $default;
+            }
+            $column = $column === '' ? array_keys(reset($res))[0] : $column;
             if (!key_exists($column, reset($res))) {
                 throw new \Ada\Core\Exception(
-                    'Unknown column \'' . $column . '\'. Query: \'' . trim($query) . '\'',
+                    (
+                        'Unknown column \'' . $column      . '\'.' .
+                        ' Query: \''        . trim($query) . '\''
+                    ),
                     6
                 );
             }
@@ -272,10 +284,24 @@
                 );
             }
             $this->stmt->closeCursor();
+            switch (
+                $fetch_style === null
+                    ? $this->getAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE)
+                    : $fetch_style
+            ) {
+                case \PDO::FETCH_ASSOC :
+                case \PDO::FETCH_BOTH  :
+                case \PDO::FETCH_NAMED :
+                case \PDO::FETCH_NUM   :
+                    $type = 'array';
+                    break;
+                default:
+                    $type = 'auto';
+            }
             return \Ada\Core\Type::set(
                 $res === false ? $default : $res,
-                'auto',
-                true
+                $type,
+                false
             );
         }
 
@@ -414,7 +440,7 @@
         public function getTable(
             string $name,
             bool   $cached = true
-        ): \Ada\Core\Db\Table {
+        ): Table {
             $class = $this->getNameSpace() . 'Table';
             return $class::init($name, $this, $cached);
         }
@@ -562,7 +588,14 @@
         }
 
         public function t(string $table, string $as = ''): string {
-            return $this->q($this->getPrefix() . $table, $as);
+            $table_arr = explode('.', $table);
+            $dot       = count($table_arr) > 1;
+            $name      = $table_arr[$dot ? 1 : 0];
+            $schema    = $dot ? $table_arr[0] : '';
+            return $this->q(
+                (!$schema ? '' : $schema . '.') . $this->getPrefix() . $name,
+                $as
+            );
         }
 
         public function updateRow(
@@ -581,6 +614,6 @@
             return $this->exec($query);
         }
 
-        abstract protected function load(): bool;
+        abstract protected function getProps(): array;
 
     }

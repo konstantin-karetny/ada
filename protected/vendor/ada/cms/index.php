@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 13.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -37,6 +37,31 @@
         'user'   => 'postgres',
     ]);
 
+    $t = Db::init(0)->getTable('test');
+
+    exit(var_dump( $t->getColumns(true) ));
+
+    exit(var_dump(
+
+        Db::init(1)->createTable(
+            [
+                //'name' => 'test2',
+                //'schema' => 'information_schema',
+                'columns' => [
+                    [
+                        'name'              => 'id',
+                        'is_primary_key'    => true,
+                        'is_auto_increment' => true
+                    ],
+                    [
+                        'name'              => 'name',
+                        'iis_unique_key'    => true
+                    ]
+                ]
+            ]
+        )
+
+    ));
 
     $t1 = Db::init(0)->getTable('test');
     //$t1->getColumns();

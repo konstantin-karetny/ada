@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 13.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,11 +11,14 @@
 
     abstract class Column extends \Ada\Core\Proto {
 
+        protected static
+            $instances         = [];
+
         protected
             $collation         = '',
-            $default_value     = '';,
+            $default_value     = '',
             $is_auto_increment = false,
-            $is_null           = false,
+            $is_nullable       = false,
             $is_primary_key    = false,
             $is_unique_key     = false,
             $length            = 0,
@@ -23,16 +26,48 @@
             $table             = null,
             $type              = 'int';
 
-        public static function init(string $name, Table $table) {
-            return new static($name, $table);
+        abstract public static function create($table, array $params);
+
+        public static function init(
+            string $name,
+            Table  $table,
+            bool   $cached = true
+        ) {
+            $db  = $table->getDb();
+            $res =&
+                static::$instances
+                [$db->getDriver()]
+                [$db->getName()]
+                [$db->getSchema()]
+                [$table->getName()]
+                [\Ada\Core\Clean::cmd($name)]
+                ?? null;
+            if ($cached && $res) {
+                return $res;
+            }
+            return $res = new static(...func_get_args());
         }
 
-        public function __construct(string $name, Table $table) {
+        public function __construct(
+            string $name,
+            Table  $table,
+            bool   $cached = true
+        ) {
             $this->name  = \Ada\Core\Clean::cmd($name);
             $this->table = $table;
+            $props       = $this->getProps();
+            if (!$props) {
+                throw new \Ada\Core\Exception(
+                    (
+                        'No column \''    . $this->getName()           . '\'' .
+                        ' in table \''    . $table->getName()          . '\'' .
+                        ' of database \'' . $table->getDb()->getName() . '\''
+                    ),
+                    3
+                );
+            }
+            $this->setProps($props);
         }
-
-        abstract public function add(): bool;
 
         public function delete(): bool {
 
@@ -54,8 +89,8 @@
             return $this->is_auto_increment;
         }
 
-        public function getIsNull(): bool {
-            return $this->is_null;
+        public function getIsNullable(): bool {
+            return $this->is_nullable;
         }
 
         public function getIsPrimaryKey(): bool {
@@ -82,36 +117,6 @@
             return $this->type;
         }
 
-        public function setCollation(string $collation) {
-            $this->collation = \Ada\Core\Clean::cmd($collation);
-        }
-
-        public function setDefaultValue(string $default_value) {
-            $this->default_value = \Ada\Core\Type::set(trim($default_value));
-        }
-
-        public function setIsAutoIncrement(bool $is_auto_increment) {
-            $this->is_auto_increment = $is_auto_increment;
-        }
-
-        public function setIsNull(bool $is_null) {
-            $this->is_null = $is_null;
-        }
-
-        public function setIsPrimaryKey(bool $is_primary_key) {
-            $this->is_primary_key = $is_primary_key;
-        }
-
-        public function setIsUniqueKey(bool $is_unique_key) {
-            $this->is_unique_key = $is_unique_key;
-        }
-
-        public function setLength(int $length) {
-            $this->length = $length;
-        }
-
-        public function setType(string $type) {
-            $this->type = preg_replace('/[^ a-z0-9_\.-]/i', '', trim($type));
-        }
+        abstract protected function getProps(): array;
 
     }
