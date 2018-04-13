@@ -24,8 +24,6 @@
     //Str, Arr and Obj classes
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
 
-
-
     Db::add([
         'name'   => 'project',
         'prefix' => 'pj_'
@@ -37,16 +35,19 @@
         'user'   => 'postgres',
     ]);
 
-    $t = Db::init(0)->getTable('test');
+    exit(var_dump( Db::init(1)->getTable('information_schema.sql_features') ));
 
-    exit(var_dump( $t->getColumns(true) ));
+/*
+    $t = Db::init(1)->getTable('test');
+    $t->getColumns(true);
 
+    exit(var_dump( $t ));
+*/
     exit(var_dump(
 
         Db::init(1)->createTable(
             [
-                //'name' => 'test2',
-                //'schema' => 'information_schema',
+                'name' => 'information_schema.test2',
                 'columns' => [
                     [
                         'name'              => 'id',

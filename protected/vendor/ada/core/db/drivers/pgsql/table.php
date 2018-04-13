@@ -11,6 +11,10 @@
 
     class Table extends \Ada\Core\Db\Table {
 
+        protected static function getCreateQuery($db, array $params): string {
+            return 'CREATE TABLE ' . $db->t($params['name']) . ' ()';
+        }
+
         protected function getColumnsNamesQuery(): string {
             $db = $this->getDb();
             return ('
@@ -21,21 +25,18 @@
             );
         }
 
-        protected function getCreateQuery(array $params): string {
-            $db = $this->getDb();
-            return (
-                'CREATE TABLE ' .
-                $db->t($params['schema'] . '.' . $params['name']) .
-                ' ()'
-            );
-        }
-
         protected function getProps(): array {
             $db  = $this->getDb();
+            exit(var_dump( '
+                SELECT *
+                FROM '  . $db->q('information_schema.tables') . '
+                WHERE ' . $db->q('table_schema') . ' LIKE ' . $db->e($this->getSchema()) . '
+                AND '   . $db->q('table_name')   . ' LIKE ' . $db->e($this->getName(true)) ));
             $row = $db->fetchRow('
                 SELECT *
                 FROM '  . $db->q('information_schema.tables') . '
-                WHERE ' . $db->q('table_name') . ' LIKE ' . $db->e($this->getName(true))
+                WHERE ' . $db->q('table_schema') . ' LIKE ' . $db->e($this->getSchema()) . '
+                AND '   . $db->q('table_name')   . ' LIKE ' . $db->e($this->getName(true))
             );
             return
                 $row

@@ -100,7 +100,7 @@
         }
 
         public function createTable(array $params): Table {
-            $class = $this->getDb()->getNameSpace() . 'Table';
+            $class = $this->getNameSpace() . 'Table';
             return $class::create($this, $params);
         }
 

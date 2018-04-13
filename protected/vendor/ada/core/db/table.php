@@ -25,21 +25,21 @@
             $schema        = '';
 
         public static function create(Driver $db, array $params): self {
-            $defaults = get_class_vars(__CLASS__);
-            foreach ([
-                'charset',
-                'collation',
-                'columns',
-                'engine',
-                'name',
-                'schema'
-            ] as $prop) {
-                $params[$prop] = $params[$prop] ?? $defaults[$prop];
-                switch ($prop) {
-                    case 'columns':
-                        $params[$prop] = (array) $params[$prop];
-                    default:
-                        $params[$prop] = \Ada\Core\Clean::cmd($params[$prop]);
+            foreach (get_class_vars(__CLASS__) as $k => $v) {
+                $params[$k] = $params[$k] ?? $v;
+                switch ($k) {
+                    case 'charset'   :
+                    case 'collation' :
+                    case 'engine'    :
+                    case 'name'      :
+                    case 'schema'    :
+                        $params[$k] = \Ada\Core\Clean::cmd($params[$k]);
+                        break;
+                    case 'columns'   :
+                        $params[$k] = (array) $params[$k];
+                        break;
+                    default          :
+                        unset($params[$k]);
                 }
             }
             $error = (
@@ -53,7 +53,7 @@
                 );
             }
             try {
-                $db->exec($this->getCreateQuery($params));
+                $db->exec(static::getCreateQuery($db, $params));
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     $error . '. ' . $e->getMessage(),
@@ -86,9 +86,12 @@
         }
 
         protected function __construct(string $name, Driver $db) {
-            $this->db   = $db;
-            $this->name = \Ada\Core\Clean::cmd($name);
-            $props      = $this->getProps();
+            $this->db     = $db;
+            $name_arr     = explode('.', \Ada\Core\Clean::cmd($name));
+            $dot          = count($name_arr) > 1;
+            $this->name   = $name_arr[$dot ? 1 : 0];
+            $this->schema = $dot ? $name_arr[0] : $this->getSchema();
+            $props        = $this->getProps();
             if (!$props) {
                 throw new \Ada\Core\Exception(
                     (
@@ -178,7 +181,21 @@
         }
 
         public function getName(bool $prefix = false): string {
-            return ($prefix ? $this->getDb()->getPrefix() : '') . $this->name;
+            if (!$prefix) {
+                return $this->name;
+            }
+
+            /* ...............   */
+
+            $prefix = !$prefix ? '' : $this->getDb()->getPrefix();
+            if ($this->getSchema()) {
+                return $this->getSchema() . '.' . $this->name;
+            }
+
+            return
+                $this->getSchema()
+                    ? ($this->getSchema() . '.' . $this->name)
+                    : ($prefix ? $this->getDb()->getPrefix() : '') . $this->name;
         }
 
         public function getSchema(): string {
@@ -219,10 +236,7 @@
             return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
-        abstract protected function getColumnsNamesQuery(): string;
-
-        protected function getCreateQuery(array $params): string {
-            $db = $this->getDb();
+        protected static function getCreateQuery($db, array $params): string {
             return (
                 'CREATE TABLE ' . $db->t($params['name']) . ' ()' .
                 (!$params['engine']    ? '' : ' ENGINE = '          . $db->e($params['engine'])) .
@@ -231,8 +245,40 @@
             );
         }
 
+        protected function getColumnsNamesQuery(): string {
+            $db = $this->getDb();
+            return ('
+                SELECT ' . $db->q('COLUMN_NAME') . '
+                FROM '   . $db->q('INFORMATION_SCHEMA.COLUMNS') . '
+                WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($db->getName()) . '
+                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($this->getName(true))
+            );
+        }
+
         protected function getDeleteQuery(): string {
             return 'DROP TABLE ' . $this->getDb()->t($this->getName());
+        }
+
+        protected function getProps(): array {
+            $db  = $this->getDb();
+            $row = $db->fetchRow('
+                SELECT *
+                FROM '  . $db->q('information_schema.TABLES', 't') . '
+                JOIN '  . $db->q('information_schema.COLLATION_CHARACTER_SET_APPLICABILITY', 'ccsa') . '
+                ON '    . $db->q('ccsa.COLLATION_NAME') . ' = '    . $db->q('t.TABLE_COLLATION') . '
+                WHERE ' . $db->q('t.TABLE_SCHEMA')      . ' LIKE ' . $db->e($db->getName()) . '
+                AND '   . $db->q('t.TABLE_NAME')        . ' LIKE ' . $db->e($this->getName(true)) . '
+            ');
+            return
+                $row
+                    ? [
+                        'charset'   => trim($row['CHARACTER_SET_NAME']),
+                        'collation' => trim($row['COLLATION_NAME']),
+                        'engine'    => trim($row['ENGINE']),
+                        'exists'    => true,
+                        'schema'    => trim($row['TABLE_SCHEMA'])
+                    ]
+                    : [];
         }
 
         protected function getRenameQuery(string $name): string {
@@ -242,7 +288,5 @@
                 TO           ' . $db->t($name)
             );
         }
-
-        abstract protected function getProps(): array;
 
     }

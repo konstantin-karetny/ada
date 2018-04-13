@@ -11,101 +11,51 @@
 
     class Column extends \Ada\Core\Db\Column {
 
-        public static function create($table, array $params): self {
-            $db                = $table->getDb();
-            $defaults          = get_class_vars(__CLASS__);
-            $collation         = \Ada\Core\Clean::cmd(
-                $params['collation']         ?? $defaults['collation']
-            );
-            $default_value     = \Ada\Core\Type::set(trim(
-                $params['default_value']     ?? $defaults['default_value']
-            ));
-            $is_auto_increment = \Ada\Core\Clean::bool(
-                $params['is_auto_increment'] ?? $defaults['is_auto_increment']
-            );
-            $is_nullable       = \Ada\Core\Clean::bool(
-                $params['is_nullable']       ?? $defaults['is_nullable']
-            );
-            $is_primary_key    = \Ada\Core\Clean::bool(
-                $params['is_primary_key']    ?? $defaults['is_primary_key']
-            );
-            $is_unique_key     = \Ada\Core\Clean::bool(
-                $params['is_primary_key']    ?? $defaults['is_unique_key']
-            );
-            $length            = \Ada\Core\Clean::int(
-                $params['length']            ?? $defaults['length']
-            );
-            $name              = \Ada\Core\Clean::cmd(
-                $params['name']              ?? $defaults['name']
-            );
-            $type              = preg_replace(
-                '/[^ a-z0-9_\.-]/i',
-                '',
-                trim($params['type'] ?? $defaults['type'])
-            );
-            $error             = (
-                'Failed to add column ' .
-                (!$name ? '' : '\'' . $name . '\'') .
-                ' to table \'' . $table->getName() . '\''
-            );
-            if (!$name) {
-                throw new \Ada\Core\Exception(
-                    $error . '. Column name must not be empty',
-                    1
-                );
-            }
-            $queries           = [];
-            $queries[]         = '
+        protected static function getCreateQueries($table, array $params): array {
+            $res   = [];
+            $db    = $table->getDb();
+            $res[] = '
                 ALTER TABLE ' . $db->t($table->getName()) . '
-                ADD '         . $db->q($name) . ' ' .
+                ADD '         . $db->q($params['name'])   . ' ' .
                 (
-                    $is_auto_increment
+                    $params['is_auto_increment']
                         ? 'serial'
                         : (
-                            $type .
+                            $params['type'] .
                             (
-                                !$length
+                                !$params['length']
                                     ? ''
-                                    : '(' . $db->e($length) . ')'
+                                    : '(' . $db->e($params['length']) . ')'
                             ) .
                             (
-                                $default_value === ''
+                                $params['default_value'] === ''
                                     ? ''
-                                    : ' DEFAULT \'' . $default_value . '\''
+                                    : ' DEFAULT \'' . $params['default_value'] . '\''
                             ) .
                             (
-                                !$collation
+                                !$params['collation']
                                     ? ''
-                                    : ' COLLATE ' . $db->e($collation)
+                                    : ' COLLATE ' . $db->e($params['collation'])
                             )
                         )
                 ) .
                 (
-                    ($is_nullable ? '' : ' NOT') . ' NULL'
+                    ($params['is_nullable']? '' : ' NOT') . ' NULL'
                 );
-            if ($is_primary_key) {
-                $queries[] = '
+        exit(var_dump( $res ));
+            if ($params['is_primary_key']) {
+                $res[] = '
                     ALTER TABLE '      . $db->t($table->getName()) . '
-                    ADD PRIMARY KEY (' . $db->q($name) . ')
+                    ADD PRIMARY KEY (' . $db->q($params['name']) . ')
                 ';
             }
-            if ($is_unique_key) {
-                $queries[] = '
+            if ($params['is_unique_key']) {
+                $res[] = '
                     ALTER TABLE ' . $db->t($table->getName()) . '
-                    ADD UNIQUE (' . $db->q($name) . ')
+                    ADD UNIQUE (' . $db->q($params['name']) . ')
                 ';
             }
-            try {
-                foreach ($queries as $query) {
-                    $db->exec($query);
-                }
-            } catch (\Throwable $e) {
-                throw new \Ada\Core\Exception(
-                    $error . '. ' . $e->getMessage(),
-                    2
-                );
-            }
-            return $table->getColumn($name, false);
+            return $res;
         }
 
         protected function getProps(): array {
