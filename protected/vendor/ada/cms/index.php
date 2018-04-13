@@ -70,6 +70,19 @@
     //$t2->getColumns();
 
 
+    exit(var_dump( Db::init()->createTable([
+        'name'    => 'test',
+        'columns' => [
+            [
+                'name'              => 'id',
+                'type'              => 'int',
+                'is_primary_key'    => true,
+                'is_auto_increment' => true
+            ]
+        ]
+    ]) ));
+
+
     $db  = Db::init(0);
     $t22 = $db->getTable('test2');
 

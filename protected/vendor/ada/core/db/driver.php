@@ -131,6 +131,10 @@
             return $this->isConnected();
         }
 
+        public function createTable(array $params): \Ada\Core\Db\Table {
+            exit(var_dump( $params ));
+        }
+
         public function debugInfo(): array {
             if (!$this->stmt) {
                 return [];
