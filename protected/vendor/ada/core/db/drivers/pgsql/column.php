@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 13.04.2018
+    * @version   1.0.0 17.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,12 +11,9 @@
 
     class Column extends \Ada\Core\Db\Column {
 
-        protected static function getCreateQueries($table, array $params): array {
-            $res   = [];
-            $db    = $table->getDb();
-            $res[] = '
-                ALTER TABLE ' . $db->t($table->getName()) . '
-                ADD '         . $db->q($params['name'])   . ' ' .
+        public static function getCreateQuery($db, array  $params): string {
+            return (
+                $db->q($params['name'])   . ' ' .
                 (
                     $params['is_auto_increment']
                         ? 'serial'
@@ -41,21 +38,8 @@
                 ) .
                 (
                     ($params['is_nullable']? '' : ' NOT') . ' NULL'
-                );
-        exit(var_dump( $res ));
-            if ($params['is_primary_key']) {
-                $res[] = '
-                    ALTER TABLE '      . $db->t($table->getName()) . '
-                    ADD PRIMARY KEY (' . $db->q($params['name']) . ')
-                ';
-            }
-            if ($params['is_unique_key']) {
-                $res[] = '
-                    ALTER TABLE ' . $db->t($table->getName()) . '
-                    ADD UNIQUE (' . $db->q($params['name']) . ')
-                ';
-            }
-            return $res;
+                )
+            );
         }
 
         protected function getProps(): array {
@@ -72,7 +56,7 @@
                 ON '         . $db->q('c.table_schema')      . ' = '    . $db->q('kcu.table_schema') . '
                 AND '        . $db->q('c.table_name')        . ' = '    . $db->q('kcu.table_name') . '
                 AND '        . $db->q('c.column_name')       . ' = '    . $db->q('kcu.column_name') . '
-                WHERE '      . $db->q('c.table_name')        . ' LIKE ' . $db->e($table->getName(true)) . '
+                WHERE '      . $db->q('c.table_name')        . ' LIKE ' . $db->e($table->getName(true, false)) . '
                 AND '        . $db->q('c.column_name')       . ' LIKE ' . $db->e($this->getName())
             );
             if (!$row) {
@@ -80,8 +64,9 @@
             }
             $constraint_type = strtolower(trim($row['constraint_type']));
             $res             = [
+                'charset'        => trim($row['character_set_name']),
                 'collation'      => trim($row['collation_name']),
-                'default_value'  => $row['column_default'],
+                'default_value'  => trim($row['column_default']),
                 'is_nullable'    => strtolower(trim($row['is_nullable'])) == 'yes',
                 'is_primary_key' => $constraint_type == 'primary key',
                 'is_unique_key'  => $constraint_type == 'unique',
@@ -100,6 +85,14 @@
                 stripos($res['default_value'], 'nextval') === 0
             );
             return $res;
+        }
+
+        protected function getRenameQuery(string $name): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE '   . $db->t($this->getTable()->getName()) . '
+                RENAME COLUMN ' . $db->q($this->getName()) . ' TO ' . $db->q($name)
+            ;
         }
 
     }

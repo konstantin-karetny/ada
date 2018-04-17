@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 13.04.2018
+    * @version   1.0.0 17.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -35,28 +35,49 @@
         'user'   => 'postgres',
     ]);
 
-    exit(var_dump( Db::init(1)->getTable('information_schema.sql_features') ));
-
 /*
-    $t = Db::init(1)->getTable('test');
-    $t->getColumns(true);
+    exit(var_dump(
 
-    exit(var_dump( $t ));
+        Db::init(0)->getTable('test2')->addColumn([
+            'name'              => 'text',
+            'type'              => 'text'
+        ])
+
+    ));
 */
+
+    exit(var_dump( Db::init(0)->getTable('test2')->getColumns(true) ));
+
+    exit(var_dump(
+
+        Db::init(0)->getTable('test2')->getColumn('text')->change(
+            [
+                'name'           => 'text',
+                'is_nullable'    => false,
+                'default_value'  => '',
+                'is_primary_key' => true
+            ]
+        )
+
+    ));
+
     exit(var_dump(
 
         Db::init(1)->createTable(
             [
-                'name' => 'information_schema.test2',
+                'name' => 'test2',
                 'columns' => [
                     [
                         'name'              => 'id',
                         'is_primary_key'    => true,
+                        'is_unique_key'     => true,
                         'is_auto_increment' => true
                     ],
                     [
                         'name'              => 'name',
-                        'iis_unique_key'    => true
+                        'type'              => 'varchar',
+                        'length'            => 255,
+                        'is_unique_key'     => true
                     ]
                 ]
             ]

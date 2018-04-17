@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 13.04.2018
+    * @version   1.0.0 17.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,8 +12,7 @@
     abstract class Driver extends \Ada\Core\Proto {
 
         const
-            ESC_TAG      = ':',
-            ADD_PARAMS   = [
+            ADD_PARAMS    = [
                 'attributes',
                 'charset',
                 'date_format',
@@ -25,33 +24,35 @@
                 'prefix',
                 'quote',
                 'user'
-            ];
+            ],
+            ESC_TAG       = ':';
 
         protected
-            $attributes  = [
+            $attributes   = [
                 \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
                 \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC
             ],
-            $charset     = 'utf8',
-            $collation   = 'utf8mb4_unicode_ci',
-            $date_format = 'Y-m-d H:i:s',
-            $dsn_format  = '',
-            $driver      = \Ada\Core\Db::DEFAULT_DRIVER,
-            $fetch_mode  = [],
-            $host        = 'localhost',
-            $min_version = '',
-            $name        = '',
-            $password    = '',
+            $charset      = 'utf8',
+            $collation    = 'utf8mb4_unicode_ci',
+            $date_format  = 'Y-m-d H:i:s',
+            $driver       = \Ada\Core\Db::DEFAULT_DRIVER,
+            $dsn_format   = '',
+            $fetch_mode   = [],
+            $host         = 'localhost',
+            $min_version  = '',
+            $name         = '',
+            $password     = '',
             /** @var \PDO */
-            $pdo         = null,
-            $port        = 0,
-            $prefix      = '',
-            $quote       = '`',
-            $schema      = '',
+            $pdo          = null,
+            $port         = 0,
+            $prefix       = '',
+            $quote        = '`',
+            $schema       = '',
             /** @var \PDOStatement */
-            $stmt        = null,
-            $user        = '',
-            $version     = '';
+            $stmt         = null,
+            $tables_names = [],
+            $user         = '',
+            $version      = '';
 
         public static function init(array $params) {
             return new static($params);
@@ -94,14 +95,9 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to close a transaction. ' . $e->getMessage(),
-                    8
+                    13
                 );
             }
-        }
-
-        public function createTable(array $params): Table {
-            $class = $this->getNameSpace() . 'Table';
-            return $class::create($this, $params);
         }
 
         public function connect(): bool {
@@ -131,6 +127,11 @@
             return $this->isConnected();
         }
 
+        public function createTable(array $params): Table {
+            $class = $this->getNameSpace() . 'Table';
+            return $class::create($this, $params);
+        }
+
         public function debugInfo(): array {
             if (!$this->stmt) {
                 return [];
@@ -140,12 +141,19 @@
             return explode("\n", trim(ob_get_clean()));
         }
 
-        public function deleteRow(string $table, string $condition): bool {
-            return $this->exec('
-                DELETE FROM ' .
-                $this->t($table) . '
-                WHERE ' . $condition
-            );
+        public function deleteRow(string $table_name, string $condition): bool {
+            $query = $this->getDeleteRowQuery($table_name, $condition);
+            try {
+                return $this->exec($query);
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    (
+                        'Failed to delete row. Query: \'' . trim($query) . '\'. ' .
+                        $e->getMessage()
+                    ),
+                    12
+                );
+            }
         }
 
         public function disconnect(): bool {
@@ -215,7 +223,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . trim($query) . '\''
                     ),
-                    3
+                    5
                 );
             }
             $this->fetch_mode = [];
@@ -256,7 +264,7 @@
                         'Unknown column \'' . $column      . '\'.' .
                         ' Query: \''        . trim($query) . '\''
                     ),
-                    6
+                    8
                 );
             }
             return array_combine(
@@ -280,7 +288,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . trim($query) . '\''
                     ),
-                    4
+                    9
                 );
             }
             $this->stmt->closeCursor();
@@ -321,7 +329,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . trim($query) . '\''
                     ),
-                    4
+                    10
                 );
             }
             $this->stmt->closeCursor();
@@ -336,7 +344,7 @@
             if (!key_exists($key, (array) reset($res))) {
                 throw new \Ada\Core\Exception(
                     'Unknown key \'' . $key . '\'. Query: \'' . trim($query) . '\'',
-                    5
+                    11
                 );
             }
             return array_combine(
@@ -358,7 +366,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to get PDO attribute ' . $name . '. ' . $e->getMessage(),
-                    10
+                    3
                 );
             }
         }
@@ -445,6 +453,28 @@
             return $class::init($name, $this, $cached);
         }
 
+        public function getTables(
+            bool $as_objects = false,
+            bool $cached     = true
+        ): array {
+            if (!$cached || !$this->tables_names) {
+                $this->tables_names = array_map(
+                    function($el) {
+                        return ltrim($el, $this->getPrefix());
+                    },
+                    $this->fetchColumn($this->getGetTablesQuery())
+                );
+            }
+            if (!$as_objects) {
+                return $this->tables_names;
+            }
+            $res = [];
+            foreach ($this->tables_names as $name) {
+                $res[$name] = $this->getTable($name, $cached);
+            }
+            return $res;
+        }
+
         public function getUser(): string {
             return $this->user;
         }
@@ -453,23 +483,19 @@
             return $this->version;
         }
 
-        public function insertRow(string $table, array $row): bool {
-            return $this->exec('
-                INSERT INTO ' .
-                $this->t($table) . '
-                (' .
-                    implode(
-                        ', ',
-                        array_map([$this, 'q'], array_keys($row))
-                    ) . '
-                )
-                VALUES(' .
-                    implode(
-                        ', ',
-                        array_map([$this, 'e'], $row)
-                    ) . '
-                )
-            ');
+        public function insertRow(string $table_name, array $row): bool {
+            $query = $this->getInsertRowQuery($table_name, $row);
+            try {
+                return $this->exec($query);
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    (
+                        'Failed to insert row. Query: \'' . trim($query) . '\'. ' .
+                        $e->getMessage()
+                    ),
+                    6
+                );
+            }
         }
 
         public function isConnected(): bool {
@@ -512,7 +538,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to start a transaction. ' . $e->getMessage(),
-                    7
+                    4
                 );
             }
         }
@@ -568,7 +594,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to roll back a transaction. ' . $e->getMessage(),
-                    9
+                    14
                 );
             }
         }
@@ -587,33 +613,88 @@
             return $res ? (' IN(' . implode(', ', $res) . ') ') : '';
         }
 
-        public function t(string $table, string $as = ''): string {
-            $table_arr = explode('.', $table);
-            $dot       = count($table_arr) > 1;
-            $name      = $table_arr[$dot ? 1 : 0];
-            $schema    = $dot ? $table_arr[0] : '';
+        public function t(string $table_name, string $as = ''): string {
+            $dot = strpos($table_name, '.');
             return $this->q(
-                (!$schema ? '' : $schema . '.') . $this->getPrefix() . $name,
+                $dot === false
+                    ? ($this->getPrefix() . $table_name)
+                    : (
+                        substr($table_name, 0, $dot + 1) .
+                        $this->getPrefix() .
+                        substr($table_name,    $dot + 1)
+                    ),
                 $as
             );
         }
 
         public function updateRow(
-            string $table,
+            string $table_name,
             array  $row,
             string $condition
         ): bool {
-            $query = 'UPDATE ' . $this->t($table) . ' SET ';
-            foreach ($row as $k => $v) {
-                $query .= $this->q($k) . ' = ' . $this->e($v) . ',';
+            $query = $this->getUpdateRowQuery($table_name, $row, $condition);
+            try {
+                return $this->exec($query);
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    (
+                        'Failed to update row. Query: \'' . trim($query) . '\'. ' .
+                        $e->getMessage()
+                    ),
+                    7
+                );
             }
-            $query = (
-                rtrim($query, " \t\n\r\0\x0B,") .
-                ' WHERE ' . $condition
-            );
-            return $this->exec($query);
+        }
+
+        protected function getDeleteRowQuery(
+            string $table_name,
+            string $condition
+        ): string {
+            return 'DELETE FROM ' . $this->t($table_name) . ' WHERE ' . $condition;
+        }
+
+        protected function getInsertRowQuery(
+            string $table_name,
+            array  $row
+        ): string {
+            return '
+                INSERT INTO ' .
+                $this->t($table_name) . '
+                (' .
+                    implode(
+                        ', ',
+                        array_map([$this, 'q'], array_keys($row))
+                    ) . '
+                )
+                VALUES(' .
+                    implode(
+                        ', ',
+                        array_map([$this, 'e'], $row)
+                    ) . '
+                )
+            ';
         }
 
         abstract protected function getProps(): array;
+
+        protected function getGetTablesQuery(): string {
+            return '
+                SELECT ' . $this->q('TABLE_NAME') . '
+                FROM '   . $this->q('information_schema.TABLES') . '
+                WHERE '  . $this->q('TABLE_SCHEMA') . ' LIKE ' . $this->e($this->getName())
+            ;
+        }
+
+        protected function getUpdateRowQuery(
+            string $table_name,
+            array  $row,
+            string $condition
+        ): string {
+            $res = 'UPDATE ' . $this->t($table_name) . ' SET ';
+            foreach ($row as $k => $v) {
+                $res .= $this->q($k) . ' = ' . $this->e($v) . ',';
+            }
+            return rtrim($res, " \t\n\r\0\x0B,") . ' WHERE ' . $condition;
+        }
 
     }
