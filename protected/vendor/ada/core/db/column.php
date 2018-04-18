@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 17.04.2018
+    * @version   1.0.0 18.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -24,15 +24,17 @@
             $is_unique_key     = false,
             $length            = 0,
             $name              = '',
+            $primary_key_name  = '',
             $table             = null,
-            $type              = 'int';
+            $type              = 'int',
+            $unique_key_name   = '';
 
         public static function create($table, array $params): self {
             $params = static::preapreParams($params);
             $error  = (
-                'Failed to add column ' .
+                'Failed to create column ' .
                 (!$params['name'] ? '' : '\'' . $params['name'] . '\'') .
-                ' to table \'' . $table->getName() . '\''
+                ' in table \'' . $table->getName() . '\''
             );
             if (!$params['name']) {
                 throw new \Ada\Core\Exception(
@@ -164,9 +166,9 @@
             if (!$props) {
                 throw new \Ada\Core\Exception(
                     (
-                        'No column \''    . $this->getName()          . '\'' .
-                        ' in table \''    . $table->getName()         . '\'' .
-                        ' of database \'' . $this->getDb()->getName() . '\''
+                        'No column \''   . $this->getName()          . '\' ' .
+                        'in table \''    . $table->getName()         . '\' ' .
+                        'of database \'' . $this->getDb()->getName() . '\''
                     ),
                     3
                 );
@@ -174,44 +176,19 @@
             $this->setProps($props);
         }
 
-        public function change(array $params): bool {
-            foreach (static::preapreParams([]) as $k => $v) {
-                $getter     = 'get' . \Ada\Core\Str::toCamelCase($k);
-                $params[$k] = (
-                    $params[$k]
-                        ?? (
-                            method_exists($this, $getter)
-                                ? $this->$getter()
-                                : (
-                                    property_exists($this, $k)
-                                        ? $this->$k
-                                        : $v
-                                )
-                        )
-                );
-            }
-            $db    = $this->getDb();
-            $table = $this->getTable();
+        public function delete(): bool {
             try {
-                foreach ($this->getChangeQueries($params) as $query) {
-                    $db->exec($query);
-                }
+                return $this->getDb()->exec($this->getDeleteQuery());
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     (
-                        'Failed to change column \'' . $this->getName(). '\'' .
-                        ' of table \'' . $table->getName() . '\'' .
-                        '. ' . $e->getMessage()
+                        'Failed to delete column \'' . $this->getName() . '\' ' .
+                        'of table \'' .    $this->getTable()->getName() . '\'. ' .
+                        $e->getMessage()
                     ),
-                    4
+                    5
                 );
             }
-            $table->getColumn($params['name'], false);
-            return true;
-        }
-
-        public function delete(): bool {
-
         }
 
         public function getCharset(): string {
@@ -254,6 +231,10 @@
             return $this->name;
         }
 
+        public function getPrimaryKeyName(): string {
+            return $this->primary_key_name;
+        }
+
         public function getTable(): Table {
             return $this->table;
         }
@@ -262,16 +243,59 @@
             return $this->type;
         }
 
+        public function getUniqueKeyName(): string {
+            return $this->unique_key_name;
+        }
+
+        public function update(array $params): bool {
+            foreach (static::preapreParams([]) as $k => $v) {
+                $getter     = 'get' . \Ada\Core\Str::toCamelCase($k);
+                $params[$k] = (
+                    $params[$k]
+                        ?? (
+                            method_exists($this, $getter)
+                                ? $this->$getter()
+                                : (
+                                    property_exists($this, $k)
+                                        ? $this->$k
+                                        : $v
+                                )
+                        )
+                );
+            }
+            $db    = $this->getDb();
+            $table = $this->getTable();
+            $db->beginTransaction();
+            try {
+                foreach ($this->getUpdateQueries($params) as $query) {
+                    $db->exec($query);
+                }
+            } catch (\Throwable $e) {
+                $db->rollBackTransaction();
+                throw new \Ada\Core\Exception(
+                    (
+                        'Failed to update column \'' . $this->getName() . '\' ' .
+                        'of table \'' . $table->getName() . '\'. ' .
+                        $e->getMessage()
+                    ),
+                    4
+                );
+            }
+            $db->commitTransaction();
+            $table->getColumn($params['name'], false);
+            return true;
+        }
+
         protected static function getCreateQueries(
                   $table,
             array $params
         ): array {
             $res   = [];
-            $db    = $this->getDb();
-            $res[] = ('
+            $db    = $table->getDb();
+            $res[] = '
                 ALTER TABLE ' . $db->t($table->getName()) . '
                 ADD '         . static::getCreateQuery($db, $params)
-            );
+            ;
             if ($params['is_primary_key']) {
                 $res[] = '
                     ALTER TABLE '      . $db->t($table->getName()) . '
@@ -287,60 +311,63 @@
             return $res;
         }
 
-        protected function getChangeQueries(array $params): array {
-            $res   = [];
-            $db    = $this->getDb();
-            $table = $this->getTable();
-            if ($params['name'] != $this->getName()) {
-                $res[] = $this->getRenameQuery($params['name']);
-            }
-            $res[] = '
-                ALTER TABLE ' . $db->t($table->getName()) . '
-                MODIFY '      . static::getCreateQuery($db, $params)
+        protected function getDeleteQuery(): string {
+           $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
+                DROP COLUMN ' . $db->q($this->getName())
             ;
-            if ($params['is_primary_key'] != $this->getIsPrimaryKey()) {
-                $res[] =
-                    $params['is_primary_key']
-                        ? '
-                            ALTER TABLE '      . $db->t($table->getName()) . '
-                            ADD PRIMARY KEY (' . $db->q($this->getName()) . ')
-                        '
-                        : '
-                            ALTER TABLE ' . $db->t($table->getName()) . '
-                            DROP PRIMARY KEY
-                        ';
-            }
-            return $res;
         }
 
         protected function getProps(): array {
             $table = $this->getTable();
             $db    = $this->getDb();
             $row   = $db->fetchRow('
-                SELECT *
-                FROM '  . $db->q('information_schema.COLUMNS') . '
-                WHERE ' . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($table->getSchema()) . '
-                AND '   . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($table->getName(true, false)) . '
-                AND '   . $db->q('COLUMN_NAME')  . ' LIKE ' . $db->e($this->getName())
+                SELECT ' . $db->qs([
+                    'CHARACTER_SET_NAME',
+                    'COLLATION_NAME',
+                    'COLUMN_DEFAULT',
+                    'COLUMN_NAME',
+                    'COLUMN_TYPE',
+                    'DATA_TYPE',
+                    'EXTRA',
+                    'IS_NULLABLE',
+                    'TABLE_NAME',
+                    'TABLE_SCHEMA'
+                ]) . '
+                FROM '   . $db->q('information_schema.COLUMNS') . '
+                WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($table->getSchema()) . '
+                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($table->getName(true, false)) . '
+                AND '    . $db->q('COLUMN_NAME')  . ' LIKE ' . $db->e($this->getName())
             );
             if (!$row) {
                 return [];
             }
-            $key         = strtolower(trim($row['COLUMN_KEY']));
-            $type_length = explode('(', rtrim($row['COLUMN_TYPE'], ')'));
-            $res         = [
+            preg_match('/\((.*)\)/', $row['COLUMN_TYPE'], $length);
+            $res = [
                 'charset'           => trim($row['CHARACTER_SET_NAME']),
                 'collation'         => trim($row['COLLATION_NAME']),
                 'default_value'     => trim($row['COLUMN_DEFAULT']),
-                'is_auto_increment' => (
-                    stripos('auto_increment', strtolower($row['EXTRA'])) !== false
-                ),
+                'is_auto_increment' => strpos(strtolower($row['EXTRA']), 'auto_increment') !== false,
                 'is_nullable'       => strtolower(trim($row['IS_NULLABLE'])) == 'yes',
-                'is_primary_key'    => $key                                  == 'pri',
-                'is_unique_key'     => $key                                  == 'uni',
-                'length'            => (int) ($type_length[1] ?? 0),
-                'type'              => trim($type_length[0])
+                'length'            => (int) end($length),
+                'type'              => trim($row['DATA_TYPE'])
             ];
+            foreach ($db->fetchRows('
+                SHOW INDEX
+                FROM '  . $db->t($table->getName()) . '
+                WHERE ' . $db->q('Column_name') . ' LIKE ' . $db->e($this->getName()) . '
+                AND '   . $db->q('Non_unique')  . ' = 0'
+            ) as $index) {
+                $key_name                 = trim($index['Key_name']);
+                $key                      = (
+                    strtolower($key_name) == 'primary'
+                        ? 'primary_key'
+                        : 'unique_key'
+                );
+                $res['is_' . $key]        = true;
+                $res[$key  . '_name']     = $key_name;
+            }
             return $res;
         }
 
@@ -356,6 +383,44 @@
                         : '(' . $db->e($this->getLength()) . ')'
                 )
             ;
+        }
+
+        protected function getUpdateQueries(array $params): array {
+            $res   = [];
+            $db    = $this->getDb();
+            $table = $this->getTable();
+            if ($params['name'] != $this->getName()) {
+                $res[] = $this->getRenameQuery($params['name']);
+            }
+            if ($params['is_primary_key'] != $this->getIsPrimaryKey()) {
+                $res[] =
+                    $params['is_primary_key']
+                        ? '
+                            ALTER TABLE '      . $db->t($table->getName()) . '
+                            ADD PRIMARY KEY (' . $db->q($params['name']) . ')
+                        '
+                        : '
+                            ALTER TABLE ' . $db->t($table->getName()) . '
+                            DROP PRIMARY KEY
+                        ';
+            }
+            if ($params['is_unique_key'] != $this->getIsUniqueKey()) {
+                $res[] =
+                    $params['is_unique_key']
+                        ? '
+                            ALTER TABLE ' . $db->t($table->getName()) . '
+                            ADD UNIQUE (' . $db->q($params['name']) . ')
+                        '
+                        : '
+                            ALTER TABLE ' . $db->t($table->getName()) . '
+                            DROP KEY '    . $db->q($this->getUniqueKeyName())
+                        ;
+            }
+            $res[] = '
+                ALTER TABLE ' . $db->t($table->getName()) . '
+                MODIFY '      . static::getCreateQuery($db, $params)
+            ;
+            return $res;
         }
 
     }

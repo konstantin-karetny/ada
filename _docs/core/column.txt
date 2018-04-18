@@ -1,0 +1,5 @@
+﻿* поддержка атрибутов типа unsigned и unsigned zerofill отсутствует,
+по причине её отстутствия в большинтсве СУБД и в самом стандарте SQL.
+Это упростит структуру базы данных и миграцию на другую СУБД
+Why aren't unsigned integer types available in the top database platforms?
+https://dba.stackexchange.com/questions/53050/why-arent-unsigned-integer-types-available-in-the-top-database-platforms

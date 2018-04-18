@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 17.04.2018
+    * @version   1.0.0 18.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,15 +14,12 @@
 
     require_once 'includes/autoload.php';
 
-    //column drop default
-    //column delete
-    //column rename
-	//https://www.1keydata.com/sql/sql-alter-table.html
-	//unsigned and etc.
-    //db
+    //column testing
+    //table update
+    //table delete
     //db session handler
-    //Str, Arr and Obj classes
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
+    //Str, Arr and Obj classes
 
     Db::add([
         'name'   => 'project',
@@ -35,35 +32,64 @@
         'user'   => 'postgres',
     ]);
 
-/*
-    exit(var_dump(
+    //exit(var_dump( Db::init(1)->getTable('test2')->getColumn('state')->delete() ));
 
-        Db::init(0)->getTable('test2')->addColumn([
-            'name'              => 'text',
-            'type'              => 'text'
+    exit(var_dump(
+        Db::init(1)->getTable('test2')->createColumn([
+            'name'              => 'state',
+            'type'              => 'int',
+            'length'            => 1,
+            'is_unique_key'     => true
         ])
-
     ));
-*/
 
-    exit(var_dump( Db::init(0)->getTable('test2')->getColumns(true) ));
 
     exit(var_dump(
-
-        Db::init(0)->getTable('test2')->getColumn('text')->change(
+        Db::init(1)->getTable('test2')->getColumn('id')->update(
             [
-                'name'           => 'text',
-                'is_nullable'    => false,
-                'default_value'  => '',
-                'is_primary_key' => true
+                'name'              => 'id',
+                'type'              => 'int',
+                'is_nullable'       => false,
+                'is_auto_increment' => true,
+                'is_primary_key'    => true,
+                'is_unique_key'     => true
             ]
         )
-
     ));
+
+
+    exit(var_dump(
+        Db::init(1)->getTable('test2')->getColumn('text')->update(
+            [
+                'name'              => 'text',
+                'type'              => 'text',
+                'length'            => 0,
+                //'collation'         => 'utf8',
+                'is_nullable'       => false,
+                'default_value'     => '',
+                //'is_auto_increment' => true,
+                //'is_primary_key'    => true,
+                'is_unique_key'     => false
+            ]
+        )
+    ));
+
+
+
+
+    $t = Db::init(0)->getTable('test2');
+    $t->getColumns(true);
+    exit(var_dump( $t ));
+
+
+
+
+
+    //exit(var_dump( Db::init(0)->getTable('test2')->delete() ));
 
     exit(var_dump(
 
-        Db::init(1)->createTable(
+        Db::init(0)->createTable(
             [
                 'name' => 'test2',
                 'columns' => [
@@ -78,6 +104,10 @@
                         'type'              => 'varchar',
                         'length'            => 255,
                         'is_unique_key'     => true
+                    ],
+                    [
+                        'name'              => 'text',
+                        'type'              => 'text'
                     ]
                 ]
             ]

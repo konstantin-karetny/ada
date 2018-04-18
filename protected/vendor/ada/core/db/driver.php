@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 17.04.2018
+    * @version   1.0.0 18.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -86,7 +86,21 @@
             }
         }
 
-        public function closeTransaction(): bool {
+        public function beginTransaction(): bool {
+            if (!$this->isConnected()) {
+                $this->connect();
+            }
+            try {
+                return (bool) $this->pdo->beginTransaction();
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    'Failed to begin transaction. ' . $e->getMessage(),
+                    4
+                );
+            }
+        }
+
+        public function commitTransaction(): bool {
             if (!$this->isTransactionOpen()) {
                 return false;
             }
@@ -94,7 +108,7 @@
                 return (bool) $this->pdo->commit();
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    'Failed to close a transaction. ' . $e->getMessage(),
+                    'Failed to close transaction. ' . $e->getMessage(),
                     13
                 );
             }
@@ -529,20 +543,6 @@
             );
         }
 
-        public function openTransaction(): bool {
-            if (!$this->isConnected()) {
-                $this->connect();
-            }
-            try {
-                return (bool) $this->pdo->beginTransaction();
-            } catch (\Throwable $e) {
-                throw new \Ada\Core\Exception(
-                    'Failed to start a transaction. ' . $e->getMessage(),
-                    4
-                );
-            }
-        }
-
         public function q(string $name, string $as = ''): string {
             return (
                 (
@@ -593,7 +593,7 @@
                 return (bool) $this->pdo->rollBack();
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    'Failed to roll back a transaction. ' . $e->getMessage(),
+                    'Failed to roll back transaction. ' . $e->getMessage(),
                     14
                 );
             }

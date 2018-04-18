@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 17.04.2018
+    * @version   1.0.0 18.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -87,8 +87,8 @@
             if (!$props) {
                 throw new \Ada\Core\Exception(
                     (
-                        'No table \''     . $this->getName()          . '\'' .
-                        ' in database \'' . $this->getDb()->getName() . '\''
+                        'No table \''     . $this->getName()          . '\' ' .
+                        'in database \'' . $this->getDb()->getName() . '\''
                     ),
                     4
                 );
@@ -96,7 +96,7 @@
             $this->setProps($props);
         }
 
-        public function addColumn(array $params): Column {
+        public function createColumn(array $params): Column {
             $class = $this->getDb()->getNameSpace() . 'Column';
             return $class::create($this, $params);
         }
