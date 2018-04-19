@@ -56,7 +56,7 @@
             'name'              => 'price',
             'type'              => 'decimal',
             'type_args'         => [10,2,3,4,5],
-            'is_unique_key'     => true
+            'unique_key'     => true
         ])
     ));
 
@@ -80,15 +80,15 @@
                 'columns' => [
                     [
                         'name'              => 'id',
-                        'is_primary_key'    => true,
-                        'is_unique_key'     => true,
+                        'primary_key'       => true,
+                        'unique_key'        => true,
                         'is_auto_increment' => true
                     ],
                     [
                         'name'              => 'name',
                         'type'              => 'varchar',
                         'length'            => 255,
-                        'is_unique_key'     => true
+                        'unique_key'        => true
                     ],
                     [
                         'name'              => 'text',

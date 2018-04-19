@@ -14,4 +14,13 @@
         protected
             $engine = 'InnoDB';
 
+        protected static function getCreateQuery($db, array $params): string {
+            return (
+                parent::getCreateQuery($db, $params) .
+                (!$params['engine']    ? '' : ' ENGINE = '          . $db->e($params['engine'])) .
+                (!$params['charset']   ? '' : ' DEFAULT CHARSET = ' . $db->e($params['charset'])) .
+                (!$params['collation'] ? '' : ' COLLATE = '         . $db->e($params['collation']))
+            );
+        }
+
     }

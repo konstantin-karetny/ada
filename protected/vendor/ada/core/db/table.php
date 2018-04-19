@@ -246,12 +246,10 @@
                 }
                 $columns = rtrim($columns, ', ') . ')';
             }
-            return (
-                'CREATE TABLE ' . $db->t($params['name']) . ' (' . $columns . ')' .
-                (!$params['engine']    ? '' : ' ENGINE = '          . $db->e($params['engine'])) .
-                (!$params['charset']   ? '' : ' DEFAULT CHARSET = ' . $db->e($params['charset'])) .
-                (!$params['collation'] ? '' : ' COLLATE = '         . $db->e($params['collation']))
-            );
+            return '
+                CREATE TABLE ' . $db->t($params['name']) . '
+                (' . $columns . ')
+            ';
         }
 
         protected static function preapreParams(array $params): array {
