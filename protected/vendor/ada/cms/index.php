@@ -32,48 +32,33 @@
         'user'   => 'postgres',
     ]);
 
-    //exit(var_dump( Db::init(1)->getTable('test2')->getColumn('state')->delete() ));
+
+
+    exit(var_dump( Db::init(0)->getTable('test2')->getColumn('id') ));
 
     exit(var_dump(
-        Db::init(1)->getTable('test2')->createColumn([
-            'name'              => 'state',
-            'type'              => 'int',
-            'length'            => 1,
+        Db::init(0)->getTable('test2')->getColumn('id')->update(
+            [
+                //'name'              => 'price',
+                //'type'              => 'decimal',
+                //'is_nullable'       => false,
+                'is_auto_increment' => true,
+                'primary_key'       => true,
+                //'unique_key'        => false
+            ]
+        )
+    ));
+
+
+
+    exit(var_dump(
+        Db::init(0)->getTable('test2')->createColumn([
+            'name'              => 'price',
+            'type'              => 'decimal',
+            'type_args'         => [10,2,3,4,5],
             'is_unique_key'     => true
         ])
     ));
-
-
-    exit(var_dump(
-        Db::init(1)->getTable('test2')->getColumn('id')->update(
-            [
-                'name'              => 'id',
-                'type'              => 'int',
-                'is_nullable'       => false,
-                'is_auto_increment' => true,
-                'is_primary_key'    => true,
-                'is_unique_key'     => true
-            ]
-        )
-    ));
-
-
-    exit(var_dump(
-        Db::init(1)->getTable('test2')->getColumn('text')->update(
-            [
-                'name'              => 'text',
-                'type'              => 'text',
-                'length'            => 0,
-                //'collation'         => 'utf8',
-                'is_nullable'       => false,
-                'default_value'     => '',
-                //'is_auto_increment' => true,
-                //'is_primary_key'    => true,
-                'is_unique_key'     => false
-            ]
-        )
-    ));
-
 
 
 

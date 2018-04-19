@@ -1,4 +1,13 @@
-﻿* поддержка атрибутов типа unsigned и unsigned zerofill отсутствует,
+﻿Создание столбцов
+https://laravel.ru/docs/v5/migrations#создание_столбцов
++
+Типы данных столбцов
+https://phpclub.ru/mysql/doc/column-types.html
++
+Типы данных
+http://postgresql.ru.net/manual/datatype.html
+
+* поддержка атрибутов типа unsigned и unsigned zerofill отсутствует,
 по причине её отстутствия в большинтсве СУБД и в самом стандарте SQL.
 Это упростит структуру базы данных и миграцию на другую СУБД
 Why aren't unsigned integer types available in the top database platforms?

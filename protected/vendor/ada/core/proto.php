@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 13.04.2018
+    * @version   1.0.0 19.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,6 +15,22 @@
             foreach ($this as $k => $v) {
                 $this->$k = Type::INITIAL_VALUES[Type::get($v)];
             }
+        }
+
+        protected function getProps(array $except = []): array {
+            $res = [];
+            foreach ($this as $k => $v) {
+                if (in_array($k, $except)) {
+                    continue;
+                }
+                $getter  = 'get' . \Ada\Core\Str::toCamelCase($k);
+                $res[$k] = (
+                    method_exists($this, $getter)
+                        ? $this->$getter()
+                        : Type::set($v)
+                );
+            }
+            return $res;
         }
 
         protected function setProps(array $props) {

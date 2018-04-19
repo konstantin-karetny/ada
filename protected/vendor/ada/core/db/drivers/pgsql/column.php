@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 18.04.2018
+    * @version   1.0.0 19.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,6 +11,18 @@
 
     class Column extends \Ada\Core\Db\Column {
 
+        const
+            DATA_TYPES          = [
+                'bigint'  => 'bigint',
+                'binary'  => 'blob',
+                'boolean' => 'boolean',
+                'decimal' => 'decimal',
+                'int'     => 'integer'
+            ],
+            DATA_TYPES_ARGS_QTY = [
+                'decimal' => 2
+            ];
+
         public static function getCreateQuery($db, array  $params): string {
             return (
                 $db->q($params['name'])   . ' ' .
@@ -18,12 +30,7 @@
                     $params['is_auto_increment']
                         ? 'serial'
                         : (
-                            $params['type'] .
-                            (
-                                !$params['length']
-                                    ? ''
-                                    : '(' . $db->e($params['length']) . ')'
-                            ) .
+                            static::getTypeQuery($params) .
                             (
                                 $params['default_value'] === ''
                                     ? ''
@@ -42,7 +49,7 @@
             );
         }
 
-        protected function getProps(): array {
+        protected function extractProps(): array {
             $table = $this->getTable();
             $db    = $table->getDb();
             $row   = $db->fetchRow('
@@ -52,7 +59,9 @@
                     'collation_name',
                     'column_default',
                     'data_type',
-                    'is_nullable'
+                    'is_nullable',
+                    'numeric_precision',
+                    'numeric_scale'
                 ]) . '
                 FROM '  . $db->q('information_schema.columns') . '
                 WHERE ' . $db->q('table_schema') . ' LIKE ' . $db->e($table->getSchema()) . '
@@ -67,8 +76,20 @@
                 'collation'     => trim($row['collation_name']),
                 'default_value' => trim($row['column_default']),
                 'is_nullable'   => strtolower(trim($row['is_nullable'])) == 'yes',
-                'length'        => (int) $row['character_maximum_length'],
-                'type'          => trim($row['data_type'])
+                'type'          => trim($row['data_type']),
+                'type_args'     => \Ada\Core\Clean::values(
+                    (
+                        $row['character_maximum_length']
+                            ? [
+                                $row['character_maximum_length']
+                            ]
+                            : [
+                                $row['numeric_precision'],
+                                $row['numeric_scale']
+                            ]
+                    ),
+                    'int'
+                )
             ];
             $res['is_auto_increment'] = (
                 in_array(
@@ -111,11 +132,12 @@
             return $res;
         }
 
-        protected function getRenameQuery(string $name): string {
+        protected function getRenameQuery(array $params): string {
             $db = $this->getDb();
             return '
                 ALTER TABLE '   . $db->t($this->getTable()->getName()) . '
-                RENAME COLUMN ' . $db->q($this->getName()) . ' TO ' . $db->q($name)
+                RENAME COLUMN ' . $db->q($this->getName()) . '
+                TO '            . $db->q($params['name'])
             ;
         }
 
@@ -124,30 +146,32 @@
             $db    = $this->getDb();
             $table = $this->getTable();
             if ($params['name'] != $this->getName()) {
-                $res[] = $this->getRenameQuery($params['name']);
+                $res[] = $this->getRenameQuery($params);
             }
-            if ($params['is_primary_key'] != $this->getIsPrimaryKey()) {
+            if ($params['primary_key'] != $this->getPrimaryKey()) {
                 $res[] =
-                    $params['is_primary_key']
+                    $params['primary_key']
                         ? '
                             ALTER TABLE '      . $db->t($table->getName()) . '
+                            ADD CONSTRAINT '   . $db->q($params['primary_key']) . '
                             ADD PRIMARY KEY (' . $db->q($params['name']) . ')
                         '
                         : '
-                            ALTER TABLE '     . $db->t($table->getName()) . '
-                            DROP CONSTRAINT ' . $db->q($this->getPrimaryKeyName())
+                            ALTER TABLE '      . $db->t($table->getName()) . '
+                            DROP CONSTRAINT '  . $db->q($this->getPrimaryKey())
                         ;
             }
-            if ($params['is_unique_key'] != $this->getIsUniqueKey()) {
+            if ($params['unique_key'] != $this->getUniqueKey()) {
                 $res[] =
-                    $params['is_unique_key']
+                    $params['unique_key']
                         ? '
-                            ALTER TABLE ' . $db->t($table->getName()) . '
-                            ADD UNIQUE (' . $db->q($params['name']) . ')
+                            ALTER TABLE '      . $db->t($table->getName()) . '
+                            ADD CONSTRAINT '   . $db->q($params['unique_key']) . '
+                            ADD UNIQUE ('      . $db->q($params['name']) . ')
                         '
                         : '
-                            ALTER TABLE ' . $db->t($table->getName()) . '
-                            DROP CONSTRAINT '    . $db->q($this->getUniqueKeyName())
+                            ALTER TABLE '      . $db->t($table->getName()) . '
+                            DROP CONSTRAINT '  . $db->q($this->getUniqueKey())
                         ;
             }
             $alter_table = '
@@ -156,17 +180,12 @@
             ';
             if (
                 $params['type']      != $this->getType() ||
-                $params['length']    != $this->getLength() ||
+                $params['type_args'] != $this->getTypeArgs() ||
                 $params['collation'] != $this->getCollation()
             ) {
                 $res[] = (
                     $alter_table . '
-                    TYPE ' . $params['type'] .
-                    (
-                        !$params['length']
-                            ? ''
-                            : '(' . $db->e($params['length']) . ')'
-                    ) .
+                    TYPE ' . static::getTypeQuery($params) .
                     (
                         !$params['collation']
                             ? ''

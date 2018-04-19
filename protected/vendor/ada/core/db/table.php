@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 18.04.2018
+    * @version   1.0.0 19.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -83,7 +83,7 @@
                 $this->name   = substr($name, $dot + 1);
                 $this->schema = substr($name, 0, $dot);
             }
-            $props            = $this->getProps();
+            $props            = $this->extractProps();
             if (!$props) {
                 throw new \Ada\Core\Exception(
                     (
@@ -228,20 +228,16 @@
                 $columns        .= (
                     $class::getCreateQuery($db, $column_params) . ', '
                 );
-                if ($column_params['is_primary_key']) {
-                    $primaries[] = $column_params['name'];
+                if ($column_params['primary_key']) {
+                    $primaries[] = $column_params['primary_key'];
                 }
-                if ($column_params['is_unique_key']) {
-                    $uniques[]   = $column_params['name'];
+                if ($column_params['unique_key']) {
+                    $uniques[]   = $column_params['unique_key'];
                 }
             }
             $columns = rtrim($columns, ', ');
             if ($primaries) {
-                $columns .= ', PRIMARY KEY (';
-                foreach ($primaries as $primary) {
-                    $columns .= $db->q($primary) . ', ';
-                }
-                $columns = rtrim($columns, ', ') . ')';
+                $columns .= ', PRIMARY KEY (' . $db->q(reset($primaries)) . ')';
             }
             if ($uniques) {
                 $columns .= ', UNIQUE (';
@@ -279,21 +275,7 @@
             return $params;
         }
 
-        protected function getColumnsNamesQuery(): string {
-            $db = $this->getDb();
-            return ('
-                SELECT ' . $db->q('COLUMN_NAME') . '
-                FROM '   . $db->q('INFORMATION_SCHEMA.COLUMNS') . '
-                WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($db->getName()) . '
-                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($this->getName(true, false))
-            );
-        }
-
-        protected function getDeleteQuery(): string {
-            return 'DROP TABLE ' . $this->getDb()->t($this->getName());
-        }
-
-        protected function getProps(): array {
+        protected function extractProps(): array {
             $db  = $this->getDb();
             $row = $db->fetchRow('
                 SELECT *
@@ -312,6 +294,20 @@
                         'schema'    => trim($row['TABLE_SCHEMA'])
                     ]
                     : [];
+        }
+
+        protected function getColumnsNamesQuery(): string {
+            $db = $this->getDb();
+            return ('
+                SELECT ' . $db->q('COLUMN_NAME') . '
+                FROM '   . $db->q('INFORMATION_SCHEMA.COLUMNS') . '
+                WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($db->getName()) . '
+                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($this->getName(true, false))
+            );
+        }
+
+        protected function getDeleteQuery(): string {
+            return 'DROP TABLE ' . $this->getDb()->t($this->getName());
         }
 
         protected function getRenameQuery(string $name): string {

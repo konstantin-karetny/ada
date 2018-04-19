@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 18.04.2018
+    * @version   1.0.0 19.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -68,7 +68,7 @@
                     \Ada\Core\Type::get($this->$k)
                 );
             }
-            $this->setProps($this->getProps());
+            $this->setProps($this->extractProps());
             if (
                 version_compare(
                     $this->getVersion(),
@@ -646,6 +646,8 @@
             }
         }
 
+        abstract protected function extractProps(): array;
+
         protected function getDeleteRowQuery(
             string $table_name,
             string $condition
@@ -674,8 +676,6 @@
                 )
             ';
         }
-
-        abstract protected function getProps(): array;
 
         protected function getGetTablesQuery(): string {
             return '

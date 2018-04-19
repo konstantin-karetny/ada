@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 18.04.2018
+    * @version   1.0.0 19.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,35 +11,55 @@
 
     abstract class Column extends \Ada\Core\Proto {
 
+        const
+            DATA_TYPES          = [
+                'bigint'  => 'bigint',
+                'binary'  => 'blob',
+                'boolean' => 'tinyint(1)',
+                'decimal' => 'decimal',
+                'int'     => 'int'
+            ],
+            DATA_TYPES_ARGS_QTY = [
+                'bigint'  => 1,
+                'decimal' => 2,
+                'int'     => 1
+            ];
+
         protected static
-            $instances         = [];
+            $instances          = [];
 
         protected
-            $charset           = '',
-            $collation         = '',
-            $default_value     = '',
-            $is_auto_increment = false,
-            $is_nullable       = false,
-            $is_primary_key    = false,
-            $is_unique_key     = false,
-            $length            = 0,
-            $name              = '',
-            $primary_key_name  = '',
-            $table             = null,
-            $type              = 'int',
-            $unique_key_name   = '';
+            $charset            = '',
+            $collation          = '',
+            $default_value      = '',
+            $is_auto_increment  = false,
+            $is_nullable        = false,
+            $name               = '',
+            $primary_key        = '',
+            $table              = null,
+            $type               = 'int',
+            $type_args          = [],
+            $type_real          = '',
+            $unique_key         = '';
 
         public static function create($table, array $params): self {
-            $params = static::preapreParams($params);
             $error  = (
                 'Failed to create column ' .
                 (!$params['name'] ? '' : '\'' . $params['name'] . '\'') .
                 ' in table \'' . $table->getName() . '\''
             );
-            if (!$params['name']) {
+            if (!isset($params['name'])) {
                 throw new \Ada\Core\Exception(
-                    $error . '. Column name must not be empty',
+                    $error . '. Column name is required',
                     1
+                );
+            }
+            try {
+                $params = static::preapreParams($params);
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    $error . '. ' . $e->getMessage(),
+                    $e->getCode()
                 );
             }
             $db = $table->getDb();
@@ -50,7 +70,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     $error . '. ' . $e->getMessage(),
-                    2
+                    3
                 );
             }
             return $table->getColumn($params['name'], false);
@@ -59,12 +79,7 @@
         public static function getCreateQuery($db, array $params): string {
             return (
                 $db->q($params['name']) . ' ' .
-                $params['type'] .
-                (
-                    !$params['length']
-                        ? ''
-                        : '(' . $db->e($params['length']) . ')'
-                ) .
+                static::getTypeQuery($params) .
                 (
                     !$params['charset']
                         ? ''
@@ -115,6 +130,18 @@
         }
 
         public static function preapreParams(array $params): array {
+            if (isset($params['name']) && !$params['name']) {
+                throw new \Ada\Core\Exception('Column name is required', 1);
+            }
+            if (
+                 isset($params['type']) &&
+                !isset(static::DATA_TYPES[$params['type']])
+            ) {
+                throw new \Ada\Core\Exception(
+                    'Unknown type \'' . $params['type'] . '\'',
+                    2
+                );
+            }
             foreach (array_merge(
                 get_class_vars(__CLASS__),
                 [
@@ -134,12 +161,15 @@
                         break;
                     case 'is_auto_increment' :
                     case 'is_nullable'       :
-                    case 'is_primary_key'    :
-                    case 'is_unique_key'     :
                         $params[$k] = \Ada\Core\Clean::bool($params[$k]);
                         break;
-                    case 'length'            :
-                        $params[$k] = \Ada\Core\Clean::int($params[$k]);
+                    case 'primary_key'       :
+                    case 'unique_key'        :
+                        $params[$k] = (
+                            $params[$k] === true
+                                ? $params['name']
+                                : \Ada\Core\Clean::cmd($params[$k])
+                        );
                         break;
                     case 'type'              :
                         $params[$k] = preg_replace(
@@ -148,10 +178,25 @@
                             trim($params[$k])
                         );
                         break;
+                    case 'type_args'         :
+                        $params[$k] = \Ada\Core\Clean::values(
+                            (
+                                is_array($params[$k])
+                                    ? $params[$k]
+                                    : \Ada\Core\Type::set($params[$k], 'array')
+                            ),
+                            'int'
+                        );
+                        break;
                     default                  :
                         unset($params[$k]);
                 }
             }
+            $params['type_args'] = array_slice(
+                $params['type_args'],
+                0,
+                static::DATA_TYPES_ARGS_QTY[$params['type']] ?? 0
+            );
             return $params;
         }
 
@@ -162,7 +207,7 @@
         ) {
             $this->name  = \Ada\Core\Clean::cmd($name);
             $this->table = $table;
-            $props       = $this->getProps();
+            $props       = $this->extractProps();
             if (!$props) {
                 throw new \Ada\Core\Exception(
                     (
@@ -170,7 +215,7 @@
                         'in table \''    . $table->getName()         . '\' ' .
                         'of database \'' . $this->getDb()->getName() . '\''
                     ),
-                    3
+                    4
                 );
             }
             $this->setProps($props);
@@ -186,7 +231,7 @@
                         'of table \'' .    $this->getTable()->getName() . '\'. ' .
                         $e->getMessage()
                     ),
-                    5
+                    6
                 );
             }
         }
@@ -215,24 +260,12 @@
             return $this->is_nullable;
         }
 
-        public function getIsPrimaryKey(): bool {
-            return $this->is_primary_key;
-        }
-
-        public function getIsUniqueKey(): bool {
-            return $this->is_unique_key;
-        }
-
-        public function getLength() {
-            return $this->length;
-        }
-
         public function getName(): string {
             return $this->name;
         }
 
-        public function getPrimaryKeyName(): string {
-            return $this->primary_key_name;
+        public function getPrimaryKey(): string {
+            return $this->primary_key;
         }
 
         public function getTable(): Table {
@@ -243,28 +276,34 @@
             return $this->type;
         }
 
-        public function getUniqueKeyName(): string {
-            return $this->unique_key_name;
+        public function getTypeArgs(): array {
+            return $this->type_args;
+        }
+
+        public function getTypeReal(): string {
+            return $this->type_real;
+        }
+
+        public function getUniqueKey(): string {
+            return $this->unique_key;
         }
 
         public function update(array $params): bool {
-            foreach (static::preapreParams([]) as $k => $v) {
-                $getter     = 'get' . \Ada\Core\Str::toCamelCase($k);
-                $params[$k] = (
-                    $params[$k]
-                        ?? (
-                            method_exists($this, $getter)
-                                ? $this->$getter()
-                                : (
-                                    property_exists($this, $k)
-                                        ? $this->$k
-                                        : $v
-                                )
-                        )
+            $db     = $this->getDb();
+            $table  = $this->getTable();
+            $params = array_merge($this->getProps(['table']), $params);
+            $error  = (
+                'Failed to update column \'' . $this->getName() . '\' ' .
+                'of table \'' . $table->getName() . '\''
+            );
+            try {
+                $params = static::preapreParams($params);
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    $error . '. ' . $e->getMessage(),
+                    $e->getCode()
                 );
             }
-            $db    = $this->getDb();
-            $table = $this->getTable();
             $db->beginTransaction();
             try {
                 foreach ($this->getUpdateQueries($params) as $query) {
@@ -273,12 +312,8 @@
             } catch (\Throwable $e) {
                 $db->rollBackTransaction();
                 throw new \Ada\Core\Exception(
-                    (
-                        'Failed to update column \'' . $this->getName() . '\' ' .
-                        'of table \'' . $table->getName() . '\'. ' .
-                        $e->getMessage()
-                    ),
-                    4
+                    $error . '. ' . $e->getMessage(),
+                    5
                 );
             }
             $db->commitTransaction();
@@ -286,40 +321,7 @@
             return true;
         }
 
-        protected static function getCreateQueries(
-                  $table,
-            array $params
-        ): array {
-            $res   = [];
-            $db    = $table->getDb();
-            $res[] = '
-                ALTER TABLE ' . $db->t($table->getName()) . '
-                ADD '         . static::getCreateQuery($db, $params)
-            ;
-            if ($params['is_primary_key']) {
-                $res[] = '
-                    ALTER TABLE '      . $db->t($table->getName()) . '
-                    ADD PRIMARY KEY (' . $db->q($params['name']) . ')
-                ';
-            }
-            if ($params['is_unique_key']) {
-                $res[] = '
-                    ALTER TABLE ' . $db->t($table->getName()) . '
-                    ADD UNIQUE (' . $db->q($params['name']) . ')
-                ';
-            }
-            return $res;
-        }
-
-        protected function getDeleteQuery(): string {
-           $db = $this->getDb();
-            return '
-                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
-                DROP COLUMN ' . $db->q($this->getName())
-            ;
-        }
-
-        protected function getProps(): array {
+        protected function extractProps(): array {
             $table = $this->getTable();
             $db    = $this->getDb();
             $row   = $db->fetchRow('
@@ -343,45 +345,95 @@
             if (!$row) {
                 return [];
             }
-            preg_match('/\((.*)\)/', $row['COLUMN_TYPE'], $length);
+            preg_match('/\((.*)\)/', $row['COLUMN_TYPE'], $type_args);
             $res = [
                 'charset'           => trim($row['CHARACTER_SET_NAME']),
                 'collation'         => trim($row['COLLATION_NAME']),
                 'default_value'     => trim($row['COLUMN_DEFAULT']),
                 'is_auto_increment' => strpos(strtolower($row['EXTRA']), 'auto_increment') !== false,
                 'is_nullable'       => strtolower(trim($row['IS_NULLABLE'])) == 'yes',
-                'length'            => (int) end($length),
-                'type'              => trim($row['DATA_TYPE'])
+                'type_args'         => \Ada\Core\Clean::values(
+                    explode(',', end($type_args)),
+                    'int'
+                ),
+                'type_real'         => strtolower(trim($row['DATA_TYPE']))
             ];
+            $res['type'] = array_search($res['type_real'], static::DATA_TYPES);
+            if ($res['type'] === false) {
+                $res['type'] = $res['type_real'];
+            }
             foreach ($db->fetchRows('
                 SHOW INDEX
                 FROM '  . $db->t($table->getName()) . '
                 WHERE ' . $db->q('Column_name') . ' LIKE ' . $db->e($this->getName()) . '
                 AND '   . $db->q('Non_unique')  . ' = 0'
             ) as $index) {
-                $key_name                 = trim($index['Key_name']);
-                $key                      = (
-                    strtolower($key_name) == 'primary'
+                $key = trim($index['Key_name']);
+                $res[
+                    strtolower($key) == 'primary'
                         ? 'primary_key'
                         : 'unique_key'
-                );
-                $res['is_' . $key]        = true;
-                $res[$key  . '_name']     = $key_name;
+                ] = $key;
             }
             return $res;
         }
 
-        protected function getRenameQuery(string $name): string {
+        protected static function getCreateQueries(
+                  $table,
+            array $params
+        ): array {
+            $res   = [];
+            $db    = $table->getDb();
+            $res[] = '
+                ALTER TABLE ' . $db->t($table->getName()) . '
+                ADD '         . static::getCreateQuery($db, $params)
+            ;
+            if ($params['primary_key']) {
+                $res[] = '
+                    ALTER TABLE '      . $db->t($table->getName()) . '
+                    ADD CONSTRAINT '   . $db->q($params['primary_key']) . '
+                    ADD PRIMARY KEY (' . $db->q($params['name']) . ')
+                ';
+            }
+            if ($params['unique_key']) {
+                $res[] = '
+                    ALTER TABLE '      . $db->t($table->getName()) . '
+                    ADD CONSTRAINT '   . $db->q($params['unique_key']) . '
+                    ADD UNIQUE ('      . $db->q($params['name']) . ')
+                ';
+            }
+            return $res;
+        }
+
+        protected static function getTypeQuery(array $params): string {
+            return (
+                static::DATA_TYPES[$params['type']] .
+                (
+                    (
+                        $params['type_args'] &&
+                        isset(static::DATA_TYPES[$params['type']])
+                    )
+                        ? ('(' . implode(', ', $params['type_args']) . ')')
+                        : ''
+                )
+            );
+        }
+
+        protected function getDeleteQuery(): string {
+           $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
+                DROP COLUMN ' . $db->q($this->getName())
+            ;
+        }
+
+        protected function getRenameQuery(array $params): string {
             $db = $this->getDb();
             return '
                 ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
-                CHANGE '      . $db->q($this->getName()) . ' ' . $db->q($name) .
-                ' ' . $this->getType() .
-                (
-                    !$this->getLength()
-                        ? ''
-                        : '(' . $db->e($this->getLength()) . ')'
-                )
+                CHANGE ' .      $db->q($this->getName()) . ' ' .
+                                $db->q($params['name'])  . ' ' .
+                static::getTypeQuery($params)
             ;
         }
 
@@ -390,30 +442,32 @@
             $db    = $this->getDb();
             $table = $this->getTable();
             if ($params['name'] != $this->getName()) {
-                $res[] = $this->getRenameQuery($params['name']);
+                $res[] = $this->getRenameQuery($params);
             }
-            if ($params['is_primary_key'] != $this->getIsPrimaryKey()) {
+            if ($params['primary_key'] != $this->getPrimaryKey()) {
                 $res[] =
-                    $params['is_primary_key']
+                    $params['primary_key']
                         ? '
-                            ALTER TABLE '      . $db->t($table->getName()) . '
-                            ADD PRIMARY KEY (' . $db->q($params['name']) . ')
+                            ALTER TABLE '    . $db->t($table->getName()) . '
+                            ADD CONSTRAINT ' . $db->q($params['primary_key']) . '
+                            PRIMARY KEY ('   . $db->q($params['name']) . ')
                         '
                         : '
-                            ALTER TABLE ' . $db->t($table->getName()) . '
+                            ALTER TABLE '    . $db->t($table->getName()) . '
                             DROP PRIMARY KEY
                         ';
             }
-            if ($params['is_unique_key'] != $this->getIsUniqueKey()) {
+            if ($params['unique_key'] != $this->getUniqueKey()) {
                 $res[] =
-                    $params['is_unique_key']
+                    $params['unique_key']
                         ? '
-                            ALTER TABLE ' . $db->t($table->getName()) . '
-                            ADD UNIQUE (' . $db->q($params['name']) . ')
+                            ALTER TABLE '    . $db->t($table->getName()) . '
+                            ADD CONSTRAINT ' . $db->q($params['unique_key']) . '
+                            ADD UNIQUE ('    . $db->q($params['name']) . ')
                         '
                         : '
-                            ALTER TABLE ' . $db->t($table->getName()) . '
-                            DROP KEY '    . $db->q($this->getUniqueKeyName())
+                            ALTER TABLE '    . $db->t($table->getName()) . '
+                            DROP KEY '       . $db->q($this->getUniqueKey())
                         ;
             }
             $res[] = '
