@@ -14,7 +14,7 @@
 
     require_once 'includes/autoload.php';
 
-    //column delete only column from constraint, not all constraint
+    //column delete only column from constraint, not all column in constraint
     //column types and args_qtys
     //column attributes?
     //table  remake
