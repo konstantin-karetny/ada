@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 19.04.2018
+    * @version   1.0.0 20.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,7 +22,7 @@
             return new static($params);
         }
 
-        protected function extractProps(): array {
+        protected function extractParams(): array {
             $row = $this->fetchRow('
                 SELECT ' .
                     $this->q('DEFAULT_CHARACTER_SET_NAME') . ', ' .

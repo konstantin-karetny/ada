@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 19.04.2018
+    * @version   1.0.0 20.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -23,7 +23,7 @@
             return new static($params);
         }
 
-        protected function extractProps(): array {
+        protected function extractParams(): array {
             $search_path = explode(' ', $this->fetchCell('SHOW search_path'));
             return [
                 'charset'   => trim($this->fetchCell('SHOW SERVER_ENCODING')),

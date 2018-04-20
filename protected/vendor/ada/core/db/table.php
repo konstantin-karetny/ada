@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 19.04.2018
+    * @version   1.0.0 20.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -83,7 +83,7 @@
                 $this->name   = substr($name, $dot + 1);
                 $this->schema = substr($name, 0, $dot);
             }
-            $props            = $this->extractProps();
+            $props            = $this->extractParams();
             if (!$props) {
                 throw new \Ada\Core\Exception(
                     (
@@ -139,7 +139,10 @@
             return $this->collation;
         }
 
-        public function getColumn(string $name, bool $cached = true): Column {
+        public function getColumn(
+            string $name = '',
+            bool   $cached = true
+        ): Column {
             $class = $this->getDb()->getNameSpace() . 'Column';
             $res   = $class::init($name, $this, $cached);
             return $this->columns[$res->getName()] = $res;
@@ -273,7 +276,7 @@
             return $params;
         }
 
-        protected function extractProps(): array {
+        protected function extractParams(): array {
             $db  = $this->getDb();
             $row = $db->fetchRow('
                 SELECT *

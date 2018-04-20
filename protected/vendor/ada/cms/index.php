@@ -33,8 +33,10 @@
     ]);
 
 
+    $c = Db::init(0)->getTable('test2')->getColumn();
+    $c->setName('state');
 
-    exit(var_dump( Db::init(0)->getTable('test2')->getColumn('id') ));
+    exit(var_dump( $c->save() ));
 
     exit(var_dump(
         Db::init(0)->getTable('test2')->getColumn('id')->update(
