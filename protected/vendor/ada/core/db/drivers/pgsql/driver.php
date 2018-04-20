@@ -19,10 +19,6 @@
             $schema      = 'public',
             $user        = 'postgres';
 
-        public static function init(array $params): self {
-            return new static($params);
-        }
-
         protected function extractParams(): array {
             $search_path = explode(' ', $this->fetchCell('SHOW search_path'));
             return [

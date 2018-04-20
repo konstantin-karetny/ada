@@ -27,7 +27,7 @@
                     : [];
         }
 
-        protected function getColumnsNamesQuery(): string {
+        protected function getQueryColumnsNames(): string {
             $db = $this->getDb();
             return ('
                 SELECT ' . $db->q('column_name') . '

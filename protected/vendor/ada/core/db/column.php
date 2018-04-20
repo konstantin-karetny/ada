@@ -26,9 +26,11 @@
             $instances          = [];
 
         protected
+            $after              = '',
             $charset            = '',
             $collation          = '',
             $default_value      = '',
+            $init_params        = [],
             $is_auto_increment  = false,
             $is_nullable        = false,
             $name               = '',
@@ -39,10 +41,10 @@
             $unique_key         = '';
 
         public static function init(
-            string $name = '',
             Table  $table,
+            string $name   = '',
             bool   $cached = true
-        ) {
+        ): self {
             $db  = $table->getDb();
             $res =&
                 static::$instances
@@ -58,9 +60,9 @@
             return $res = new static(...func_get_args());
         }
 
-        public function __construct(
-            string $name = '',
+        protected function __construct(
             Table  $table,
+            string $name   = '',
             bool   $cached = true
         ) {
             $this->name  = \Ada\Core\Clean::cmd($name);
@@ -68,18 +70,49 @@
             if (!$this->getName()) {
                 return;
             }
-            $params = $this->extractParams();
-            if (!$params) {
+            $this->init_params = $this->extractParams();
+            if (!$this->init_params) {
                 throw new \Ada\Core\Exception(
                     (
-                        'No column \''   . $this->getName()          . '\' ' .
+                        'No column \''   . $this->getNameInit()      . '\' ' .
                         'in table \''    . $table->getName()         . '\' ' .
                         'of database \'' . $this->getDb()->getName() . '\''
                     ),
                     1
                 );
             }
-            $this->setProps($params);
+            $this->setProps($this->init_params);
+        }
+
+        public function delete(): bool {
+            if (!$this->exists()) {
+                return true;
+            }
+            try {
+                $res = $this->getDb()->exec($this->getQueryDelete());
+            } catch (\Throwable $e) {
+                throw new \Ada\Core\Exception(
+                    (
+                        'Failed to delete column \'' . $this->init_params['name']   . '\' '  .
+                        'of table \''                . $this->getTable()->getName() . '\' '  .
+                        'of database \''             . $this->getDb()->getName()    . '\'. ' .
+                        $e->getMessage()
+                    ),
+                    4
+                );
+            }
+            if ($res) {
+                $this->init_params = [];
+            }
+            return $res;
+        }
+
+        public function exists(): bool {
+            return (bool) $this->init_params;
+        }
+
+        public function getAfter(): string {
+            return $this->after;
         }
 
         public function getCharset(): string {
@@ -130,27 +163,59 @@
         }
 
         public function getUniqueKey(): string {
-            return $this->unique_key;
+            return
+                $this->unique_key === true
+                    ? $this->getName()
+                    : $this->unique_key;
         }
 
         public function save(): bool {
-            $props = $this->extractParams();
-            $action = $props ? 'update' : 'create';
-
-
+            $db    = $this->getDb();
+            $props = array_intersect_key($this->getProps(), $this->init_params);
+            if (
+                $this->exists() &&
+                !\Ada\Core\Arr::init($this->init_params)->diffRecursive($props)
+            ) {
+                return true;
+            }
+            $error = '
+                Failed to save column \'' . $this->getName()             . '\'
+                of table \''              . $this->getTable()->getName() . '\'
+                of database \''           . $this->getDb()->getName()    . '\'
+            ';
+            if (!$this->getName()) {
+                throw new \Ada\Core\Exception(
+                    $error . '. Column name must not be empty',
+                    2
+                );
+            }
+            $method = 'getQueries' . ($this->exists() ? 'Update' : 'Create');
+            $db->beginTransaction();
             try {
-                foreach ($this->{'getQueries' . ucfirst($action)}($params) as $query) {
+                foreach ($this->$method() as $query) {
                     $db->exec($query);
                 }
             } catch (\Throwable $e) {
                 $db->rollBackTransaction();
+                throw new \Ada\Core\Exception($error . '. ' . $e->getMessage(), 3);
+            }
+            $db->commitTransaction();
+            $this->init_params = $this->extractParams();
+            return true;
+        }
+
+        public function setAfter(string $column_name) {
+            if (!in_array($column_name, $this->getTable()->getColumns())) {
                 throw new \Ada\Core\Exception(
-                    $error . '. ' . $e->getMessage(),
-                    5
+                    (
+                        'No column \''   . $column_name                 . '\' ' .
+                        'in table \''    . $this->getTable()->getName() . '\' ' .
+                        'of database \'' . $this->getDb()->getName()    . '\''
+                    ),
+                    1
                 );
             }
-
-            exit(var_dump( $props ));
+            $this->after = \Ada\Core\Clean::cmd($column_name);
         }
 
         public function setCharset(string $charset) {
@@ -184,6 +249,7 @@
         public function setType(string $type) {
             $type       = \Ada\Core\Clean::cmd($type);
             $this->type = static::DATA_TYPES_ALIASES[$type] ?? $type;
+            $this->setTypeArgs($this->getTypeArgs());
         }
 
         public function setTypeArgs() {
@@ -200,11 +266,14 @@
 
         public function setUniqueKey(string $unique_key) {
             $this->unique_key = \Ada\Core\Clean::cmd($unique_key);
+            if ($this->unique_key === '1') {
+                $this->unique_key = true;
+            }
         }
 
         protected function extractParams(): array {
-            $table = $this->getTable();
             $db    = $this->getDb();
+            $table = $this->getTable();
             $row   = $db->fetchRow('
                 SELECT ' . $db->qs([
                     'CHARACTER_SET_NAME',
@@ -234,11 +303,14 @@
                 'default_value'     => trim($row['COLUMN_DEFAULT']),
                 'is_auto_increment' => strpos(strtolower($row['EXTRA']), 'auto_increment') !== false,
                 'is_nullable'       => strtolower(trim($row['IS_NULLABLE'])) == 'yes',
+                'name'              => trim($row['COLUMN_NAME']),
+                'primary_key'       => '',
                 'type'              => strtolower(trim($row['DATA_TYPE'])),
                 'type_args'         => \Ada\Core\Clean::values(
                     explode(',', end($type_args)),
                     'int'
                 ),
+                'unique_key'        => ''
             ];
             foreach ($db->fetchRows('
                 SHOW INDEX
@@ -254,6 +326,143 @@
                 ] = $key;
             }
             return $res;
+        }
+
+        protected function getQueriesCreate(): array {
+            $res   = [];
+            $res[] = $this->getQueryCreate();
+            if ($this->getPrimaryKey()) {
+                $res[] = $this->getQueryAddPrimaryKey();
+            }
+            if ($this->getUniqueKey()) {
+                $res[] = $this->getQueryAddUniqueKey();
+            }
+            return $res;
+        }
+
+        protected function getQueriesUpdate(): array {
+            $res = [];
+            if ($this->getName() != $this->init_params['name']) {
+                $res[] = $this->getQueryRename();
+            }
+            if ($this->getPrimaryKey() && !$this->init_params['primary_key']) {
+                $res[] = $this->getQueryAddPrimaryKey();
+            }
+            elseif(!$this->getPrimaryKey() && $this->init_params['primary_key']) {
+                $res[] = $this->getQueryDropPrimaryKey();
+            }
+            if ($this->getUniqueKey() && !$this->init_params['unique_key']) {
+                $res[] = $this->getQueryAddUniqueKey();
+            }
+            elseif(!$this->getUniqueKey() && $this->init_params['unique_key']) {
+                $res[] = $this->getQueryDropUniqueKey();
+            }
+            $res[] = $this->getQueryUpdate();
+            return $res;
+        }
+
+        protected function getQueryAddPrimaryKey(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE '    . $db->t($this->getTable()->getName()) . '
+                ADD CONSTRAINT ' . $db->q($this->getPrimaryKey()) . '
+                PRIMARY KEY ('   . $db->q($this->getName()) . ')
+            ';
+        }
+
+        protected function getQueryAddUniqueKey(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE '    . $db->t($this->getTable()->getName()) . '
+                ADD CONSTRAINT ' . $db->q($this->getUniqueKey()) . '
+                UNIQUE ('        . $db->q($this->getName()) . ')
+            ';
+        }
+
+        protected function getQueryCreate(): string {
+            return '
+                ALTER TABLE ' . $this->getDb()->t($this->getTable()->getName()) . '
+                ADD '         . $this->getQueryCreateUpdate();
+        }
+
+        protected function getQueryCreateUpdate(): string {
+            $db = $this->getDb();
+            return (
+                $db->q($this->getName()) . ' ' .
+                $this->getQuerySetType() .
+                (
+                    !$this->getCharset()
+                        ? ''
+                        : ' CHARACTER SET ' . $db->e($this->getCharset())
+                ) .
+                (
+                    !$this->getCollation()
+                        ? ''
+                        : ' COLLATE ' . $db->e($this->getCollation())
+                ) .
+                (
+                    $this->getDefaultValue() === ''
+                        ? ''
+                        : ' DEFAULT \'' . $this->getDefaultValue() . '\''
+                ) .
+                (
+                    ($this->getIsNullable() ? '' : ' NOT') . ' NULL'
+                ) .
+                (
+                    $this->getIsAutoIncrement() ? ' AUTO_INCREMENT' : ''
+                ) .
+                (
+                    !$this->getAfter()
+                        ? ''
+                        : ' AFTER ' . $db->q($this->getAfter())
+                )
+            );
+        }
+
+        protected function getQueryDelete(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
+                DROP COLUMN ' . $db->q($this->init_params['name']);
+        }
+
+        protected function getQueryDropPrimaryKey(): string {
+            return '
+                ALTER TABLE ' . $this->getDb()->t($table->getName()) . '
+                DROP PRIMARY KEY
+            ';
+        }
+
+        protected function getQueryDropUniqueKey(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($table->getName()) . '
+                DROP KEY '    . $db->q($this->init_params['unique_key']);
+        }
+
+        protected function getQueryRename(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
+                CHANGE '      . $db->q($this->init_params['name'])   . ' ' .
+                                $db->q($this->getName())             . ' ' .
+                                $this->getQuerySetType();
+        }
+
+        protected function getQuerySetType(): string {
+            return
+                $this->getType(true) .
+                (
+                    $this->getTypeArgs()
+                        ? ('(' . implode(', ', $this->getTypeArgs()) . ')')
+                        : ''
+                );
+        }
+
+        protected function getQueryUpdate(): string {
+            return '
+                ALTER TABLE ' . $this->getDb()->t($this->getTable()->getName()) . '
+                MODIFY '      . $this->getQueryCreateUpdate();
         }
 
     }

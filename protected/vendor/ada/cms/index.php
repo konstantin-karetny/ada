@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 18.04.2018
+    * @version   1.0.0 20.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,9 +14,11 @@
 
     require_once 'includes/autoload.php';
 
-    //column testing
-    //table update
-    //table delete
+    //column delete only column from constraint, not all constraint
+    //column types and args_qtys
+    //column attributes?
+    //table  remake
+    //table  get constraints
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //Str, Arr and Obj classes
@@ -33,46 +35,27 @@
     ]);
 
 
-    $c = Db::init(0)->getTable('test2')->getColumn();
-    $c->setName('state');
+
+    $t = Db::init(1)->getTable('test2');
+    $c = $t->getColumn('price');
+
+    $c->setUniqueKey(false);
+
+    //setTypeArgs for numeric PgSQL
 
     exit(var_dump( $c->save() ));
 
-    exit(var_dump(
-        Db::init(0)->getTable('test2')->getColumn('id')->update(
-            [
-                //'name'              => 'price',
-                //'type'              => 'decimal',
-                //'is_nullable'       => false,
-                'is_auto_increment' => true,
-                'primary_key'       => true,
-                //'unique_key'        => false
-            ]
-        )
-    ));
+    $c->setName('price');
+    $c->setType('decimal');
+    $c->setTypeArgs(10, 5);
+    $c->setAfter('id');
+    $c->setIsNullable(false);
+    $c->setUniqueKey(true);
 
 
-
-    exit(var_dump(
-        Db::init(0)->getTable('test2')->createColumn([
-            'name'              => 'price',
-            'type'              => 'decimal',
-            'type_args'         => [10,2,3,4,5],
-            'unique_key'     => true
-        ])
-    ));
+    exit(var_dump( $c->save() ));
 
 
-
-    $t = Db::init(0)->getTable('test2');
-    $t->getColumns(true);
-    exit(var_dump( $t ));
-
-
-
-
-
-    //exit(var_dump( Db::init(0)->getTable('test2')->delete() ));
 
     exit(var_dump(
 

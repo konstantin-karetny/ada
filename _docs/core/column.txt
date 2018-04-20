@@ -7,6 +7,9 @@ https://phpclub.ru/mysql/doc/column-types.html
 Типы данных
 http://postgresql.ru.net/manual/datatype.html
 
+How do I determine if a column is defined as a serial data type instead of an integer based off the catalog?
+https://dba.stackexchange.com/questions/47098/how-do-i-determine-if-a-column-is-defined-as-a-serial-data-type-instead-of-an-in
+
 * поддержка атрибутов типа unsigned и unsigned zerofill отсутствует,
 по причине её отстутствия в большинтсве СУБД и в самом стандарте SQL.
 Это упростит структуру базы данных и миграцию на другую СУБД

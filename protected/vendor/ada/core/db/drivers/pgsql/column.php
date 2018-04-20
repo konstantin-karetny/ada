@@ -13,51 +13,22 @@
 
         const
             DATA_TYPES          = [
-                'bigint'  => 'bigint',
                 'binary'  => 'blob',
-                'boolean' => 'boolean',
-                'decimal' => 'decimal',
-                'int'     => 'integer'
             ],
             DATA_TYPES_ARGS_QTY = [
                 'decimal' => 2
             ];
 
-        public static function getCreateQuery($db, array  $params): string {
-            return (
-                $db->q($params['name'])   . ' ' .
-                (
-                    $params['is_auto_increment']
-                        ? 'serial'
-                        : (
-                            static::getTypeQuery($params) .
-                            (
-                                $params['default_value'] === ''
-                                    ? ''
-                                    : ' DEFAULT \'' . $params['default_value'] . '\''
-                            ) .
-                            (
-                                !$params['collation']
-                                    ? ''
-                                    : ' COLLATE ' . $params['collation']
-                            )
-                        )
-                ) .
-                (
-                    ($params['is_nullable']? '' : ' NOT') . ' NULL'
-                )
-            );
-        }
-
         protected function extractParams(): array {
+            $db    = $this->getDb();
             $table = $this->getTable();
-            $db    = $table->getDb();
             $row   = $db->fetchRow('
                 SELECT ' . $db->qs([
                     'character_maximum_length',
                     'character_set_name',
                     'collation_name',
                     'column_default',
+                    'column_name',
                     'data_type',
                     'is_nullable',
                     'numeric_precision',
@@ -76,6 +47,8 @@
                 'collation'     => trim($row['collation_name']),
                 'default_value' => trim($row['column_default']),
                 'is_nullable'   => strtolower(trim($row['is_nullable'])) == 'yes',
+                'name'          => trim($row['column_name']),
+                'primary_key'   => '',
                 'type'          => trim($row['data_type']),
                 'type_args'     => \Ada\Core\Clean::values(
                     (
@@ -89,7 +62,8 @@
                             ]
                     ),
                     'int'
-                )
+                ),
+                'unique_key'    => ''
             ];
             $res['is_auto_increment'] = (
                 in_array(
@@ -126,107 +100,109 @@
                     default:
                         continue 2;
                 }
-                $res['is_' . $key]    = true;
-                $res[$key  . '_name'] = strtolower(trim($index['constraint_name']));
+                $res[$key] = strtolower(trim($index['constraint_name']));
             }
             return $res;
         }
 
-        protected function getRenameQuery(array $params): string {
+        protected function getQueryCreate(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
+                ADD '         . $db->q($this->getName()) . ' ' .
+                (
+                    $this->getIsAutoIncrement()
+                        ? 'serial'
+                        : (
+                            $this->getQuerySetType() .
+                            (
+                                $this->getDefaultValue() === ''
+                                    ? ''
+                                    : ' DEFAULT \'' . $this->getDefaultValue() . '\''
+                            ) .
+                            (
+                                !$this->getCollation()
+                                    ? ''
+                                    : ' COLLATE ' . $this->getCollation()
+                            )
+                        )
+                ) .
+                (
+                    ($this->getIsNullable() ? '' : ' NOT') . ' NULL'
+                );
+        }
+
+        protected function getQueryDropPrimaryKey(): string {
+            return '
+                ALTER TABLE '     . $db->t($this->getTable()->getName()) . '
+                DROP CONSTRAINT ' . $db->q($this->init_params['primary_key']);
+        }
+
+        protected function getQueryDropUniqueKey(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE '     . $db->t($this->getTable()->getName()) . '
+                DROP CONSTRAINT ' . $db->q($this->init_params['unique_key']);
+        }
+
+        protected function getQueryRename(): string {
             $db = $this->getDb();
             return '
                 ALTER TABLE '   . $db->t($this->getTable()->getName()) . '
-                RENAME COLUMN ' . $db->q($this->getName()) . '
-                TO '            . $db->q($params['name'])
+                RENAME COLUMN ' . $db->q($this->init_params['name']) . '
+                TO '            . $db->q($this->getName())
             ;
         }
 
-        protected function getUpdateQueries(array $params): array {
-            $res   = [];
+        protected function getQueryUpdate(): string {
+            $res   = '';
             $db    = $this->getDb();
             $table = $this->getTable();
-            if ($params['name'] != $this->getName()) {
-                $res[] = $this->getRenameQuery($params);
-            }
-            if ($params['primary_key'] != $this->getPrimaryKey()) {
-                $res[] =
-                    $params['primary_key']
-                        ? '
-                            ALTER TABLE '      . $db->t($table->getName()) . '
-                            ADD CONSTRAINT '   . $db->q($params['primary_key']) . '
-                            ADD PRIMARY KEY (' . $db->q($params['name']) . ')
-                        '
-                        : '
-                            ALTER TABLE '      . $db->t($table->getName()) . '
-                            DROP CONSTRAINT '  . $db->q($this->getPrimaryKey())
-                        ;
-            }
-            if ($params['unique_key'] != $this->getUniqueKey()) {
-                $res[] =
-                    $params['unique_key']
-                        ? '
-                            ALTER TABLE '      . $db->t($table->getName()) . '
-                            ADD CONSTRAINT '   . $db->q($params['unique_key']) . '
-                            ADD UNIQUE ('      . $db->q($params['name']) . ')
-                        '
-                        : '
-                            ALTER TABLE '      . $db->t($table->getName()) . '
-                            DROP CONSTRAINT '  . $db->q($this->getUniqueKey())
-                        ;
-            }
-            $alter_table = '
-                ALTER TABLE '  . $db->t($table->getName()) . '
-                ALTER COLUMN ' . $db->q($params['name'])   . '
-            ';
             if (
-                $params['type']      != $this->getType() ||
-                $params['type_args'] != $this->getTypeArgs() ||
-                $params['collation'] != $this->getCollation()
+                $this->getType()      != $this->init_params['type'] ||
+                $this->getTypeArgs()  != $this->init_params['type_args'] ||
+                $this->getCollation() != $this->init_params['collation']
             ) {
-                $res[] = (
-                    $alter_table . '
-                    TYPE ' . static::getTypeQuery($params) .
+                $res .= '
+                    TYPE ' . $this->getQuerySetType() .
                     (
-                        !$params['collation']
+                        !$this->getCollation()
                             ? ''
-                            : ' COLLATE ' . $params['collation']
-                    ) .
-                    ' USING (' . $params['name'] . '::' . $params['type'] . ')'
+                            : ' COLLATE ' . $this->getCollation()
+                    ) . '
+                    USING (' . $table->getName() . '::' . $this->getType() . ')
+                ';
+            }
+            if ($this->getDefaultValue() != $this->init_params['default_value']) {
+                $res .= (
+                    $this->getDefaultValue() === ''
+                        ? 'DROP DEFAULT'
+                        : 'SET DEFAULT \'' . $this->getDefaultValue() . '\''
                 );
             }
-            if ($params['default_value'] != $this->getDefaultValue()) {
-                $res[] = (
-                    $alter_table .
-                    (
-                        $params['default_value'] === ''
-                            ? 'DROP DEFAULT'
-                            : 'SET DEFAULT \'' . $params['default_value'] . '\''
-                    )
+            if ($this->getIsNullable() != $this->init_params['is_nullable']) {
+                $res .= ($this->getIsNullable() ? ' DROP' : ' SET') . ' NOT NULL';
+            }
+            if ($this->getIsAutoIncrement() != $this->init_params['is_auto_increment']) {
+                $res .= (
+                    !$this->getIsAutoIncrement()
+                        ? 'DROP DEFAULT'
+                        : '
+                            SET DEFAULT nextval(\'' .
+                                $table->getName(true, false) . '_' .
+                                $this->getName() .
+                                '_seq' .
+                            '\')
+                        '
                 );
             }
-            if ($params['is_nullable'] != $this->getIsNullable()) {
-                $res[] = (
-                    $alter_table .
-                    ($params['is_nullable'] ? ' DROP' : ' SET') . ' NOT NULL'
-                );
-            }
-            if ($params['is_auto_increment'] != $this->getIsAutoIncrement()) {
-                $res[] = (
-                    $alter_table .
-                    (
-                        !$params['is_auto_increment']
-                            ? 'DROP DEFAULT'
-                            : (
-                                'SET DEFAULT nextval(\'' .
-                                    $table->getName(true, false) . '_' .
-                                    $params['name'] .
-                                    '_seq' .
-                                '\')'
-                            )
-                    )
-                );
-            }
-            return $res;
+            return
+                $res
+                    ? '
+                        ALTER TABLE '  . $db->t($table->getName()) . '
+                        ALTER COLUMN ' . $db->q($this->getName()) .
+                        $res
+                    : $res;
         }
 
     }

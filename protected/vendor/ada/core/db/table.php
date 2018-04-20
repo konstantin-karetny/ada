@@ -43,7 +43,7 @@
                 );
             }
             try {
-                $db->exec(static::getCreateQuery($db, $params));
+                $db->exec(static::getQueryCreate($db, $params));
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     $error . '. ' . $e->getMessage(),
@@ -83,8 +83,8 @@
                 $this->name   = substr($name, $dot + 1);
                 $this->schema = substr($name, 0, $dot);
             }
-            $props            = $this->extractParams();
-            if (!$props) {
+            $params           = $this->extractParams();
+            if (!$params) {
                 throw new \Ada\Core\Exception(
                     (
                         'No table \''     . $this->getName()          . '\' ' .
@@ -93,7 +93,7 @@
                     4
                 );
             }
-            $this->setProps($props);
+            $this->setProps($params);
         }
 
         public function createColumn(array $params): Column {
@@ -104,7 +104,7 @@
         public function delete(): bool {
             $db = $this->getDb();
             try {
-                if (!$db->exec($this->getDeleteQuery())) {
+                if (!$db->exec($this->getQueryDelete())) {
                     return false;
                 }
             } catch (\Throwable $e) {
@@ -140,11 +140,11 @@
         }
 
         public function getColumn(
-            string $name = '',
+            string $name   = '',
             bool   $cached = true
         ): Column {
             $class = $this->getDb()->getNameSpace() . 'Column';
-            $res   = $class::init($name, $this, $cached);
+            $res   = $class::init($this, $name, $cached);
             return $this->columns[$res->getName()] = $res;
         }
 
@@ -154,7 +154,7 @@
         ): array {
             if (!$cached || !$this->columns_names) {
                 $this->columns_names = $this->getDb()->fetchColumn(
-                    $this->getColumnsNamesQuery()
+                    $this->getQueryColumnsNames()
                 );
             }
             if (!$as_objects) {
@@ -177,13 +177,25 @@
 
         public function getName(
             bool $prefix = false,
-            bool $schema = true
+            bool $schema = null
         ): string {
-            return (
-                ($schema && $this->getSchema() ? ($this->getSchema() . '.') : '') .
+            if ($schema === true) {
+                $schema_name = $this->getSchema();
+            }
+            elseif ($schema === false) {
+                $schema_name = '';
+            }
+            else {
+                $schema_name = (
+                    $this->getDb()->getSchema() == $this->getSchema()
+                        ? ''
+                        : $this->getSchema()
+                );
+            }
+            return
+                (!$schema_name ? '' : $this->getSchema() . '.') .
                 ($prefix ? $this->getDb()->getPrefix() : '') .
-                $this->name
-            );
+                $this->name;
         }
 
         public function getSchema(): string {
@@ -204,7 +216,7 @@
                 );
             }
             try {
-                if (!$this->getDb()->exec($this->getRenameQuery($name))) {
+                if (!$this->getDb()->exec($this->getQueryRename($name))) {
                     return false;
                 }
             } catch (\Throwable $e) {
@@ -221,7 +233,7 @@
             return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
-        protected static function getCreateQuery($db, array $params): string {
+        protected static function getQueryCreate($db, array $params): string {
             $columns   = '';
             $primaries = [];
             $uniques   = [];
@@ -229,7 +241,7 @@
             foreach ($params['columns'] as $column_params) {
                 $column_params   = $class::preapreParams($column_params);
                 $columns        .= (
-                    $class::getCreateQuery($db, $column_params) . ', '
+                    $class::getQueryCreate($db, $column_params) . ', '
                 );
                 if ($column_params['primary_key']) {
                     $primaries[] = $column_params['primary_key'];
@@ -297,7 +309,7 @@
                     : [];
         }
 
-        protected function getColumnsNamesQuery(): string {
+        protected function getQueryColumnsNames(): string {
             $db = $this->getDb();
             return ('
                 SELECT ' . $db->q('COLUMN_NAME') . '
@@ -307,11 +319,11 @@
             );
         }
 
-        protected function getDeleteQuery(): string {
+        protected function getQueryDelete(): string {
             return 'DROP TABLE ' . $this->getDb()->t($this->getName());
         }
 
-        protected function getRenameQuery(string $name): string {
+        protected function getQueryRename(string $name): string {
             $db = $this->getDb();
             return ('
                 ALTER TABLE ' . $db->t($this->getName()) . '

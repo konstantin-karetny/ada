@@ -54,7 +54,7 @@
             $user         = '',
             $version      = '';
 
-        public static function init(array $params) {
+        public static function init(array $params): self {
             return new static($params);
         }
 
@@ -156,7 +156,7 @@
         }
 
         public function deleteRow(string $table_name, string $condition): bool {
-            $query = $this->getDeleteRowQuery($table_name, $condition);
+            $query = $this->getQueryDeleteRow($table_name, $condition);
             try {
                 return $this->exec($query);
             } catch (\Throwable $e) {
@@ -476,7 +476,7 @@
                     function($el) {
                         return ltrim($el, $this->getPrefix());
                     },
-                    $this->fetchColumn($this->getGetTablesQuery())
+                    $this->fetchColumn($this->getQueryGetTables())
                 );
             }
             if (!$as_objects) {
@@ -498,7 +498,7 @@
         }
 
         public function insertRow(string $table_name, array $row): bool {
-            $query = $this->getInsertRowQuery($table_name, $row);
+            $query = $this->getQueryInsertRow($table_name, $row);
             try {
                 return $this->exec($query);
             } catch (\Throwable $e) {
@@ -632,7 +632,7 @@
             array  $row,
             string $condition
         ): bool {
-            $query = $this->getUpdateRowQuery($table_name, $row, $condition);
+            $query = $this->getQueryUpdateRow($table_name, $row, $condition);
             try {
                 return $this->exec($query);
             } catch (\Throwable $e) {
@@ -646,16 +646,34 @@
             }
         }
 
-        abstract protected function extractParams(): array;
+        protected function extractParams(): array {
+            return array_map(
+                'trim',
+                array_merge(
+                    $this->fetchRow('
+                        SELECT ' .
+                            $this->q('DEFAULT_CHARACTER_SET_NAME', 'charset')   . ', ' .
+                            $this->q('DEFAULT_COLLATION_NAME',     'collation') . ', ' .
+                            $this->q('SCHEMA_NAME',                'schema')    . '
+                        FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA')      . '
+                        WHERE '  . $this->q('SCHEMA_NAME')                      . '
+                        LIKE '   . $this->e($this->getName())                   . '
+                    '),
+                    [
+                        'version' => $this->getAttribute(\PDO::ATTR_SERVER_VERSION)
+                    ]
+                )
+            );
+        }
 
-        protected function getDeleteRowQuery(
+        protected function getQueryDeleteRow(
             string $table_name,
             string $condition
         ): string {
             return 'DELETE FROM ' . $this->t($table_name) . ' WHERE ' . $condition;
         }
 
-        protected function getInsertRowQuery(
+        protected function getQueryInsertRow(
             string $table_name,
             array  $row
         ): string {
@@ -677,7 +695,7 @@
             ';
         }
 
-        protected function getGetTablesQuery(): string {
+        protected function getQueryGetTables(): string {
             return '
                 SELECT ' . $this->q('TABLE_NAME') . '
                 FROM '   . $this->q('information_schema.TABLES') . '
@@ -685,7 +703,7 @@
             ;
         }
 
-        protected function getUpdateRowQuery(
+        protected function getQueryUpdateRow(
             string $table_name,
             array  $row,
             string $condition

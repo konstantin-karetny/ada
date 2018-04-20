@@ -18,26 +18,4 @@
             $port        = 3306,
             $user        = 'root';
 
-        public static function init(array $params): self {
-            return new static($params);
-        }
-
-        protected function extractParams(): array {
-            $row = $this->fetchRow('
-                SELECT ' .
-                    $this->q('DEFAULT_CHARACTER_SET_NAME') . ', ' .
-                    $this->q('DEFAULT_COLLATION_NAME') . '
-                FROM '   . $this->q('INFORMATION_SCHEMA.SCHEMATA') . '
-                WHERE '  . $this->q('SCHEMA_NAME') . '
-                LIKE '   . $this->e($this->getName()) . '
-            ');
-            return [
-                'charset'   => trim($row['DEFAULT_CHARACTER_SET_NAME']),
-                'collation' => trim($row['DEFAULT_COLLATION_NAME']),
-                'version'   => trim($this->getAttribute(
-                    \PDO::ATTR_SERVER_VERSION
-                ))
-            ];
-        }
-
     }

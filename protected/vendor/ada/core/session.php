@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 20.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -76,7 +76,7 @@
 
         public function abort(): bool {
             if (!$this->isStarted()) {
-                return false;
+                return true;
             }
             session_abort();
 			$this->read_only = false;
@@ -123,7 +123,7 @@
 
         public function clear(): bool {
             if (!$this->isStarted()) {
-                return false;
+                return true;
             }
 			session_unset();
 			$res             = session_destroy();
@@ -133,7 +133,7 @@
 
         public function delete(): bool {
             if (!$this->isStarted()) {
-                return false;
+                return true;
             }
             return !in_array(
                 false,
@@ -183,7 +183,7 @@
 
         public function regenerateId($delete_old_session = false): bool {
             if (!$this->isStarted()) {
-                return false;
+                return true;
             }
             return session_regenerate_id($delete_old_session);
         }
@@ -225,7 +225,7 @@
 
         public function stop(): bool {
             if (!$this->isStarted()) {
-                return false;
+                return true;
             }
             static::set(
                 'last_stop_datetime',
