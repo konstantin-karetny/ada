@@ -43,8 +43,8 @@
             return $res;
         }
 
-        public function keysExist(array $ks): bool {
-            return !array_diff_key(array_flip($ks), $this->toArray());
+        public function keysExist(array $keys): bool {
+            return !array_diff_key(array_flip($keys), $this->toArray());
         }
 
         public function toArray(): array {
