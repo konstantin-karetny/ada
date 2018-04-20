@@ -21,7 +21,7 @@
     //table  get constraints
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
-    //Str, Arr and Obj classes
+    //Str, Arr, Obj classes
 
     Db::add([
         'name'   => 'project',
