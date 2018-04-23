@@ -14,7 +14,7 @@
         protected
             $path = '';
 
-        public static function init(string $path): self {
+        public static function init(string $path): \Ada\Core\Dir {
             return new static($path);
         }
 
@@ -105,7 +105,7 @@
             return $res;
         }
 
-        public function getDir(): self {
+        public function getDir(): \Ada\Core\Dir {
             return static::init(pathinfo($this->path, PATHINFO_DIRNAME));
         }
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 30.03.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -33,7 +33,7 @@
             $ip_proxy       = '',
             $lang           = 'en';
 
-        public static function init(bool $current = true): self {
+        public static function init(bool $current = true): \Ada\Core\Client {
             return new static($current);
         }
 

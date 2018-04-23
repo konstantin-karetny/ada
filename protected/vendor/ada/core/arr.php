@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,7 +14,7 @@
         protected
             $array = [];
 
-        public static function init(array $array = []): self {
+        public static function init(array $array = []): \Ada\Core\Arr {
             return new static(...func_get_args());
         }
 

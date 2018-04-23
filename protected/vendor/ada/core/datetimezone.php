@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,7 +11,7 @@
 
     class DateTimeZone extends \DateTimeZone {
 
-        public static function init(string $timezone_id): self {
+        public static function init(string $timezone_id): \Ada\Core\DateTimeZone {
             try {
                 return new static($timezone_id);
             } catch (\Throwable $e) {

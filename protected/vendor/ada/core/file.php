@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.03.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,7 +14,7 @@
         protected
             $path = '';
 
-        public static function init(string $path): self {
+        public static function init(string $path): \Ada\Core\File {
             return new static($path);
         }
 
@@ -25,7 +25,7 @@
         public function copy(
             string $path,
             bool   $validate_ext = true
-        ): self {
+        ): \Ada\Core\File {
             $res = static::init(Clean::path($path, $validate_ext));
             $dir = $res->getDir();
             if (!$dir->exists() && !$dir->create()) {
@@ -52,7 +52,7 @@
             return pathinfo($this->getPath(), PATHINFO_BASENAME);
         }
 
-        public function getDir(): Dir {
+        public function getDir(): \Ada\Core\Dir {
             return Dir::init(
                 trim(
                     pathinfo($this->getPath(), PATHINFO_DIRNAME),
@@ -107,7 +107,7 @@
         public function move(
             string $path,
             bool   $validate_ext = true
-        ): self {
+        ): \Ada\Core\File {
             $res = static::init(Clean::path($path, $validate_ext));
             $dir = $res->getDir();
             if (!$dir->exists() && !$dir->create()) {

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -35,7 +35,7 @@
             $path       = '',
             $size       = 0;
 
-        public static function init(array $params): self {
+        public static function init(array $params): \Ada\Core\UploadedFile {
             return new static($params);
         }
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -41,10 +41,10 @@
             $unique_key         = '';
 
         public static function init(
-            Table  $table,
-            string $name   = '',
-            bool   $cached = true
-        ): self {
+            \Ada\Core\Db\Table  $table,
+            string              $name   = '',
+            bool                $cached = true
+        ): \Ada\Core\Db\Column {
             $db  = $table->getDb();
             $res =&
                 static::$instances
@@ -61,9 +61,8 @@
         }
 
         protected function __construct(
-            Table  $table,
-            string $name   = '',
-            bool   $cached = true
+            \Ada\Core\Db\Table $table,
+            string             $name = ''
         ) {
             $this->name  = \Ada\Core\Clean::cmd($name);
             $this->table = $table;
@@ -88,17 +87,23 @@
             if (!$this->exists()) {
                 return true;
             }
+            $error = (
+                'Failed to delete column \'' . $this->init_params['name']   . '\' '  .
+                'of table \''                . $this->getTable()->getName() . '\' '  .
+                'of database \''             . $this->getDb()->getName()    . '\''
+            );
+            if (count($this->getTable()->getColumns()) == 1) {
+                throw new \Ada\Core\Exception(
+                    $error . '. Table must contain at least one column',
+                    4
+                );
+            }
             try {
                 $res = $this->getDb()->exec($this->getQueryDelete());
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Failed to delete column \'' . $this->init_params['name']   . '\' '  .
-                        'of table \''                . $this->getTable()->getName() . '\' '  .
-                        'of database \''             . $this->getDb()->getName()    . '\'. ' .
-                        $e->getMessage()
-                    ),
-                    4
+                    $error . '. ' . $e->getMessage(),
+                    5
                 );
             }
             if ($res) {
@@ -144,10 +149,13 @@
         }
 
         public function getPrimaryKey(): string {
-            return $this->primary_key;
+            return
+                $this->primary_key === '1'
+                    ? $this->getName()
+                    : $this->primary_key;
         }
 
-        public function getTable(): Table {
+        public function getTable(): \Ada\Core\Db\Table {
             return $this->table;
         }
 
@@ -164,7 +172,7 @@
 
         public function getUniqueKey(): string {
             return
-                $this->unique_key === true
+                $this->unique_key === '1'
                     ? $this->getName()
                     : $this->unique_key;
         }
@@ -179,9 +187,10 @@
                 return true;
             }
             $error = '
-                Failed to save column \'' . $this->getName()             . '\'
-                of table \''              . $this->getTable()->getName() . '\'
-                of database \''           . $this->getDb()->getName()    . '\'
+                Failed to save column ' .
+                (!$this->getName() ? '' : '\'' . $this->getName() . '\'') . '
+                of table \''            . $this->getTable()->getName()    . '\'
+                of database \''         . $this->getDb()->getName()       . '\'
             ';
             if (!$this->getName()) {
                 throw new \Ada\Core\Exception(
@@ -197,10 +206,14 @@
                 }
             } catch (\Throwable $e) {
                 $db->rollBackTransaction();
-                throw new \Ada\Core\Exception($error . '. ' . $e->getMessage(), 3);
+                throw new \Ada\Core\Exception(
+                    $error . '. ' . $e->getMessage(),
+                    3
+                );
             }
             $db->commitTransaction();
             $this->init_params = $this->extractParams();
+            $this->setProps($this->init_params);
             return true;
         }
 
@@ -385,7 +398,7 @@
                 ADD '         . $this->getQueryCreateUpdate();
         }
 
-        protected function getQueryCreateUpdate(): string {
+        public function getQueryCreateUpdate(): string {
             $db = $this->getDb();
             return (
                 $db->q($this->getName()) . ' ' .

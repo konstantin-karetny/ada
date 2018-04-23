@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 24.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,11 +14,11 @@
 
     require_once 'includes/autoload.php';
 
+    //table  setColumn ?
+    //table  get constraints
     //column delete only column from constraint, not all column in constraint
     //column types and args_qtys
     //column attributes?
-    //table  remake
-    //table  get constraints
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
     //Str, Arr and Obj classes
@@ -36,7 +36,14 @@
 
 
 
-    $t = Db::init(1)->getTable('test2');
+    $db = Db::init(0);
+    $t  = $db->getTable();
+    $t->getColumns();
+
+    $t->setName('test3');
+
+    exit(var_dump( $t->save() ));
+
     $c = $t->getColumn('price');
 
     $c->setUniqueKey(false);

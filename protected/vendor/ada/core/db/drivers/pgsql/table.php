@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -25,6 +25,18 @@
                         'schema' => (string) $row['table_schema']
                     ]
                     : [];
+        }
+
+        protected function getQueryChangeCharset(): string {
+            return '';
+        }
+
+        protected function getQueryChangeCollation(): string {
+            return '';
+        }
+
+        protected function getQueryChangeEngine(): string {
+            return '';
         }
 
         protected function getQueryColumnsNames(): string {

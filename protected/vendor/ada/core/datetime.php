@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.03.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -25,7 +25,7 @@
             return static::$default_format;
         }
 
-        public static function getDefaultTimezone(): DateTimeZone {
+        public static function getDefaultTimezone(): \Ada\Core\DateTimeZone {
             return
                 (
                     static::$default_timezone &&
@@ -47,7 +47,7 @@
         public static function init(
             string $time          = 'now',
             string $timezone_name = ''
-        ): self {
+        ): \Ada\Core\DateTime {
             return new static(...func_get_args());
         }
 

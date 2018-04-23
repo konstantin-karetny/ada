@@ -45,7 +45,7 @@
             return $res;
         }
 
-        public static function init(int $id = 0): Db\Driver {
+        public static function init(int $id = 0): \Ada\Core\Db\Driver {
             if (!isset(static::$insts[$id])) {
                 throw new Exception(
                     'No database added with identifier \'' . $id . '\'',

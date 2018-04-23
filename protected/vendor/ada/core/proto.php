@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 19.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,7 +11,7 @@
 
     abstract class Proto {
 
-        protected function drop() {
+        protected function dropProps() {
             foreach ($this as $k => $v) {
                 $this->$k = Type::INITIAL_VALUES[Type::get($v)];
             }

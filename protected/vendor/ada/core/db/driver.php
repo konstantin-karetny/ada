@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -54,7 +54,7 @@
             $user         = '',
             $version      = '';
 
-        public static function init(array $params): self {
+        public static function init(array $params): \Ada\Core\Db\Driver {
             return new static($params);
         }
 
@@ -139,11 +139,6 @@
                 );
             }
             return $this->isConnected();
-        }
-
-        public function createTable(array $params): Table {
-            $class = $this->getNameSpace() . 'Table';
-            return $class::create($this, $params);
         }
 
         public function debugInfo(): array {
@@ -275,8 +270,8 @@
             if (!key_exists($column, reset($res))) {
                 throw new \Ada\Core\Exception(
                     (
-                        'Unknown column \'' . $column      . '\'.' .
-                        ' Query: \''        . trim($query) . '\''
+                        'Unknown column \'' . $column      . '\'. ' .
+                        'Query: \''         . trim($query) . '\''
                     ),
                     8
                 );
@@ -460,11 +455,11 @@
         }
 
         public function getTable(
-            string $name,
+            string $name   = '',
             bool   $cached = true
-        ): Table {
+        ): \Ada\Core\Db\Table {
             $class = $this->getNameSpace() . 'Table';
-            return $class::init($name, $this, $cached);
+            return $class::init($this, $name, $cached);
         }
 
         public function getTables(

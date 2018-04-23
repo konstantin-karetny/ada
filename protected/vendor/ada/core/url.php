@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 10.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -125,7 +125,7 @@
             return static::$default_root;
         }
 
-        public static function init(string $url = ''): self {
+        public static function init(string $url = ''): \Ada\Core\Url {
             return new static($url);
         }
 

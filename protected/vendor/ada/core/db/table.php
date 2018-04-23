@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,52 +12,22 @@
     abstract class Table extends \Ada\Core\Proto {
 
         protected static
-            $instances     = [];
+            $instances   = [];
 
         protected
-            $charset       = '',
-            $collation     = '',
-            $columns       = [],
-            $columns_names = [],
-            $db            = null,
-            $engine        = '',
-            $name          = '',
-            $schema        = '';
-
-        public static function create(Driver $db, array $params): self {
-            if (empty($params['columns'])) {
-                throw new \Ada\Core\Exception(
-                    $error . '. Table name must not be empty',
-                    2
-                );
-            }
-            $params = static::preapreParams($params);
-            $error  = (
-                'Failed to create table' .
-                (!$params['name'] ? '' : ' \'' . $params['name'] . '\'')
-            );
-            if (!$params['name']) {
-                throw new \Ada\Core\Exception(
-                    $error . '. Table name must not be empty',
-                    1
-                );
-            }
-            try {
-                $db->exec(static::getQueryCreate($db, $params));
-            } catch (\Throwable $e) {
-                throw new \Ada\Core\Exception(
-                    $error . '. ' . $e->getMessage(),
-                    3
-                );
-            }
-            return $db->getTable($params['name']);
-        }
+            $charset     = '',
+            $collation   = '',
+            $db          = null,
+            $engine      = '',
+            $init_params = [],
+            $name        = '',
+            $schema      = '';
 
         public static function init(
-            string $name,
-                   $db,
-            bool   $cached = true
-        ): self {
+            \Ada\Core\Db\Driver $db,
+            string              $name   = '',
+            bool                $cached = true
+        ): \Ada\Core\Db\Table {
             $res =&
                 static::$instances
                 [$db->getDriver()]
@@ -65,70 +35,71 @@
                 [$db->getSchema()]
                 [\Ada\Core\Clean::cmd($name)]
                 ?? null;
-            if ($cached && $res) {
+            if ($name && $res && $cached) {
                 return $res;
             }
             return $res = new static(...func_get_args());
         }
 
-        protected function __construct(string $name, Driver $db) {
-            $this->db         = $db;
-            $name             = \Ada\Core\Clean::cmd($name);
-            $dot              = strpos($name, '.');
+        protected function __construct(
+            \Ada\Core\Db\Driver $db,
+            string              $name   = ''
+        ) {
+            $this->db          = $db;
+            $name              = \Ada\Core\Clean::cmd($name);
+            $dot               = strpos($name, '.');
             if ($dot === false) {
-                $this->name   = $name;
-                $this->schema = $db->getSchema();
+                $this->name    = $name;
+                $this->schema  = $db->getSchema();
             }
             else {
-                $this->name   = substr($name, $dot + 1);
-                $this->schema = substr($name, 0, $dot);
+                $this->name    = substr($name, $dot + 1);
+                $this->schema  = substr($name, 0, $dot);
             }
-            $params           = $this->extractParams();
-            if (!$params) {
+            if (!$this->getName()) {
+                return;
+            }
+            $this->init_params = $this->extractParams();
+            if (!$this->init_params) {
                 throw new \Ada\Core\Exception(
                     (
-                        'No table \''     . $this->getName()          . '\' ' .
+                        'No table \''    . $this->getName()          . '\' ' .
                         'in database \'' . $this->getDb()->getName() . '\''
                     ),
-                    4
+                    1
                 );
             }
-            $this->setProps($params);
-        }
-
-        public function createColumn(array $params): Column {
-            $class = $this->getDb()->getNameSpace() . 'Column';
-            return $class::create($this, $params);
+            $this->setProps($this->init_params);
         }
 
         public function delete(): bool {
-            $db = $this->getDb();
+            if (!$this->exists()) {
+                return true;
+            }
             try {
-                if (!$db->exec($this->getQueryDelete())) {
-                    return false;
-                }
+                $res = $this->getDb()->exec($this->getQueryDelete());
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     (
-                        'Failed to delete table \'' . $this->getName() . '\'. ' .
+                        'Failed to delete table \'' . $this->init_params['name']   . '\' '  .
+                        'of database \''            . $this->getDb()->getName()    . '\'. ' .
                         $e->getMessage()
                     ),
-                    7
+                    5
                 );
             }
-            unset(
-                static::$instances
-                [$db->getDriver()]
-                [$db->getName()]
-                [$db->getSchema()]
-                [$this->getName()]
-            );
-            $this->drop();
-            return true;
+            if ($res) {
+                $this->init_params = [];
+            }
+            return $res;
         }
 
         public function deleteRow(string $condition): bool {
             return $this->getDb()->deleteRow($this->getName(), $condition);
+        }
+
+        public function exists(): bool {
+            return (bool) $this->init_params;
         }
 
         public function getCharset(): string {
@@ -142,32 +113,32 @@
         public function getColumn(
             string $name   = '',
             bool   $cached = true
-        ): Column {
+        ): \Ada\Core\Db\Column {
             $class = $this->getDb()->getNameSpace() . 'Column';
-            $res   = $class::init($this, $name, $cached);
-            return $this->columns[$res->getName()] = $res;
+            return $class::init($this, $name, $cached);
         }
 
         public function getColumns(
             bool $as_objects = false,
             bool $cached     = true
         ): array {
-            if (!$cached || !$this->columns_names) {
-                $this->columns_names = $this->getDb()->fetchColumn(
+            if (!$cached || empty($this->init_params['columns_names'])) {
+                $this->init_params['columns_names'] = $this->getDb()->fetchColumn(
                     $this->getQueryColumnsNames()
                 );
             }
             if (!$as_objects) {
-                return $this->columns_names;
+                return $this->init_params['columns_names'];
             }
+            $res   = [];
             $class = $this->getDb()->getNameSpace() . 'Column';
-            foreach ($this->columns_names as $name) {
-                $this->columns[$name] = $class::init($name, $this, $cached);
+            foreach ($this->init_params['columns_names'] as $name) {
+                $res[$name] = $class::init($name, $this, $cached);
             }
-            return $this->columns;
+            return $res;
         }
 
-        public function getDb(): Driver {
+        public function getDb(): \Ada\Core\Db\Driver {
             return $this->db;
         }
 
@@ -194,7 +165,7 @@
             }
             return
                 (!$schema_name ? '' : $this->getSchema() . '.') .
-                ($prefix ? $this->getDb()->getPrefix() : '') .
+                (!$prefix      ? '' : $this->getDb()->getPrefix()) .
                 $this->name;
         }
 
@@ -206,86 +177,73 @@
             return $this->getDb()->insertRow($this->getName(), $row);
         }
 
-        public function rename(string $name): bool {
-            $name  = \Ada\Core\Clean::cmd($name);
-            $error = 'Failed to rename table \'' . $this->getName() . '\'';
-            if (!$name) {
+        public function save(): bool {
+            $db    = $this->getDb();
+            $props = array_intersect_key($this->getProps(), $this->init_params);
+            if (
+                $this->exists() &&
+                !\Ada\Core\Arr::init($this->init_params)->diffRecursive($props)
+            ) {
+                return true;
+            }
+            $error = '
+                Failed to save table '  .
+                (!$this->getName() ? '' : '\'' . $this->getName() . '\'') . '
+                of database \''         . $this->getDb()->getName() . '\'
+            ';
+            if (!$this->getName()) {
                 throw new \Ada\Core\Exception(
                     $error . '. Table name must not be empty',
-                    5
+                    2
                 );
             }
+            if (!$this->getColumns()) {
+                throw new \Ada\Core\Exception(
+                    $error . '. Table must contain at least one column',
+                    3
+                );
+            }
+            $method = 'getQueries' . ($this->exists() ? 'Update' : 'Create');
+            $db->beginTransaction();
             try {
-                if (!$this->getDb()->exec($this->getQueryRename($name))) {
-                    return false;
+                foreach ($this->$method() as $query) {
+                    $db->exec($query);
                 }
             } catch (\Throwable $e) {
+                $db->rollBackTransaction();
                 throw new \Ada\Core\Exception(
-                    $error . ' \' to \'' . $name . '\'. ' . $e->getMessage(),
-                    6
+                    $error . '. ' . $e->getMessage(),
+                    4
                 );
             }
-            $this->name = $name;
+            $db->commitTransaction();
+            $this->init_params = $this->extractParams();
+            $this->setProps($this->init_params);
             return true;
+        }
+
+        public function setCharset(string $charset) {
+            $this->charset = \Ada\Core\Clean::cmd($charset);
+        }
+
+        public function setCollation(string $collation) {
+            $this->collation = \Ada\Core\Clean::cmd($collation);
+        }
+
+        public function setEngine(string $engine) {
+            $this->engine = \Ada\Core\Clean::cmd($engine);
+        }
+
+        public function setName(string $name) {
+            $this->name = \Ada\Core\Clean::cmd($name);
+        }
+
+        public function setSchema(string $schema) {
+            $this->schema = \Ada\Core\Clean::cmd($schema);
         }
 
         public function updateRow(array $row, string $condition): bool {
             return $this->getDb()->updateRow($this->getName(), $row, $condition);
-        }
-
-        protected static function getQueryCreate($db, array $params): string {
-            $columns   = '';
-            $primaries = [];
-            $uniques   = [];
-            $class     = $db->getNameSpace() . 'Column';
-            foreach ($params['columns'] as $column_params) {
-                $column_params   = $class::preapreParams($column_params);
-                $columns        .= (
-                    $class::getQueryCreate($db, $column_params) . ', '
-                );
-                if ($column_params['primary_key']) {
-                    $primaries[] = $column_params['primary_key'];
-                }
-                if ($column_params['unique_key']) {
-                    $uniques[]   = $column_params['unique_key'];
-                }
-            }
-            $columns = rtrim($columns, ', ');
-            if ($primaries) {
-                $columns .= ', PRIMARY KEY (' . $db->q(reset($primaries)) . ')';
-            }
-            if ($uniques) {
-                $columns .= ', UNIQUE (';
-                foreach ($uniques as $unique) {
-                    $columns .= $db->q($unique) . ', ';
-                }
-                $columns = rtrim($columns, ', ') . ')';
-            }
-            return '
-                CREATE TABLE ' . $db->t($params['name']) . '
-                (' . $columns . ')
-            ';
-        }
-
-        protected static function preapreParams(array $params): array {
-            foreach (get_class_vars(__CLASS__) as $k => $v) {
-                $params[$k] = $params[$k] ?? $v;
-                switch ($k) {
-                    case 'charset'   :
-                    case 'collation' :
-                    case 'engine'    :
-                    case 'name'      :
-                    case 'schema'    :
-                        $params[$k] = \Ada\Core\Clean::cmd($params[$k]);
-                        break;
-                    case 'columns'   :
-                        $params[$k] = (array) $params[$k];
-                        break;
-                    default          :
-                        unset($params[$k]);
-                }
-            }
-            return $params;
         }
 
         protected function extractParams(): array {
@@ -307,6 +265,76 @@
                         'schema'    => trim($row['TABLE_SCHEMA'])
                     ]
                     : [];
+        }
+
+        protected function getQueriesCreate(): array {
+            $db             = $this->getDb();
+            $colums_queries = [];
+            $primary_keys   = [];
+            $unique_keys    = [];
+            foreach ($this->getColumn() as $column) {
+                $colums_queries[]   = $column->getQueryCreateUpdate();
+                if ($column->getPrimaryKey()) {
+                    $primary_keys[] = $column->getPrimaryKey();
+                }
+                if ($column->getUniqueKey()) {
+                    $unique_keys[]  = $column->getUniqueKey();
+                }
+            }
+            return ['
+                CREATE TABLE ' . $db->t($this->getName()) . '(
+                    ' . implode(', ', $colums_queries) . (
+                        !$primary_keys
+                            ? ''
+                            : ', PRIMARY KEY (' . $db->q(reset($primary_keys)) . ')'
+                    ) . (
+                        !$unique_keys
+                            ? ''
+                            : ', UNIQUE (' .
+                                implode(', ', array_map([$db, 'q'], $unique_keys)) .
+                            ')'
+                    ) . '
+                )
+            '];
+        }
+
+        protected function getQueriesUpdate(): array {
+            $res = [];
+            if ($this->getName() != $this->init_params['name']) {
+                $res[] = $this->getQueryRename();
+            }
+            if ($this->getCharset() != $this->init_params['charset']) {
+                $res[] = $this->getQueryChangeCharset();
+            }
+            if ($this->getCollation() != $this->init_params['collation']) {
+                $res[] = $this->getQueryChangeCollation();
+            }
+            if ($this->getEngine() != $this->init_params['engine']) {
+                $res[] = $this->getQueryChangeEngine();
+            }
+            $res[] = $this->getQueryUpdate();
+            return $res;
+        }
+
+        protected function getQueryChangeCharset(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE '       . $db->t($this->getName()) . '
+                DEFAULT CHARSET = ' . $db->q($this->getCharset());
+        }
+
+        protected function getQueryChangeCollation(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getName()) . '
+                COLLATE = '   . $db->q($this->getCollation());
+        }
+
+        protected function getQueryChangeEngine(): string {
+            $db = $this->getDb();
+            return '
+                ALTER TABLE ' . $db->t($this->getName()) . '
+                ENGINE = '    . $db->q($this->getCollation());
         }
 
         protected function getQueryColumnsNames(): string {

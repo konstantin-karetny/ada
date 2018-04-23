@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 23.04.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -37,16 +37,16 @@
             $read_only        = false;
 
         public static function init(
-            array           $ini_params = [],
-            Session\Handler $handler    = null
-        ): self {
+            array                     $ini_params = [],
+            \Ada\Core\Session\Handler $handler    = null
+        ): \Ada\Core\Session {
             static $res;
             return $res ?? $res = new static($ini_params, $handler);
         }
 
         protected function __construct(
-            array           $ini_params = [],
-            Session\Handler $handler    = null
+            array                     $ini_params = [],
+            \Ada\Core\Session\Handler $handler    = null
         ) {
             $this->new        = !Cookie::getBool($this->generateName());
             $this->ini_params = Type::set(
@@ -144,7 +144,7 @@
             );
         }
 
-        public function getHandler(): Session\Handler {
+        public function getHandler(): \Ada\Core\Session\Handler {
             return $this->handler;
         }
 
