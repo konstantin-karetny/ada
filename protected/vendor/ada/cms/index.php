@@ -14,7 +14,7 @@
 
     require_once 'includes/autoload.php';
 
-    //table  setColumn ?
+    //table  setColumn(array $params) / setColumns(array $params) ?
     //table  get constraints
     //column delete only column from constraint, not all column in constraint
     //column types and args_qtys
