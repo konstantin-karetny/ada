@@ -17,6 +17,7 @@
         protected
             $charset     = '',
             $collation   = '',
+            $columns     = [],
             $db          = null,
             $engine      = '',
             $init_params = [],
@@ -115,7 +116,11 @@
             bool   $cached = true
         ): \Ada\Core\Db\Column {
             $class = $this->getDb()->getNameSpace() . 'Column';
-            return $class::init($this, $name, $cached);
+            $res   = $class::init($this, $name, $cached);
+            if ($res->getName()) {
+                $this->columns[$res->getName()] = $res;
+            }
+            return $res;
         }
 
         public function getColumns(
@@ -123,17 +128,20 @@
             bool $cached     = true
         ): array {
             if (!$cached || empty($this->init_params['columns_names'])) {
-                $this->init_params['columns_names'] = $this->getDb()->fetchColumn(
+                $columns_names = $this->getDb()->fetchColumn(
                     $this->getQueryColumnsNames()
                 );
             }
+            if (!$columns_names) {
+                return [];
+            }
+            $this->init_params['columns_names'] = $columns_names;
             if (!$as_objects) {
                 return $this->init_params['columns_names'];
             }
-            $res   = [];
-            $class = $this->getDb()->getNameSpace() . 'Column';
+            $res = [];
             foreach ($this->init_params['columns_names'] as $name) {
-                $res[$name] = $class::init($name, $this, $cached);
+                $res[$name] = $this->getColumn($name, $cached);
             }
             return $res;
         }
@@ -228,6 +236,25 @@
 
         public function setCollation(string $collation) {
             $this->collation = \Ada\Core\Clean::cmd($collation);
+        }
+
+        public function setColumn(array $column_params) {
+            $column = $this->getColumn();
+            foreach ($column_params as $k => $v) {
+                $setter = 'set' . \Ada\Core\Str::toCamelCase($k);
+                if (method_exists($column, $setter)) {
+                    $column->$setter($v);
+                }
+            }
+            if ($column->getName()) {
+                $this->columns[$column->getName()] = $column;
+            }
+        }
+
+        public function setColumns(array $columns_params) {
+            foreach ($columns_params as $column_params) {
+                $this->setColumn($column_params);
+            }
         }
 
         public function setEngine(string $engine) {

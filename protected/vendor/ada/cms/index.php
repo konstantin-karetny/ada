@@ -35,14 +35,13 @@
     ]);
 
 
-
     $db = Db::init(0);
     $t  = $db->getTable();
-    $t->getColumns();
 
     $t->setName('test3');
+    $t->setColumns([['name'=>'qq'],['name'=>'zz']]);
 
-    exit(var_dump( $t->save() ));
+    exit(var_dump( $t, $t->save() ));
 
     $c = $t->getColumn('price');
 

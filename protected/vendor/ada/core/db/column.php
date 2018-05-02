@@ -41,9 +41,9 @@
             $unique_key         = '';
 
         public static function init(
-            \Ada\Core\Db\Table  $table,
-            string              $name   = '',
-            bool                $cached = true
+            \Ada\Core\Db\Table $table,
+            string             $name   = '',
+            bool               $cached = true
         ): \Ada\Core\Db\Column {
             $db  = $table->getDb();
             $res =&
