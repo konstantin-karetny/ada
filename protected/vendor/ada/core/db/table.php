@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 03.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -44,7 +44,7 @@
 
         protected function __construct(
             \Ada\Core\Db\Driver $db,
-            string              $name   = ''
+            string              $name = ''
         ) {
             $this->db          = $db;
             $name              = \Ada\Core\Clean::cmd($name);
@@ -82,11 +82,11 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     (
-                        'Failed to delete table \'' . $this->init_params['name']   . '\' '  .
+                        'Failed to delete table \'' . $this->getInitParam('name')  . '\' '  .
                         'of database \''            . $this->getDb()->getName()    . '\'. ' .
                         $e->getMessage()
                     ),
-                    5
+                    6
                 );
             }
             if ($res) {
@@ -115,6 +115,12 @@
             string $name   = '',
             bool   $cached = true
         ): \Ada\Core\Db\Column {
+            if (
+                isset($this->columns[$name]) &&
+                !$this->columns[$name]->exists()
+            ) {
+                return $this->columns[$name];
+            }
             $class = $this->getDb()->getNameSpace() . 'Column';
             $res   = $class::init($this, $name, $cached);
             if ($res->getName()) {
@@ -127,23 +133,46 @@
             bool $as_objects = false,
             bool $cached     = true
         ): array {
-            if (!$cached || empty($this->init_params['columns_names'])) {
-                $columns_names = $this->getDb()->fetchColumn(
+            if (!$cached || !$this->getInitParam('columns_names')) {
+                $init_names = $this->getDb()->fetchColumn(
                     $this->getQueryColumnsNames()
                 );
+                if ($init_names) {
+                    $this->init_params['columns_names'] = $init_names;
+                }
             }
-            if (!$columns_names) {
-                return [];
+            $names = array_values(
+                array_unique(
+                    array_merge(
+                        $this->getInitParam('columns_names', []),
+                        array_keys($this->columns)
+                    )
+                )
+            );
+            if (!$names || !$as_objects) {
+                return $names;
             }
-            $this->init_params['columns_names'] = $columns_names;
-            if (!$as_objects) {
-                return $this->init_params['columns_names'];
+            foreach ($this->getInitParam('columns_names', []) as $name) {
+                $this->getColumn($name, $cached);
             }
-            $res = [];
-            foreach ($this->init_params['columns_names'] as $name) {
-                $res[$name] = $this->getColumn($name, $cached);
+            return $this->columns;
+        }
+
+        public function getConstraints(
+            bool $grouped = true,
+            bool $cached  = true
+        ): array {
+            if (!$cached || !$this->getInitParam('constraints')) {
+                $this->init_params['constraints'] = $this->extractConstraints();
             }
-            return $res;
+            return
+                $grouped
+                    ? $this->getInitParam('constraints', [])
+                    : array_merge(
+                        ...array_values(
+                            $this->getInitParam('constraints', [])
+                        )
+                    );
         }
 
         public function getDb(): \Ada\Core\Db\Driver {
@@ -273,6 +302,25 @@
             return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
+        protected function extractConstraints(): array {
+            $res = [];
+            $db  = $this->getDb();
+            foreach ($db->fetchRows('
+                SHOW INDEX
+                FROM '  . $db->t($this->getName()) . '
+                WHERE ' . $db->q('Non_unique')     . ' = 0
+            ') as $row) {
+                $key   = trim($row['Key_name']);
+                $group = (
+                    strtolower($key) == 'primary'
+                        ? 'primary'
+                        : 'unique'
+                );
+                $res[$group][$key][] = trim($row['Column_name']);
+            }
+            return $res;
+        }
+
         protected function extractParams(): array {
             $db  = $this->getDb();
             $row = $db->fetchRow('
@@ -294,12 +342,19 @@
                     : [];
         }
 
+        protected function getInitParam(string $name, $default = null) {
+            return \Ada\Core\Type::set(
+                $this->init_params[$name] ?? $default,
+                isset($this->$name) ? \Ada\Core\Type::get($this->$name) : 'auto'
+            );
+        }
+
         protected function getQueriesCreate(): array {
             $db             = $this->getDb();
             $colums_queries = [];
             $primary_keys   = [];
             $unique_keys    = [];
-            foreach ($this->getColumn() as $column) {
+            foreach ($this->getColumns(true) as $column) {
                 $colums_queries[]   = $column->getQueryCreateUpdate();
                 if ($column->getPrimaryKey()) {
                     $primary_keys[] = $column->getPrimaryKey();
@@ -327,16 +382,16 @@
 
         protected function getQueriesUpdate(): array {
             $res = [];
-            if ($this->getName() != $this->init_params['name']) {
+            if ($this->getName()      != $this->getInitParam('name')) {
                 $res[] = $this->getQueryRename();
             }
-            if ($this->getCharset() != $this->init_params['charset']) {
+            if ($this->getCharset()   != $this->getInitParam('charset')) {
                 $res[] = $this->getQueryChangeCharset();
             }
-            if ($this->getCollation() != $this->init_params['collation']) {
+            if ($this->getCollation() != $this->getInitParam('collation')) {
                 $res[] = $this->getQueryChangeCollation();
             }
-            if ($this->getEngine() != $this->init_params['engine']) {
+            if ($this->getEngine()    != $this->getInitParam('engine')) {
                 $res[] = $this->getQueryChangeEngine();
             }
             $res[] = $this->getQueryUpdate();
@@ -366,12 +421,11 @@
 
         protected function getQueryColumnsNames(): string {
             $db = $this->getDb();
-            return ('
+            return '
                 SELECT ' . $db->q('COLUMN_NAME') . '
                 FROM '   . $db->q('INFORMATION_SCHEMA.COLUMNS') . '
                 WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($db->getName()) . '
-                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($this->getName(true, false))
-            );
+                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($this->getName(true, false));
         }
 
         protected function getQueryDelete(): string {
@@ -380,10 +434,9 @@
 
         protected function getQueryRename(string $name): string {
             $db = $this->getDb();
-            return ('
+            return '
                 ALTER TABLE ' . $db->t($this->getName()) . '
-                RENAME TO '   . $db->t($name)
-            );
+                RENAME TO '   . $db->t($name);
         }
 
     }

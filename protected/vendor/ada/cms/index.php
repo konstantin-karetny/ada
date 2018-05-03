@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 24.04.2018
+    * @version   1.0.0 03.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -36,12 +36,32 @@
 
 
     $db = Db::init(0);
-    $t  = $db->getTable();
+    $t  = $db->getTable('test2');
+
+    //$t->getColumns(true);
+
+    exit(var_dump( $t->getConstraints() ));
+
+    $c = $t->getColumn('name');
+    $c->setUniqueKey(false);
+    exit(var_dump( $c->save() ));
 
     $t->setName('test3');
-    $t->setColumns([['name'=>'qq'],['name'=>'zz']]);
+    $t->setColumns(
+        [
+            [
+                'name'              => 'id',
+                'primary_key'       => true,
+                'unique_key'        => true,
+                'is_auto_increment' => true
+            ],
+            [
+                'name' => 'zz'
+            ]
+        ]
+    );
 
-    exit(var_dump( $t, $t->save() ));
+    exit(var_dump( $t ));
 
     $c = $t->getColumn('price');
 

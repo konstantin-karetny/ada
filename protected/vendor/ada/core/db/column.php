@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 03.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -19,7 +19,8 @@
             DATA_TYPES_ARGS_QTY = [
                 'bigint'  => 1,
                 'decimal' => 2,
-                'int'     => 1
+                'int'     => 1,
+                'varchar' => 1
             ];
 
         protected static
@@ -73,7 +74,7 @@
             if (!$this->init_params) {
                 throw new \Ada\Core\Exception(
                     (
-                        'No column \''   . $this->getNameInit()      . '\' ' .
+                        'No column \''   . $this->getName()          . '\' ' .
                         'in table \''    . $table->getName()         . '\' ' .
                         'of database \'' . $this->getDb()->getName() . '\''
                     ),
@@ -88,7 +89,7 @@
                 return true;
             }
             $error = (
-                'Failed to delete column \'' . $this->init_params['name']   . '\' '  .
+                'Failed to delete column \'' . $this->getInitParam('name')  . '\' '  .
                 'of table \''                . $this->getTable()->getName() . '\' '  .
                 'of database \''             . $this->getDb()->getName()    . '\''
             );
@@ -279,9 +280,6 @@
 
         public function setUniqueKey(string $unique_key) {
             $this->unique_key = \Ada\Core\Clean::cmd($unique_key);
-            if ($this->unique_key === '1') {
-                $this->unique_key = true;
-            }
         }
 
         protected function extractParams(): array {
@@ -325,20 +323,22 @@
                 ),
                 'unique_key'        => ''
             ];
-            foreach ($db->fetchRows('
-                SHOW INDEX
-                FROM '  . $db->t($table->getName()) . '
-                WHERE ' . $db->q('Column_name') . ' LIKE ' . $db->e($this->getName()) . '
-                AND '   . $db->q('Non_unique')  . ' = 0'
-            ) as $index) {
-                $key = trim($index['Key_name']);
-                $res[
-                    strtolower($key) == 'primary'
-                        ? 'primary_key'
-                        : 'unique_key'
-                ] = $key;
+            foreach ($table->getConstraints() as $group_name => $group) {
+                foreach ($group as $key => $names) {
+                    if (in_array($this->getName(), $names)) {
+                        $res[$group_name . '_key'] = $key;
+                        break 1;
+                    }
+                }
             }
             return $res;
+        }
+
+        protected function getInitParam(string $name, $default = null) {
+            return \Ada\Core\Type::set(
+                $this->init_params[$name] ?? $default,
+                $this->$name ? \Ada\Core\Type::get($this->$name) : 'auto'
+            );
         }
 
         protected function getQueriesCreate(): array {
@@ -355,19 +355,19 @@
 
         protected function getQueriesUpdate(): array {
             $res = [];
-            if ($this->getName() != $this->init_params['name']) {
+            if ($this->getName()           !=  $this->getInitParam('name')) {
                 $res[] = $this->getQueryRename();
             }
-            if ($this->getPrimaryKey() && !$this->init_params['primary_key']) {
+            if ($this->getPrimaryKey()     && !$this->getInitParam('primary_key')) {
                 $res[] = $this->getQueryAddPrimaryKey();
             }
-            elseif(!$this->getPrimaryKey() && $this->init_params['primary_key']) {
+            elseif(!$this->getPrimaryKey() &&  $this->getInitParam('primary_key')) {
                 $res[] = $this->getQueryDropPrimaryKey();
             }
-            if ($this->getUniqueKey() && !$this->init_params['unique_key']) {
+            if ($this->getUniqueKey()      && !$this->getInitParam('unique_key')) {
                 $res[] = $this->getQueryAddUniqueKey();
             }
-            elseif(!$this->getUniqueKey() && $this->init_params['unique_key']) {
+            elseif(!$this->getUniqueKey()  &&  $this->getInitParam('unique_key')) {
                 $res[] = $this->getQueryDropUniqueKey();
             }
             $res[] = $this->getQueryUpdate();
@@ -436,7 +436,7 @@
             $db = $this->getDb();
             return '
                 ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
-                DROP COLUMN ' . $db->q($this->init_params['name']);
+                DROP COLUMN ' . $db->q($this->getInitParam('name'));
         }
 
         protected function getQueryDropPrimaryKey(): string {
@@ -449,15 +449,15 @@
         protected function getQueryDropUniqueKey(): string {
             $db = $this->getDb();
             return '
-                ALTER TABLE ' . $db->t($table->getName()) . '
-                DROP KEY '    . $db->q($this->init_params['unique_key']);
+                ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
+                DROP KEY '    . $db->q($this->getInitParam('unique_key'));
         }
 
         protected function getQueryRename(): string {
             $db = $this->getDb();
             return '
                 ALTER TABLE ' . $db->t($this->getTable()->getName()) . '
-                CHANGE '      . $db->q($this->init_params['name'])   . ' ' .
+                CHANGE '      . $db->q($this->getInitParam('name'))  . ' ' .
                                 $db->q($this->getName())             . ' ' .
                                 $this->getQuerySetType();
         }
