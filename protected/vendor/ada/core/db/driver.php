@@ -13,6 +13,7 @@
 
         const
             ESC_TAG       = ':',
+            PREFIX_ALIAS  = '#__',
             WHITE_PARAMS  = [
                 'attributes',
                 'charset',
@@ -209,10 +210,12 @@
                 trim(
                     preg_replace(
                         [
+                            '/\\' . static::PREFIX_ALIAS . '/',
                             '/\s+/',
                             $pattern
                         ],
                         [
+                            $this->getPrefix(),
                             ' ',
                             ' ? '
                         ],

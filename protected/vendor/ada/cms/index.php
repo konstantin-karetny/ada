@@ -31,11 +31,8 @@
 
 
     $db = Db::init(0);
-    $t  = $db->getTable('test');
 
-    //$t->getColumns(1);
-
-    exit(var_dump( $t ));
+    exit(var_dump( $db->getTable('test') ));
 
 
 
