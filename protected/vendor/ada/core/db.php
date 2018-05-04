@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 04.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,7 +15,7 @@
             DEFAULT_DRIVER = 'mysql';
 
         protected static
-            $insts         = [];
+            $instances     = [];
 
         public static function add(array $params): int {
             $class = (
@@ -24,9 +24,9 @@
                 ($params['driver'] ?? static::DEFAULT_DRIVER) .
                 '\Driver'
             );
-            static::$insts[] = $class::init(...func_get_args());
-            end(static::$insts);
-            return (int) key(static::$insts);
+            static::$instances[] = $class::init(...func_get_args());
+            end(static::$instances);
+            return (int) key(static::$instances);
         }
 
         public static function getDrivers(bool $supported_only = false): array {
@@ -45,14 +45,14 @@
             return $res;
         }
 
-        public static function init(int $id = 0): \Ada\Core\Db\Driver {
-            if (!isset(static::$insts[$id])) {
+        public static function init(int $id = 0): Db\Driver {
+            if (!isset(static::$instances[$id])) {
                 throw new Exception(
                     'No database added with identifier \'' . $id . '\'',
                     1
                 );
             }
-            return static::$insts[$id];
+            return static::$instances[$id];
         }
 
     }

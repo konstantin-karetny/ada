@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 04.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,7 +12,8 @@
     abstract class Driver extends \Ada\Core\Proto {
 
         const
-            ADD_PARAMS    = [
+            ESC_TAG       = ':',
+            WHITE_PARAMS  = [
                 'attributes',
                 'charset',
                 'date_format',
@@ -24,8 +25,7 @@
                 'prefix',
                 'quote',
                 'user'
-            ],
-            ESC_TAG       = ':';
+            ];
 
         protected
             $attributes   = [
@@ -50,7 +50,7 @@
             $schema       = '',
             /** @var \PDOStatement */
             $stmt         = null,
-            $tables_names = [],
+            $tables_names = null,
             $user         = '',
             $version      = '';
 
@@ -61,7 +61,7 @@
         protected function __construct(array $params) {
             foreach (array_intersect_key(
                 $params,
-                array_flip(static::ADD_PARAMS)
+                array_flip(static::WHITE_PARAMS)
             ) as $k => $v) {
                 $this->$k = \Ada\Core\Type::set(
                     $v,
@@ -455,23 +455,23 @@
         }
 
         public function getTable(
-            string $name   = '',
+            string $name,
             bool   $cached = true
         ): \Ada\Core\Db\Table {
             $class = $this->getNameSpace() . 'Table';
-            return $class::init($this, $name, $cached);
+            return $class::init($name, $this, $cached);
         }
 
         public function getTables(
             bool $as_objects = false,
             bool $cached     = true
         ): array {
-            if (!$cached || !$this->tables_names) {
+            if (!$cached || $this->tables_names === null) {
                 $this->tables_names = array_map(
                     function($el) {
                         return ltrim($el, $this->getPrefix());
                     },
-                    $this->fetchColumn($this->getQueryGetTables())
+                    $this->fetchColumn($this->getQueryTablesNames())
                 );
             }
             if (!$as_objects) {
@@ -690,7 +690,7 @@
             ';
         }
 
-        protected function getQueryGetTables(): string {
+        protected function getQueryTablesNames(): string {
             return '
                 SELECT ' . $this->q('TABLE_NAME') . '
                 FROM '   . $this->q('information_schema.TABLES') . '
