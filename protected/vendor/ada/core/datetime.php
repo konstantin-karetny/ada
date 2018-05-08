@@ -86,7 +86,7 @@
         }
 
         public function format($format = '', string $locale_id = 'en'): string {
-            $format = $format ? Clean::cmd($format) : static::getDefaultFormat();
+            $format = $format === '' ? static::getDefaultFormat() : $format;
             if ($format == 'r') {
                 return $this->format(
                     str_replace('M', 'MG', static::RFC2822),

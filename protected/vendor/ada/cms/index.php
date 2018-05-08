@@ -16,6 +16,8 @@
 
     //db session handler
     //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
+    //public static function preset
+    //Sql class
     //Str, Arr and Obj classes
 
     Db::add([
@@ -26,31 +28,17 @@
         'driver' => 'pgsql',
         'name'   => 'postgres',
         'prefix' => 'pj_',
-        'user'   => 'postgres',
+        'user'   => 'postgres'
     ]);
 
 
-    $db = Db::init(0);
+    $handler = new Session\Handlers\Db(Db::init()->getTable('session'));
+    Session::preset([], $handler);
 
-    exit(var_dump( $db->getTable('test') ));
-
-
-
-    //$handler = new SessionHandlerDb;
-    //$session->setHandler($handler);
     //Session::set('var', 'val');
-    //$session->start();
+    //Session::drop('var');
 
-
-
-
-
-
-
-
-
-
-
+    exit(var_dump( Session::init() ));
 
 
 

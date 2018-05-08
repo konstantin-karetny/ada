@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 08.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -176,7 +176,7 @@
             static::$inited = true;
         }
 
-        public function delVar(string $name): bool {
+        public function dropVar(string $name): bool {
             $name = Clean::cmd($name);
             if (isset($this->vars[$name])) {
                 unset($this->vars[$name]);

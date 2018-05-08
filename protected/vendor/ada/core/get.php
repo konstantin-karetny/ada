@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 08.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,8 +11,8 @@
 
     class Get extends Input {
 
-        public static function del(string $name): bool {
-            return Url::init()->delVar($name);
+        public static function drop(string $name): bool {
+            return Url::init()->dropVar($name);
         }
 
         public static function get(

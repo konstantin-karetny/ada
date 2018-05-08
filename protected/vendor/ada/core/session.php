@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 08.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,10 +13,9 @@
 
         const
             DEFAULT_NAMESPACE = '_',
-            NAMESPACE_PREFIX  = '_',
-            SELF_NAMESPACE    = '9be28143618f21b9456528c2ee825873';
+            NAMESPACE_PREFIX  = '#__';
 
-        protected
+        protected static
             $handler          = null,
             $ini_params       = [
                 'cache_limiter'    => 'none',
@@ -33,36 +32,62 @@
                 'use_strict_mode'  => true,
                 'use_trans_sid'    => false
             ],
+            $inited           = false,
+            $system_namespace = '';
+
+        protected
             $new              = true,
             $read_only        = false;
 
-        public static function init(
-            array                     $ini_params = [],
-            \Ada\Core\Session\Handler $handler    = null
-        ): \Ada\Core\Session {
-            static $res;
-            return $res ?? $res = new static($ini_params, $handler);
+        public static function getStorage(): array {
+            static::init()->start();
+            return parent::getStorage();
         }
 
-        protected function __construct(
-            array                     $ini_params = [],
-            \Ada\Core\Session\Handler $handler    = null
-        ) {
-            $this->new        = !Cookie::getBool($this->generateName());
-            $this->ini_params = Type::set(
-                array_merge(
-                    $this->ini_params,
-                    [
-                        'cookie_secure' => Url::init()->isSSL(),
-                        'save_path'     => Clean::path(session_save_path())
-                    ],
-                    $ini_params
-                )
-            );
-            if ($handler && session_set_save_handler($handler)) {
-                $this->handler = $handler;
+        public static function init(): \Ada\Core\Session {
+            static $res;
+            return $res ?? $res = new static;
+        }
+
+        public static function preset(
+            array           $ini_params = [],
+            \SessionHandler $handler    = null
+        ): bool {
+            if (static::$inited) {
+                return false;
             }
+            if ($handler !== null) {
+                if (!session_set_save_handler($handler)) {
+                    return false;
+                }
+                static::$handler = $handler;
+            }
+            static::$ini_params = array_merge(
+                static::$ini_params,
+                [
+                    'cookie_secure' => Url::init()->isSSL(),
+                    'save_path'     => Clean::path(session_save_path())
+                ]
+            );
+            foreach (array_keys(static::$ini_params) as $key) {
+                if (!isset($ini_params[$key])) {
+                    continue;
+                }
+                static::$ini_params[$key] = Type::set(
+                    $ini_params[$key],
+                    Type::get(static::$ini_params[$key]),
+                    false
+                );
+            }
+            static::$system_namespace = Str::hash(__FILE__);
+            return true;
+        }
+
+        protected function __construct() {
+            static::preset();
             session_name($this->generateName());
+            $this->new      = !Cookie::getBool($this->getName());
+            static::$inited = true;
         }
 
         public function __debugInfo() {
@@ -85,7 +110,7 @@
 
         public function check(): bool {
             if (!$this->isStarted()) {
-                return false;
+                return true;
             }
             if ($this->isNew()) {
                 return true;
@@ -97,7 +122,7 @@
                             static::getString(
                                 'last_stop_datetime',
                                 '',
-                                static::SELF_NAMESPACE
+                                static::$system_namespace
                             )
                         )
                         +
@@ -110,7 +135,7 @@
                     static::getString(
                         'browser_signature',
                         '',
-                        static::SELF_NAMESPACE
+                        static::$system_namespace
                     )
                     !=
                     Client::init()->getSignature()
@@ -122,8 +147,8 @@
         }
 
         public function clear(): bool {
-            if (!$this->isStarted()) {
-                return true;
+            if (!$this->isStarted() && !$this->start()) {
+                return false;
             }
 			session_unset();
 			$res             = session_destroy();
@@ -132,20 +157,20 @@
         }
 
         public function delete(): bool {
-            if (!$this->isStarted()) {
-                return true;
+            if (!$this->isStarted() && !$this->start()) {
+                return false;
             }
             return !in_array(
                 false,
                 [
                     $this->clear(),
-                    Cookie::del($this->getName())
+                    Cookie::drop($this->getName())
                 ]
             );
         }
 
-        public function getHandler(): \Ada\Core\Session\Handler {
-            return $this->handler;
+        public function getHandler() {
+            return static::$handler;
         }
 
         public function getId(): string {
@@ -153,11 +178,11 @@
         }
 
         public function getIniParam(string $name) {
-            return $this->ini_params[strtolower(Clean::cmd($name))] ?? null;
+            return static::$ini_params[strtolower(Clean::cmd($name))] ?? null;
         }
 
         public function getIniParams(): array {
-            return $this->ini_params;
+            return static::$ini_params;
         }
 
         public function getName(): string {
@@ -182,8 +207,8 @@
         }
 
         public function regenerateId($delete_old_session = false): bool {
-            if (!$this->isStarted()) {
-                return true;
+            if (!$this->isStarted() && !$this->start()) {
+                return false;
             }
             return session_regenerate_id($delete_old_session);
         }
@@ -204,7 +229,7 @@
             }
             register_shutdown_function([$this, 'stop']);
             $ini_params = $this->getIniParams();
-            if ($this->handler) {
+            if ($this->getHandler()) {
                 unset($ini_params['save_handler']);
             }
             $res = session_start(
@@ -230,12 +255,12 @@
             static::set(
                 'last_stop_datetime',
                 DateTime::init()->format(),
-                static::SELF_NAMESPACE
+                static::$system_namespace
             );
             static::set(
                 'browser_signature',
                 Client::init()->getSignature(),
-                static::SELF_NAMESPACE
+                static::$system_namespace
             );
             session_write_close();
 			$this->read_only = false;
@@ -243,19 +268,19 @@
         }
 
         protected function generateName(): string {
-            return md5(Url::init()->getHost());
+            return Str::hash(__DIR__);
         }
 
         protected function getFile(): File {
             return File::init(
-                $this->ini_params['save_path'] . '/sess_' . $this->getId()
+                $this->getIniParam('save_path') . '/sess_' . $this->getId()
             );
         }
 
         protected function namespaceFull(string $namespace): string {
             return strtoupper(
-                Clean::cmd(static::NAMESPACE_PREFIX) .
-                Clean::cmd($namespace == '' ? static::DEFAULT_NAMESPACE : $namespace)
+                static::NAMESPACE_PREFIX .
+                ($namespace == '' ? static::DEFAULT_NAMESPACE : $namespace)
             );
         }
 

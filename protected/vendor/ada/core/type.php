@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 29.03.2018
+    * @version   1.0.0 08.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -69,10 +69,11 @@
                     return $val;
                 }
             }
+            $type = strtolower(trim($type));
             if ($type == 'auto') {
                 $type = static::get($val);
             }
-            if (!settype($val, strtolower(trim($type)))) {
+            if (!@settype($val, $type)) {
                 throw new Exception('Failed to set type \'' . $type . '\'', 1);
             }
             return $val;
