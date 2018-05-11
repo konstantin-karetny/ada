@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 11.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -120,12 +120,13 @@
         public function parseIni(
             bool $process_sections = true,
             int  $scanner_mode     = INI_SCANNER_TYPED
-        ) {
-            return (array) @parse_ini_file(
+        ): array {
+            $res = @parse_ini_file(
                 $this->getPath(),
                 $process_sections,
                 $scanner_mode
             );
+            return is_array($res) ? $res : [];
         }
 
         public function read(

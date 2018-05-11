@@ -14,8 +14,7 @@
 
     require_once 'includes/autoload.php';
 
-    //db session handler
-    //C:\OSPanel\domains\joomla\libraries\joomla\session\storage\database.php
+    //DateTime overwritable locales / ? set default locale
     //public static function preset
     //Sql class
     //Str, Arr and Obj classes
@@ -32,13 +31,10 @@
     ]);
 
 
-    $handler = new Session\Handlers\Db(Db::init()->getTable('session'));
-    Session::preset([], $handler);
 
-    //Session::set('var', 'val');
-    //Session::drop('var');
+    DateTime::preset('Europe/Berlin', 'A a B b C c D d E e F f G g H h I i J j K k L l M m N n O o P p R r j-S s T t U u V v W w X x Y y Z z');
 
-    exit(var_dump( Session::init() ));
+    exit(var_dump( DateTime::init()->format('', 'ru'), DateTime::init()->getLocale('ru') ));
 
 
 

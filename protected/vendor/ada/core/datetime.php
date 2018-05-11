@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 11.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,37 +12,12 @@
     class DateTime extends \DateTime {
 
         protected static
-            $default_format        = 'Y-m-d H:i:s',
-            $default_timezone      = null,
-            $default_timezone_name = '',
-            $inited                = false;
+            $default_format = 'Y-m-d H:i:s',
+            $inited         = false;
 
         protected
-            $locales_ext           = 'ini',
-            $locales_path          = __DIR__ . '/datetime/locales';
-
-        public static function getDefaultFormat(): string {
-            return static::$default_format;
-        }
-
-        public static function getDefaultTimezone(): \Ada\Core\DateTimeZone {
-            return
-                (
-                    static::$default_timezone &&
-                    static::$default_timezone->getName() == static::getDefaultTimezoneName()
-                )
-                    ? static::$default_timezone
-                    : static::$default_timezone = DateTimeZone::init(
-                        static::getDefaultTimezoneName()
-                    );
-        }
-
-        public static function getDefaultTimezoneName(): string {
-            return
-                static::$default_timezone_name
-                    ? static::$default_timezone_name
-                    : static::$default_timezone_name = date_default_timezone_get();
-        }
+            $locales_ext    = 'ini',
+            $locales_path   = __DIR__ . '/datetime/locales';
 
         public static function init(
             string $time          = 'now',
@@ -51,23 +26,20 @@
             return new static(...func_get_args());
         }
 
-        public static function setDefaultFormat(string $default_format): bool {
-            if (static::$inited) {
-                return false;
-            }
-            static::$default_format = $default_format;
-            return true;
-        }
-
-        public static function setDefaultTimezoneName(
-            string $default_timezone_name
+        public static function preset(
+            string $default_timezone_name = '',
+            string $default_format        = ''
         ): bool {
             if (static::$inited) {
                 return false;
             }
-            static::$default_timezone      = DateTimeZone::init($default_timezone_name);
-            static::$default_timezone_name = static::$default_timezone->getName();
-            date_default_timezone_set(static::$default_timezone_name);
+            if ($default_timezone_name !== '') {
+                TimeZone::init($default_timezone_name);
+                date_default_timezone_set($default_timezone_name);
+            }
+            if ($default_format !== '') {
+                static::$default_format = $default_format;
+            }
             return true;
         }
 
@@ -77,30 +49,32 @@
         ) {
             parent::__construct(
                 $time,
-                $timezone_name
-                    ? DateTimeZone::init($timezone_name)
-                    : $this->getDefaultTimezone()
+                TimeZone::init(
+                    $timezone_name === ''
+                        ? date_default_timezone_get()
+                        : $timezone_name
+                )
             );
             $this->locales_path = Clean::path($this->locales_path);
             static::$inited     = true;
         }
 
         public function format($format = '', string $locale_id = 'en'): string {
-            $format = $format === '' ? static::getDefaultFormat() : $format;
+            $format = $format === '' ? $this->getDefaultFormat() : $format;
             if ($format == 'r') {
                 return $this->format(
-                    str_replace('M', 'MG', static::RFC2822),
+                    str_replace('M', 'MS', static::RFC2822),
                     $locale_id
                 );
             }
-            if ($locale_id == 'en') {
+            $res    = '';
+            $locale = $this->getLocale($locale_id);
+            if (!$locale) {
                 return parent::format($format);
             }
-            $format2 = '';
-            $locale  = $this->getLocale($locale_id);
-            for ($i  = 0; $i < strlen($format); $i++) {
+            for ($i = 0; $i < strlen($format); $i++) {
                 if ($i && $format[$i - 1] == '\\') {
-                    $format2 .= $format[$i];
+                    $res .= $format[$i];
                     continue;
                 }
                 $char = $format[$i];
@@ -114,11 +88,12 @@
                     case 'l':
                         $sub = $locale[$char][$this->format('N')];
                         break;
-                    case 'M' && $format[$i + 1] == 'G':
-                        $sub = $locale[$char . 'G'][$this->format('n')];
-                        $i++;
-                        break;
                     case 'M':
+                        if (($format[$i + 1] ?? '') == 'S') {
+                            $sub = $locale[$char . 'S'][$this->format('n')];
+                            $i++;
+                            break;
+                        }
                         $sub = $locale[$char][$this->format('n')];
                         break;
                     case 'S':
@@ -128,21 +103,25 @@
                     default:
                         $sub = $char;
                 }
-                $format2 .= implode('\\', str_split($sub));
+                $res .= implode('\\', str_split($sub));
             }
-            return parent::format($format2);
+            return parent::format($res);
+        }
+
+        public function getDefaultFormat(): string {
+            return static::$default_format;
         }
 
         public function getLocale(string $locale_id = 'en'): array {
-            $file = File::init(
+            return File::init(
                 $this->locales_path . '/' .
                 $locale_id . '.' .
                 $this->locales_ext
-            );
-            if (!$file->exists()) {
-                return [];
-            }
-            return $file->parseIni();
+            )->parseIni();
+        }
+
+        public function getDefaultTimeZone(): \Ada\Core\TimeZone {
+            return TimeZone::init(date_default_timezone_get());
         }
 
     }

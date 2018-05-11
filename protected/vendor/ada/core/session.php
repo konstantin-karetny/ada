@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 11.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -62,29 +62,27 @@
                 }
                 static::$handler = $handler;
             }
-            static::$ini_params = array_merge(
+            foreach (array_keys(static::$ini_params) as $key) {
+                if (isset($ini_params[$key])) {
+                    static::$ini_params[$key] = Type::set(
+                        $ini_params[$key],
+                        Type::get(static::$ini_params[$key]),
+                        false
+                    );
+                }
+            }
+            return true;
+        }
+
+        protected function __construct() {
+            static::$system_namespace = Str::hash(__FILE__);
+            static::$ini_params       = array_merge(
                 static::$ini_params,
                 [
                     'cookie_secure' => Url::init()->isSSL(),
                     'save_path'     => Clean::path(session_save_path())
                 ]
             );
-            foreach (array_keys(static::$ini_params) as $key) {
-                if (!isset($ini_params[$key])) {
-                    continue;
-                }
-                static::$ini_params[$key] = Type::set(
-                    $ini_params[$key],
-                    Type::get(static::$ini_params[$key]),
-                    false
-                );
-            }
-            static::$system_namespace = Str::hash(__FILE__);
-            return true;
-        }
-
-        protected function __construct() {
-            static::preset();
             session_name($this->generateName());
             $this->new      = !Cookie::getBool($this->getName());
             static::$inited = true;
