@@ -1,17 +1,19 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 11.05.2018
+    * @version   1.0.0 14.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\DateTime;
 
     class TimeZone extends \DateTimeZone {
 
-        public static function init(string $timezone_name): \Ada\Core\TimeZone {
+        public static function init(
+            string $timezone_name
+        ): \Ada\Core\DateTime\TimeZone {
             return new static($timezone_name);
         }
 

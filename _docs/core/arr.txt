@@ -1,2 +1,5 @@
-﻿recursive array_diff()?
+﻿I refactored the Daniel's function and I got it ... array_merge_recursive does indeed merge arrays...
+http://php.net/manual/ru/function.array-merge-recursive.php
+
+recursive array_diff()?
 https://stackoverflow.com/questions/3876435/recursive-array-diff

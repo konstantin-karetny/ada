@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 14.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,17 +22,17 @@
             $this->array = $array;
         }
 
-        public function diffRecursive(array $array2): array {
+        public function diffRecursive(array $array): array {
             $res = [];
             foreach ($this->toArray() as $k => $v) {
-                if (array_key_exists($k, $array2)) {
+                if (array_key_exists($k, $array)) {
                     if (is_array($v)) {
-                        $v_diffs = static::init($v)->diffRecursive($array2[$k]);
+                        $v_diffs = static::init($v)->diffRecursive($array[$k]);
                         if ($v_diffs) {
                             $res[$k] = $v_diffs;
                         }
                     } else {
-                        if ($v != $array2[$k]) {
+                        if ($v != $array[$k]) {
                             $res[$k] = $v;
                         }
                     }
@@ -45,6 +45,23 @@
 
         public function keysExist(array $keys): bool {
             return !array_diff_key(array_flip($keys), $this->toArray());
+        }
+
+        public function mergeRecursive(array $array): array {
+            $res = $this->toArray();
+            foreach ($array as $key => &$value) {
+                if (
+                    is_array($value)  &&
+                    isset($res[$key]) &&
+                    is_array($res[$key])
+                ) {
+                    $res[$key] = static::init($res[$key])->mergeRecursive($value);
+                }
+                else {
+                    $res[$key] = $value;
+                }
+            }
+            return $res;
         }
 
         public function toArray(): array {

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 04.05.2018
+    * @version   1.0.0 14.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -16,7 +16,11 @@
 
     //DateTime overwritable locales / ? set default locale
     //public static function preset
+
+    //queries builder
+    //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
     //Sql class
+
     //Str, Arr and Obj classes
 
     Db::add([
@@ -30,11 +34,15 @@
         'user'   => 'postgres'
     ]);
 
+    DateTime::preset(
+        'Europe/Berlin',
+        'A a B b C c D d E e F f G g H h I i J j K k L l M m N n O o P p R r j-S s T t U u V v W w X x Y y Z z',
+        'ru',
+        ['D:\Downloads']
+    );
 
 
-    DateTime::preset('Europe/Berlin', 'A a B b C c D d E e F f G g H h I i J j K k L l M m N n O o P p R r j-S s T t U u V v W w X x Y y Z z');
-
-    exit(var_dump( DateTime::init()->format('', 'ru'), DateTime::init()->getLocale('ru') ));
+    exit(var_dump( DateTime::init()->format('r'), DateTime::getLocalesNames() ));
 
 
 
