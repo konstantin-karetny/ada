@@ -15,7 +15,7 @@
     require_once 'includes/autoload.php';
 
     //DateTime overwritable locales / ? set default locale
-    //public static function preset
+    //public static function preset / ? arguments as array
 
     //queries builder
     //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
