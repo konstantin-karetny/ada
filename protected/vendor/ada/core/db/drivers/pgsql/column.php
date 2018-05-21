@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 04.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -38,7 +38,7 @@
                 'charset'       => trim($row['character_set_name']),
                 'collation'     => trim($row['collation_name']),
                 'default_value' => trim($row['column_default']),
-                'is_nullable'   => strtolower(trim($row['is_nullable'])) == 'yes',
+                'is_nullable'   => \Ada\Core\Clean::cmd($row['is_nullable']) == 'yes',
                 'name'          => trim($row['column_name']),
                 'primary_key'   => '',
                 'type'          => trim($row['data_type']),

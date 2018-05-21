@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -37,7 +37,7 @@
             if (is_string($val) && is_numeric($val)) {
                 $val = 1 * $val;
             }
-            $type = strtolower(gettype($val));
+            $type = Clean::cmd(gettype($val));
             return key(
                 array_filter(
                     static::NAMES,
@@ -69,7 +69,7 @@
                     return $val;
                 }
             }
-            $type = strtolower(trim($type));
+            $type = Clean::cmd($type);
             if ($type == 'auto') {
                 $type = static::get($val);
             }

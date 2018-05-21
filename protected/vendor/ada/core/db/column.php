@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 04.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -140,11 +140,11 @@
                 'charset'           => trim($row['CHARACTER_SET_NAME']),
                 'collation'         => trim($row['COLLATION_NAME']),
                 'default_value'     => \Ada\Core\Type::set(trim($row['COLUMN_DEFAULT'])),
-                'is_auto_increment' => strpos(strtolower($row['EXTRA']), 'auto_increment') !== false,
-                'is_nullable'       => strtolower(trim($row['IS_NULLABLE'])) == 'yes',
+                'is_auto_increment' => strpos(\Ada\Core\Clean::cmd($row['EXTRA']), 'auto_increment') !== false,
+                'is_nullable'       => \Ada\Core\Clean::cmd($row['IS_NULLABLE']) == 'yes',
                 'name'              => trim($row['COLUMN_NAME']),
                 'primary_key'       => '',
-                'type'              => strtolower(trim($row['DATA_TYPE'])),
+                'type'              => \Ada\Core\Clean::cmd($row['DATA_TYPE']),
                 'type_args'         => \Ada\Core\Clean::values(explode(',', end($type_args)), 'int'),
                 'unique_key'        => ''
             ];

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -71,9 +71,9 @@
             ];
 
         protected static
-            $current            = '',
+            $cache              = [],
             $default_root       = '',
-            $inited             = '';
+            $inited             = false;
 
         protected
             $fragment           = '',
@@ -126,16 +126,22 @@
         }
 
         public static function init(string $url = ''): \Ada\Core\Url {
-            return new static($url);
+            return new static(...func_get_args());
         }
 
-        public static function setDefaultRoot(string $default_root): bool {
+        public static function preset(array $params): bool {
             if (static::$inited) {
                 return false;
             }
-            static::$default_root = static::init($default_root)->getRoot();
-            static::$current      = '';
-            static::$inited       = false;
+            foreach ($params as $k => $v) {
+                $k = Clean::cmd($k);
+                switch ($k) {
+                    case 'default_root':
+                        static::$default_root = static::init($v)->getRoot();
+                        break;
+                }
+            }
+            static::$cache = [];
             return true;
         }
 
@@ -158,15 +164,7 @@
         }
 
         public function __construct(string $url = '') {
-            if (static::$current === '') {
-                static::$current = $this->detectCurrent();
-                if (static::getDefaultRoot()) {
-                    static::$current = static::init(static::$current);
-                    static::$current->setRoot(static::getDefaultRoot());
-                    static::$current = static::$current->toString();
-                }
-            }
-            $url = $url === '' ? static::$current : $url;
+            $url = $url === '' ? $this->detectCurrent() : $url;
             if (!static::check($url)) {
                 throw new Exception('Wrong url \'' . $url . '\'', 1);
             }
@@ -366,19 +364,25 @@
             return http_build_query($vars);
         }
 
-        protected function detectCurrent(): string {
-            $res = 'http';
-            if (
-                strtolower(trim(
-                    Server::getString('HTTPS', 'off')
-                )) !== 'off' ||
-                strtolower(trim(
-                    Server::getString('HTTP_X_FORWARDED_PROTO', 'http')
-                )) !== 'http'
-            ) {
-                $res .= 's';
+        protected function detectCurrent(bool $cached = true): string {
+            if ($cached && isset(static::$cache['current'])) {
+                return static::$cache['current'];
             }
-            $res .= '://' . Server::getUrl('HTTP_HOST');
+            $res = static::getDefaultRoot();
+            if (!$res) {
+                $res = 'http';
+                if (
+                    strtolower(trim(
+                        Server::getString('HTTPS', 'off')
+                    )) !== 'off' ||
+                    strtolower(trim(
+                        Server::getString('HTTP_X_FORWARDED_PROTO', 'http')
+                    )) !== 'http'
+                ) {
+                    $res .= 's';
+                }
+                $res .= '://' . Server::getUrl('HTTP_HOST');
+            }
             if (Server::getBool('PHP_SELF') && Server::getBool('REQUEST_URI')) {
                 $res .= '/' . Server::getUrl('REQUEST_URI');
             }
@@ -388,7 +392,7 @@
                     $res .= '?' . Server::getUrl('QUERY_STRING');
                 }
             }
-            return static::clean($res);
+            return static::$cache['current'] = static::clean($res);
         }
 
         protected function parse(string $url): array {

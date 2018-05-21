@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 14.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -35,7 +35,10 @@
             return DateTime\TimeZone::init(date_default_timezone_get());
         }
 
-        public static function getLocalesNames(): array {
+        public static function getLocalesNames(bool $cached = true): array {
+            if ($cached && isset(static::$cache['locales_names'])) {
+                return static::$cache['locales_names'];
+            }
             $res = [];
             foreach (static::getLocalesPathes() as $path) {
                 foreach (Dir::init($path)->files() as $file) {
@@ -44,9 +47,8 @@
                     }
                 }
             }
-            $res = array_unique($res);
             sort($res);
-            return $res;
+            return static::$cache['locales_names'] = array_unique($res);
         }
 
         public static function getLocalesPathes(): array {
@@ -60,31 +62,32 @@
             return new static(...func_get_args());
         }
 
-        public static function preset(
-            string $default_timezone_name = '',
-            string $default_format        = '',
-            string $default_locale_name   = '',
-            array  $locales_pathes        = []
-        ): bool {
+        public static function preset(array $params): bool {
             if (static::$inited) {
                 return false;
             }
-            if ($default_timezone_name !== '') {
-                DateTime\TimeZone::init($default_timezone_name);
-                date_default_timezone_set($default_timezone_name);
+            foreach ($params as $k => $v) {
+                $k = Clean::cmd($k);
+                switch ($k) {
+                    case 'default_timezone_name':
+                        DateTime\TimeZone::init($v);
+                        date_default_timezone_set($v);
+                        break;
+                    case 'default_format':
+                        static::$default_format      = Clean::string($v);
+                        break;
+                    case 'default_locale_name':
+                        static::$default_locale_name = Clean::cmd($v);
+                        break;
+                    case 'locales_pathes':
+                        static::$locales_pathes      = array_unique(array_merge(
+                            static::$locales_pathes,
+                            Clean::values($v, 'path')
+                        ));
+                        break;
+                }
             }
-            if ($default_format !== '') {
-                static::$default_format = $default_format;
-            }
-            if ($default_locale_name !== '') {
-                static::$default_locale_name = Clean::cmd($default_locale_name);
-            }
-            if ($locales_pathes !== []) {
-                static::$locales_pathes = array_map(
-                    '\Ada\Core\Clean::path',
-                    array_merge(static::$locales_pathes, $locales_pathes)
-                );
-            }
+            static::$cache = [];
             return true;
         }
 
@@ -92,7 +95,10 @@
             string $time          = 'now',
             string $timezone_name = ''
         ) {
-            static::preset();
+            static::$locales_pathes = Clean::values(
+                static::$locales_pathes,
+                'path'
+            );
             parent::__construct(
                 $time,
                 DateTime\TimeZone::init(
@@ -173,8 +179,8 @@
                     ? static::getDefaultLocaleName()
                     : $locale_name
             );
-            if ($cached && isset(static::$cache[$locale_name])) {
-                return static::$cache[$locale_name];
+            if ($cached && isset(static::$cache['locales'][$locale_name])) {
+                return static::$cache['locales'][$locale_name];
             }
             $res = [];
             foreach (static::getLocalesPathes() as $path) {
@@ -190,7 +196,8 @@
                     1
                 );
             }
-            return static::$cache[$locale_name] = $res;
+            static::$cache['locales'] = static::$cache['locales'] ?? [];
+            return static::$cache['locales'][$locale_name] = $res;
         }
 
     }

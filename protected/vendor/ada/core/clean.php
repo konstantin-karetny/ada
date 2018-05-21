@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 17.03.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,49 +11,48 @@
 
     class Clean extends Proto {
 
-        public static function base64($val): string {
-            return (string) preg_replace('/[^a-z0-9\/+=]/i', '', $val);
+        public static function base64($value): string {
+            return (string) preg_replace('/[^a-z0-9\/+=]/i', '', $value);
         }
 
-        public static function bool($val): bool {
-            return (bool) (
-                is_numeric($val) ? (1 * $val) : $val
-            );
+        public static function bool($value): bool {
+            return (bool) (is_numeric($value) ? (1 * $value) : $value);
         }
 
-        public static function cmd($val): string {
-            return ltrim(
-                (string) preg_replace('/[^a-z0-9_\.-]/i', '', $val),
+        public static function cmd($value, bool $lower_case = true): string {
+            $res = ltrim(
+                (string) preg_replace('/[^a-z0-9_\.-]/i', '', $value),
                 '.'
             );
+            return $lower_case ? strtolower($res) : $res;
         }
 
-        public static function email($val): string {
-            return (string) filter_var(trim($val), FILTER_SANITIZE_EMAIL);
+        public static function email($value): string {
+            return (string) filter_var(trim($value), FILTER_SANITIZE_EMAIL);
         }
 
-        public static function float($val, bool $abs = true): float {
+        public static function float($value, bool $abs = true): float {
             $res = filter_var(
-                $val,
+                $value,
                 FILTER_SANITIZE_NUMBER_FLOAT,
                 FILTER_FLAG_ALLOW_FRACTION
             );
             return (float) ($abs ? abs($res) : $res);
         }
 
-        public static function html($val, bool $abs = true): string {
-            $val = trim($val);
+        public static function html($value, bool $abs = true): string {
+            $value = trim($value);
             return (string) (
-                preg_match('//u', $val)
-                    ? $val
+                preg_match('//u', $value)
+                    ? $value
                     : htmlspecialchars_decode(
-                        htmlspecialchars($val, ENT_IGNORE, 'UTF-8')
+                        htmlspecialchars($value, ENT_IGNORE, 'UTF-8')
                     )
             );
         }
 
-        public static function int($val, bool $abs = true): int {
-            $res = filter_var($val, FILTER_SANITIZE_NUMBER_INT);
+        public static function int($value, bool $abs = true): int {
+            $res = filter_var($value, FILTER_SANITIZE_NUMBER_INT);
             return (int) ($abs ? abs($res) : $res);
         }
 
@@ -68,24 +67,24 @@
             return $object;
         }
 
-        public static function path($val, bool $validate_ext = false): string {
-            return Path::clean($val, $validate_ext);
+        public static function path($value, bool $valueidate_ext = false): string {
+            return Path::clean($value, $valueidate_ext);
         }
 
-        public static function string($val): string {
-            return html_entity_decode(trim($val));
+        public static function string($value): string {
+            return html_entity_decode(trim($value));
         }
 
-        public static function url($val): string {
-            return Url::clean($val);
+        public static function url($value): string {
+            return Url::clean($value);
         }
 
-        public static function value($val, string $filter) {
-            $method = strtolower(trim($filter));
+        public static function value($value, string $filter) {
+            $method = static::cmd($filter);
             if (!method_exists(__CLASS__, $method)) {
                 throw new Exception('Wrong filter name \'' . $filter . '\'', 1);
             }
-            return static::$method($val);
+            return static::$method($value);
         }
 
         public static function values(
@@ -103,8 +102,8 @@
             return $array;
         }
 
-        public static function word($val): string {
-            return (string) preg_replace('/[^a-z_]/i', '', $val);
+        public static function word($value): string {
+            return (string) preg_replace('/[^a-z_]/i', '', $value);
         }
 
     }

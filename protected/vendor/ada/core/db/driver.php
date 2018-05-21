@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 04.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,7 +14,7 @@
         const
             ESC_TAG       = ':',
             PREFIX_ALIAS  = '#__',
-            WHITE_PARAMS  = [
+            INIT_PARAMS   = [
                 'attributes',
                 'charset',
                 'date_format',
@@ -62,7 +62,7 @@
         protected function __construct(array $params) {
             foreach (array_intersect_key(
                 $params,
-                array_flip(static::WHITE_PARAMS)
+                array_flip(static::INIT_PARAMS)
             ) as $k => $v) {
                 $this->$k = \Ada\Core\Type::set(
                     $v,
@@ -447,6 +447,11 @@
 
         public function getPrefix(): string {
             return $this->prefix;
+        }
+
+        public function getQuery(): \Ada\Core\Db\Query {
+            $class = $this->getNameSpace() . 'Query';
+            return $class::init($this);
         }
 
         public function getQuote(): string {

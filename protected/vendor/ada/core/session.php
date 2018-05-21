@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 11.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -39,6 +39,18 @@
             $new              = true,
             $read_only        = false;
 
+        public static function getHandler() {
+            return static::$handler;
+        }
+
+        public static function getIniParam(string $name, $default = null) {
+            return static::getIniParams()[Clean::cmd($name)] ?? $default;
+        }
+
+        public static function getIniParams(): array {
+            return static::$ini_params;
+        }
+
         public static function getStorage(): array {
             static::init()->start();
             return parent::getStorage();
@@ -49,26 +61,32 @@
             return $res ?? $res = new static;
         }
 
-        public static function preset(
-            array           $ini_params = [],
-            \SessionHandler $handler    = null
-        ): bool {
+        public static function preset(array $params): bool {
             if (static::$inited) {
                 return false;
             }
-            if ($handler !== null) {
-                if (!session_set_save_handler($handler)) {
-                    return false;
-                }
-                static::$handler = $handler;
-            }
-            foreach (array_keys(static::$ini_params) as $key) {
-                if (isset($ini_params[$key])) {
-                    static::$ini_params[$key] = Type::set(
-                        $ini_params[$key],
-                        Type::get(static::$ini_params[$key]),
-                        false
-                    );
+            foreach ($params as $k => $v) {
+                $k = Clean::cmd($k);
+                switch ($k) {
+                    case 'handler':
+                        if (!session_set_save_handler($v)) {
+                            return false;
+                        }
+                        static::$handler = $v;
+                        break;
+                    case 'ini_params':
+                        foreach (Type::set($v, 'array') as $kk => $vv) {
+                            $kk = Clean::cmd($kk);
+                            if (!key_exists($kk, static::getIniParams())) {
+                                continue;
+                            }
+                            static::$ini_params[$kk] = Type::set(
+                                $vv,
+                                Type::get(static::getIniParam($kk)),
+                                false
+                            );
+                        }
+                        break;
                 }
             }
             return true;
@@ -77,7 +95,7 @@
         protected function __construct() {
             static::$system_namespace = Str::hash(__FILE__);
             static::$ini_params       = array_merge(
-                static::$ini_params,
+                static::getIniParams(),
                 [
                     'cookie_secure' => Url::init()->isSSL(),
                     'save_path'     => Clean::path(session_save_path())
@@ -124,7 +142,7 @@
                             )
                         )
                         +
-                        $this->getIniParam('gc_maxlifetime')
+                        static::getIniParam('gc_maxlifetime')
                     )
                     <
                     DateTime::init()->getTimestamp()
@@ -167,20 +185,8 @@
             );
         }
 
-        public function getHandler() {
-            return static::$handler;
-        }
-
         public function getId(): string {
             return session_id();
-        }
-
-        public function getIniParam(string $name) {
-            return static::$ini_params[strtolower(Clean::cmd($name))] ?? null;
-        }
-
-        public function getIniParams(): array {
-            return static::$ini_params;
         }
 
         public function getName(): string {
@@ -226,8 +232,8 @@
                 return true;
             }
             register_shutdown_function([$this, 'stop']);
-            $ini_params = $this->getIniParams();
-            if ($this->getHandler()) {
+            $ini_params = static::getIniParams();
+            if (static::getHandler()) {
                 unset($ini_params['save_handler']);
             }
             $res = session_start(
@@ -271,7 +277,7 @@
 
         protected function getFile(): File {
             return File::init(
-                $this->getIniParam('save_path') . '/sess_' . $this->getId()
+                static::getIniParam('save_path') . '/sess_' . $this->getId()
             );
         }
 

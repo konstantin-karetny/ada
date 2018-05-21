@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 04.05.2018
+    * @version   1.0.0 21.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -29,7 +29,7 @@
                 AND '    . $db->q('cu.table_name')      . ' LIKE ' . $db->e($this->getName(true, false))
             ) as $row) {
                 $res[
-                    strtolower(trim($row['constraint_type'])) == 'primary key'
+                    \Ada\Core\Clean::cmd($row['constraint_type']) == 'primary key'
                         ? 'primary'
                         : 'unique'
                 ][

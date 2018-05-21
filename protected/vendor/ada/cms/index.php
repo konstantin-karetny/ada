@@ -14,10 +14,9 @@
 
     require_once 'includes/autoload.php';
 
-    //DateTime overwritable locales / ? set default locale
-    //public static function preset / ? arguments as array
-
-    //queries builder
+    //queries builder ?
+    //C:\OSPanel\domains\jobfood\libraries\joomla\database\query.php
+    //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
     //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
     //Sql class
 
@@ -34,15 +33,9 @@
         'user'   => 'postgres'
     ]);
 
-    DateTime::preset(
-        'Europe/Berlin',
-        'A a B b C c D d E e F f G g H h I i J j K k L l M m N n O o P p R r j-S s T t U u V v W w X x Y y Z z',
-        'ru',
-        ['D:\Downloads']
-    );
+    $db = Db::init();
 
-
-    exit(var_dump( DateTime::init()->format('r'), DateTime::getLocalesNames() ));
+    exit(var_dump( $db->getQuery() ));
 
 
 
