@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 14.05.2018
+    * @version   1.0.0 22.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -26,6 +26,9 @@
         'name'   => 'project',
         'prefix' => 'pj_'
     ]);
+
+    exit(var_dump( Db::init()->exec(Session::init()) ));
+
     Db::add([
         'driver' => 'pgsql',
         'name'   => 'postgres',
@@ -33,9 +36,10 @@
         'user'   => 'postgres'
     ]);
 
-    $db = Db::init();
+    $db    = Db::init();
+    $query = $db->getQuery();
 
-    exit(var_dump( $db->getQuery() ));
+    exit(var_dump( $query->select(['id'])->from('session')->where('id', 'NOT IN', ['zz' ,'sad'])->where('id', '!=', 'zz')->toString() ));
 
 
 

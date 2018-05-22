@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.04.2018
+    * @version   1.0.0 22.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -20,7 +20,12 @@
             $user        = 'postgres';
 
         protected function extractParams(): array {
-            $search_path = explode(' ', $this->fetchCell('SHOW search_path'));
+            $search_path = explode(
+                ' ',
+                $this->fetchCell(
+                    $this->getQuery()->raw('SHOW search_path')
+                )
+            );
             return [
                 'charset'   => trim($this->fetchCell('SHOW SERVER_ENCODING')),
                 'collation' => trim($this->fetchCell('SHOW LC_COLLATE')),
