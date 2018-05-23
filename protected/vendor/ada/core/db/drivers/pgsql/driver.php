@@ -20,12 +20,7 @@
             $user        = 'postgres';
 
         protected function extractParams(): array {
-            $search_path = explode(
-                ' ',
-                $this->fetchCell(
-                    $this->getQuery()->raw('SHOW search_path')
-                )
-            );
+            $search_path = explode(' ', $this->fetchCell('SHOW search_path'));
             return [
                 'charset'   => trim($this->fetchCell('SHOW SERVER_ENCODING')),
                 'collation' => trim($this->fetchCell('SHOW LC_COLLATE')),

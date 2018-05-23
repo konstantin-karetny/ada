@@ -1,0 +1,11 @@
+﻿C:\OSPanel\domains\joomla\libraries\joomla\database\query.php
+C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
+
+SQL Tutorial
+https://www.w3schools.com/sql
+
+Working with QueryBuilder
+https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#working-with-querybuilder
+
+Стоит отметить, что MySQL не поддерживает FULL JOIN ...
+https://proselyte.net/tutorials/sql/sql-using-joins/sql-using-full-join/

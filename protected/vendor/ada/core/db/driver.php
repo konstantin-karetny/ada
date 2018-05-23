@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.05.2018
+    * @version   1.0.0 23.05.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -160,7 +160,7 @@
                     (
                         'Failed to delete row. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     12
                 );
@@ -188,29 +188,10 @@
             );
         }
 
-        public function exec($query): bool {
+        public function exec(string $query): bool {
             if (!$this->isConnected()) {
                 $this->connect();
             }
-            if (
-                ! is_string($query) &&
-                !(is_object($query) && is_a($query, '\Ada\Core\Db\Query'))
-            ) {
-                throw new \TypeError(
-                    'Argument 1 passed to ' . __METHOD__ . '() ' .
-                    'must be of the type string ' .
-                    'or an instance of \Ada\Core\Db\Query, ' .
-                    (
-                        !is_object($query)
-                            ? \Ada\Core\Type::get($query)
-                            : 'instance of ' . get_class($query)
-                    ) . ' given'
-                );
-            }
-            // to checkQuery method ?
-
-
-            $query      = is_object($query) ? $query->toString() : $query;
             $pattern    = '/\s' . static::ESC_TAG . '(.+)' . static::ESC_TAG . '\s/U';
             $inp_params = [];
             preg_match_all($pattern, $query, $inp_params);
@@ -251,7 +232,7 @@
                     (
                         'Failed to execute a database query. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . trim($query) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     5
                 );
@@ -264,9 +245,9 @@
         }
 
         public function fetchCell(
-            \Ada\Core\Db\Query $query,
-            string             $type    = 'auto',
-            string             $default = null
+            string $query,
+            string $type    = 'auto',
+            string $default = null
         ) {
             $row = $this->fetchRow($query, \PDO::FETCH_NUM, []);
             $res = reset($row);
@@ -277,10 +258,10 @@
         }
 
         public function fetchColumn(
-            \Ada\Core\Db\Query $query,
-            string             $column  = '',
-            string             $key     = '',
-            array              $default = []
+            string $query,
+            string $column  = '',
+            string $key     = '',
+            array  $default = []
         ): array {
             $res = $this->fetchRows($query, \PDO::FETCH_ASSOC, $key);
             if (!$res) {
@@ -291,7 +272,7 @@
                 throw new \Ada\Core\Exception(
                     (
                         'Unknown column \'' . $column . '\'. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     8
                 );
@@ -303,9 +284,9 @@
         }
 
         public function fetchRow(
-            \Ada\Core\Db\Query $query,
-            int                $fetch_style = null,
-                               $default     = null
+            string $query,
+            int    $fetch_style = null,
+                   $default     = null
         ) {
             $this->exec($query);
             try {
@@ -315,7 +296,7 @@
                     (
                         'Failed to fetch data from the database. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     9
                 );
@@ -343,10 +324,10 @@
         }
 
         public function fetchRows(
-            \Ada\Core\Db\Query $query,
-            int                $fetch_style = null,
-            string             $key         = '',
-            array              $default     = []
+            string $query,
+            int    $fetch_style = null,
+            string $key         = '',
+            array  $default     = []
         ): array {
             $this->exec($query);
             try {
@@ -356,7 +337,7 @@
                     (
                         'Failed to fetch data from the database. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     10
                 );
@@ -374,7 +355,7 @@
                 throw new \Ada\Core\Exception(
                     (
                         'Unknown key \'' . $key . '\'. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     11
                 );
@@ -529,7 +510,7 @@
                     (
                         'Failed to insert row. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     6
                 );
@@ -654,7 +635,7 @@
                     (
                         'Failed to update row. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . trim($query->toString()) . '\''
+                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
                     7
                 );
@@ -665,16 +646,15 @@
             return array_map(
                 'trim',
                 array_merge(
-                    $this->fetchRow(
-                        $this->getQuery()
-                            ->select([
-                                ['DEFAULT_CHARACTER_SET_NAME', 'charset'],
-                                ['DEFAULT_COLLATION_NAME',     'collation'],
-                                ['SCHEMA_NAME',                'schema']
-                            ])
-                            ->from('INFORMATION_SCHEMA.SCHEMATA', '', false)
-                            ->where('SCHEMA_NAME', 'LIKE', $this->getName())
-                    ),
+                    $this->getQuery()
+                        ->select([
+                            ['DEFAULT_CHARACTER_SET_NAME', 'charset'],
+                            ['DEFAULT_COLLATION_NAME',     'collation'],
+                            ['SCHEMA_NAME',                'schema']
+                        ])
+                        ->from('INFORMATION_SCHEMA.SCHEMATA', '', false)
+                        ->where('SCHEMA_NAME', 'LIKE', $this->getName())
+                        ->fetchRow(),
                     [
                         'version' => $this->getAttribute(\PDO::ATTR_SERVER_VERSION)
                     ]

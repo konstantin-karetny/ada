@@ -14,20 +14,24 @@
 
     require_once 'includes/autoload.php';
 
-    //queries builder ?
+    //queries builder
+    //
+    //    public function where
+    //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
+    //
+    //
+    //
+    //https://www.w3schools.com/sql/sql_where.asp
+    //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
     //C:\OSPanel\domains\jobfood\libraries\joomla\database\query.php
     //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
-    //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
     //Sql class
-
     //Str, Arr and Obj classes
 
     Db::add([
         'name'   => 'project',
         'prefix' => 'pj_'
     ]);
-
-    exit(var_dump( Db::init()->exec(Session::init()) ));
 
     Db::add([
         'driver' => 'pgsql',
@@ -36,10 +40,18 @@
         'user'   => 'postgres'
     ]);
 
-    $db    = Db::init();
-    $query = $db->getQuery();
 
-    exit(var_dump( $query->select(['id'])->from('session')->where('id', 'NOT IN', ['zz' ,'sad'])->where('id', '!=', 'zz')->toString() ));
+
+    exit(var_dump(
+
+        Db::init()->getQuery()
+            ->select()
+            ->from('users', 'u')
+            ->whereNotNull('u.id')
+            ->fetchRows()
+
+
+    ));
 
 
 
