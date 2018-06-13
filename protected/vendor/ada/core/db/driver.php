@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.05.2018
+    * @version   1.0.0 13.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -548,7 +548,7 @@
             );
         }
 
-        public function q(string $name, string $as = ''): string {
+        public function q(string $name, string $alias = ''): string {
             return (
                 (
                     strpos($name, '.') === false
@@ -568,8 +568,8 @@
                         )
                 ) .
                 (
-                    $as
-                        ? (' AS ' . $this->getQuote() . $as . $this->getQuote())
+                    $alias
+                        ? (' AS ' . $this->getQuote() . $alias . $this->getQuote())
                         : ''
                 )
             );
@@ -579,10 +579,10 @@
             return implode(
                 ', ',
                 array_map(
-                    function($name, $as) {
+                    function($name, $alias) {
                         return is_int($name)
-                            ? $this->q($as)
-                            : $this->q($name, $as);
+                            ? $this->q($alias)
+                            : $this->q($name, $alias);
                     },
                     array_keys($names),
                     array_values($names)
@@ -608,17 +608,19 @@
             $this->fetch_mode = func_get_args();
         }
 
-        public function t(string $table_name, string $as = ''): string {
+        public function t(string $table_name, string $alias = ''): string {
             $dot = strpos($table_name, '.');
             return $this->q(
-                $dot === false
-                    ? ($this->getPrefix() . $table_name)
-                    : (
-                        substr($table_name, 0, $dot + 1) .
-                        $this->getPrefix() .
-                        substr($table_name,    $dot + 1)
-                    ),
-                $as
+                (
+                    $dot === false
+                        ? ($this->getPrefix() . $table_name)
+                        : (
+                            substr($table_name, 0, $dot + 1) .
+                            $this->getPrefix() .
+                            substr($table_name,    $dot + 1)
+                        )
+                ),
+                $alias
             );
         }
 

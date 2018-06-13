@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.05.2018
+    * @version   1.0.0 13.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,34 +12,29 @@
     abstract class Query extends \Ada\Core\Proto {
 
         const
-            OPERANDS    = [
+            OPERANDS       = [
                 '!=',
-                '*',
-                '+',
-                '-',
-                '/',
                 '<',
                 '<=',
                 '<>',
                 '=',
                 '>',
                 '>=',
-                'IN',
-                'IS NOT NULL',
-                'IS NULL',
-                'LIKE',
-                'NOT IN'
+                'LIKE'
             ];
 
         protected
-            $columns    = [],
-            $db         = null,
-            $from       = [],
-            $joins      = [],
-            $order_by   = [],
-            $self_joins = [],
-            $type       = 'select',
-            $wheres     = [];
+            $columns       = [],
+            $db            = null,
+            $distinct      = false,
+            $from          = [],
+            $function      = [],
+            $joins         = [],
+            $order_by      = [],
+            $self_joins    = [],
+            $type          = 'select',
+            $union_queries = [],
+            $wheres        = [];
 
         public static function init(\Ada\Core\Db\Driver $db): \Ada\Core\Db\Query {
             return new static(...func_get_args());
@@ -47,6 +42,11 @@
 
         protected function __construct(\Ada\Core\Db\Driver $db) {
             $this->db = $db;
+        }
+
+        public function distinct(bool $distinct): \Ada\Core\Db\Query {
+            $this->distinct = $distinct;
+            return $this;
         }
 
         public function exec(): bool {
@@ -85,7 +85,7 @@
 
         public function from(
             string $table_name,
-            string $as         = '',
+            string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
             $this->from = get_defined_vars();
@@ -100,8 +100,16 @@
             return $this->db;
         }
 
+        public function getDistinct(): bool {
+            return $this->distinct;
+        }
+
         public function getFrom(): array {
             return $this->from;
+        }
+
+        public function getFunction(): array {
+            return $this->function;
         }
 
         public function getJoins(): array {
@@ -120,13 +128,17 @@
             return $this->type;
         }
 
+        public function getUnionQueries(): array {
+            return $this->union_queries;
+        }
+
         public function getWheres(): array {
             return $this->wheres;
         }
 
         public function join(
             string $table_name,
-            string $as         = '',
+            string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
             $this->addJoin('', ...func_get_args());
@@ -135,7 +147,7 @@
 
         public function leftJoin(
             string $table_name,
-            string $as         = '',
+            string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
             $this->addJoin('LEFT', ...func_get_args());
@@ -158,6 +170,38 @@
             return $this;
         }
 
+        public function orBetween(
+            string $column,
+            string $value1,
+            string $value2
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'BETWEEN',
+                (
+                    $this->getDb()->e($value1) .
+                    ' AND ' .
+                    $this->getDb()->e($value2)
+                ),
+                true
+            );
+            return $this;
+        }
+
+        public function orColumn(
+            string $column,
+            string $operand,
+            string $column2
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                $this->validateOperand($operand),
+                $this->getDb()->q($column2),
+                true
+            );
+            return $this;
+        }
+
         public function orderBy(
             array $columns,
             bool  $asc = true
@@ -166,9 +210,85 @@
             return $this;
         }
 
+        public function orIn(
+            string $column,
+            array  $values
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'IN',
+                (
+                    '(' .
+                        implode(', ', array_map([$this->getDb(), 'e'], $values)) .
+                    ')'
+                ),
+                true
+            );
+            return $this;
+        }
+
+        public function orNotBetween(
+            string $column,
+            string $value1,
+            string $value2
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'NOT BETWEEN',
+                (
+                    $this->getDb()->e($value1) .
+                    ' AND ' .
+                    $this->getDb()->e($value2)
+                ),
+                true
+            );
+            return $this;
+        }
+
+        public function orNotIn(
+            string $column,
+            array  $values
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'NOT IN',
+                (
+                    '(' .
+                        implode(', ', array_map([$this->getDb(), 'e'], $values)) .
+                    ')'
+                ),
+                true
+            );
+            return $this;
+        }
+
+        public function orNotNull(string $column): \Ada\Core\Db\Query {
+            $this->addWhere($column, 'IS NOT NULL', '', true);
+            return $this;
+        }
+
+        public function orNull(string $column): \Ada\Core\Db\Query {
+            $this->addWhere($column, 'IS NULL', '', true);
+            return $this;
+        }
+
+        public function orWhere(
+            string $column,
+            string $operand,
+            string $value
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                $this->validateOperand($operand),
+                $this->getDb()->e($value),
+                true
+            );
+            return $this;
+        }
+
         public function rightJoin(
             string $table_name,
-            string $as         = '',
+            string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
             $this->addJoin('RIGHT', ...func_get_args());
@@ -178,26 +298,40 @@
         public function select(array $columns = ['*']): \Ada\Core\Db\Query {
             $this->type = 'select';
             foreach ($columns as $column) {
-                $this->columns[] = array_combine(
-                    ['name', 'as'],
-                    array_slice(
-                        array_pad(
-                            is_array($column)
-                                ? $column
-                                : \Ada\Core\Type::set($column, 'array'),
-                            2,
-                            ''
-                        ),
-                        0,
-                        2
-                    )
+                $this->addColumn(
+                    ...\Ada\Core\Type::set($column, 'array', false)
                 );
             }
             return $this;
         }
 
-        public function selfJoin(string $as): \Ada\Core\Db\Query {
-            $this->self_joins[] = $as;
+        public function selectAvg(string $column): \Ada\Core\Db\Query {
+            $this->setFunction('AVG', $column);
+            return $this;
+        }
+
+        public function selectCount(string $column): \Ada\Core\Db\Query {
+            $this->setFunction('COUNT', $column);
+            return $this;
+        }
+
+        public function selectMax(string $column): \Ada\Core\Db\Query {
+            $this->setFunction('MAX', $column);
+            return $this;
+        }
+
+        public function selectMin(string $column): \Ada\Core\Db\Query {
+            $this->setFunction('MIN', $column);
+            return $this;
+        }
+
+        public function selectSum(string $column): \Ada\Core\Db\Query {
+            $this->setFunction('SUM', $column);
+            return $this;
+        }
+
+        public function selfJoin(string $alias): \Ada\Core\Db\Query {
+            $this->addSelfJoin($alias);
             return $this;
         }
 
@@ -211,52 +345,145 @@
             return $this->{'getQuery' . ucfirst($this->getType())}();
         }
 
+        public function union(array $queries): \Ada\Core\Db\Query {
+            $this->type          = 'union';
+            $this->union_queries = $queries;
+            return $this;
+        }
+
         public function where(
             string $column,
             string $operand,
-                   $value,
-            bool   $or     = false,
-            bool   $escape = true
+            string $value
         ): \Ada\Core\Db\Query {
-            $operand        = $this->validateOperand($operand);
-            $this->wheres[] = get_defined_vars();
-            return $this;
-        }
-
-        public function whereNotNull(
-            string $column,
-            bool   $or = false
-        ): \Ada\Core\Db\Query {
-            $this->wheres[] = array_merge(
-                get_defined_vars(),
-                [
-                    'operand' => 'IS NOT NULL'
-                ]
+            $this->addWhere(
+                $column,
+                $this->validateOperand($operand),
+                $this->getDb()->e($value)
             );
             return $this;
         }
 
-        public function whereNull(
+        public function whereBetween(
             string $column,
-            bool   $or = false
+            string $value1,
+            string $value2
         ): \Ada\Core\Db\Query {
-            $this->wheres[] = array_merge(
-                get_defined_vars(),
-                [
-                    'operand' => 'IS NULL'
-                ]
+            $this->addWhere(
+                $column,
+                'BETWEEN',
+                (
+                    $this->getDb()->e($value1) .
+                    ' AND ' .
+                    $this->getDb()->e($value2)
+                )
             );
             return $this;
+        }
+
+        public function whereColumn(
+            string $column,
+            string $operand,
+            string $column2
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                $this->validateOperand($operand),
+                $this->getDb()->q($column2)
+            );
+            return $this;
+        }
+
+        public function whereIn(
+            string $column,
+            array  $values
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'IN',
+                (
+                    '(' .
+                        implode(', ', array_map([$this->getDb(), 'e'], $values)) .
+                    ')'
+                )
+            );
+            return $this;
+        }
+
+        public function whereNotBetween(
+            string $column,
+            string $value1,
+            string $value2
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'NOT BETWEEN',
+                (
+                    $this->getDb()->e($value1) .
+                    ' AND ' .
+                    $this->getDb()->e($value2)
+                )
+            );
+            return $this;
+        }
+
+        public function whereNotIn(
+            string $column,
+            array  $values
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'NOT IN',
+                (
+                    '(' .
+                        implode(', ', array_map([$this->getDb(), 'e'], $values)) .
+                    ')'
+                )
+            );
+            return $this;
+        }
+
+        public function whereNotNull(string $column): \Ada\Core\Db\Query {
+            $this->addWhere($column, 'IS NOT NULL', '');
+            return $this;
+        }
+
+        public function whereNull(string $column): \Ada\Core\Db\Query {
+            $this->addWhere($column, 'IS NULL', '');
+            return $this;
+        }
+
+        protected function addColumn(
+            string $name,
+            string $alias = ''
+        ): array {
+            $this->columns[] = get_defined_vars();
+            return end($this->columns);
         }
 
         protected function addJoin(
             string $type,
             string $table_name,
-            string $as         = '',
+            string $alias      = '',
             bool   $add_prefix = true
         ): array {
             $this->joins[] = get_defined_vars();
             return end($this->joins);
+        }
+
+        protected function addSelfJoin(string $alias): array {
+            $this->self_joins[] = get_defined_vars();
+            return end($this->self_joins);
+        }
+
+        protected function addWhere(
+            string $column,
+            string $operand,
+            string $value,
+            bool   $or = false
+        ): array {;
+            $this->wheres[] = get_defined_vars();
+            return end($this->wheres);
         }
 
         protected function driverExec(string $method, array $arguments) {
@@ -268,31 +495,38 @@
         }
 
         protected function getQuerySelect(): string {
-            $db   = $this->getDb();
-            $res  = 'SELECT ';
-            foreach ($this->getColumns() as $column) {
-                $res .= (
-                    (
-                        $column['name'] == '*'
-                            ? $column['name']
-                            : $db->q($column['name'], $column['as'])
-                    ) .
-                    ','
-                );
+            $db       = $this->getDb();
+            $res      = 'SELECT ';
+            $function = $this->getFunction();
+            if ($function) {
+                $res .= $function['name'] . '(' . $db->q($function['column']) . ')';
             }
-            $res  = rtrim($res, ', ');
+            else {
+                $res  .= $this->getDistinct() ? 'DISTINCT ' : '';
+                foreach ($this->getColumns() as $column) {
+                    $res .= (
+                        (
+                            $column['name'] == '*'
+                                ? $column['name']
+                                : $db->q($column['name'], $column['alias'])
+                        ) .
+                        ', '
+                    );
+                }
+                $res = rtrim($res, ', ');
+            }
             $from = $this->getFrom();
             $res .= ' FROM ' . (
                 $db->{$from['add_prefix'] ? 't' : 'q'}(
                     $from['table_name'],
-                    $from['as']
+                    $from['alias']
                 )
             );
-            foreach ($this->getSelfJoins() as $as) {
+            foreach ($this->getSelfJoins() as $alias) {
                 $res .= ', ' . (
                     $db->{$from['add_prefix'] ? 't' : 'q'}(
                         $from['table_name'],
-                        $as
+                        $alias
                     )
                 );
             }
@@ -301,14 +535,14 @@
                     ' ' . (!$join['type'] ? '' : $join['type'] . ' ') . 'JOIN ' .
                     $db->{$join['add_prefix'] ? 't' : 'q'}(
                         $join['table_name'],
-                        $join['as']
+                        $join['alias']
                     ) .
                     (
                         isset($join['column1'])
                             ? (
                                 ' ON ' .
                                 $db->q($join['column1']) . ' ' .
-                                $join['operand'] . ' ' .
+                                $join['operand']         . ' ' .
                                 $db->q($join['column2'])
                             )
                             : ''
@@ -316,47 +550,23 @@
                 );
             }
             $wheres = $this->getWheres();
-            if (!$wheres || $wheres[0]['or'] ?? false) {
+            if (!$wheres || !empty($wheres[0]['or'])) {
                 $res .= ' WHERE TRUE';
             }
             $i = 0;
             foreach ($wheres as $where) {
-                $res .= (
+                $between = in_array(
+                    $where['operand'],
+                    ['BETWEEN', 'NOT BETWEEN']
+                );
+                $res    .= (
                     ' ' .
                     ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
-                    $db->q($where['column']) . ' ' .
-                    (
-                        in_array($where['operand'], ['IS NOT NULL', 'IS NULL'])
-                            ? $where['operand']
-                            : (
-                                $where['operand'] . ' ' .
-                                (
-                                    in_array($where['operand'], ['IN', 'NOT IN'])
-                                        ? (
-                                            '(' .
-                                                implode(
-                                                    ', ',
-                                                    array_map(
-                                                       [$db, 'e'],
-                                                       is_array($where['value'])
-                                                            ? $where['value']
-                                                            : \Ada\Core\Type::set(
-                                                                $where['value'],
-                                                                'array'
-                                                            )
-                                                    )
-                                                ) .
-                                            ')'
-                                        )
-                                        : $db->{$where['escape'] ? 'e' : 'q'}(
-                                            \Ada\Core\Type::set(
-                                                $where['value'],
-                                                'string'
-                                            )
-                                        )
-                                )
-                            )
-                    )
+                    ($between ? '(' : '') .
+                    $db->q($where['column'])                       . ' ' .
+                    $where['operand']                              . ' ' .
+                    $where['value'] .
+                    ($between ? ')' : '')
                 );
                 $i++;
             }
@@ -373,8 +583,29 @@
             return preg_replace('/\s+/', ' ', $res);
         }
 
+        protected function getQueryUnion(): string {
+            return (
+                '(' .
+                    implode(
+                        ') UNION (',
+                        array_map(
+                            function (\Ada\Core\Db\Query $query) {
+                                return $query->toString();
+                            },
+                            $this->getUnionQueries()
+                        )
+                    ) .
+                ')'
+            );
+        }
+
         protected function getQueryUpdate(): string {
 
+        }
+
+        protected function setFunction(string $name, string $column): array {
+            $name                  = strtoupper(\Ada\Core\Clean::cmd($name));
+            return $this->function = get_defined_vars();
         }
 
         protected function validateOperand(string $operand): string {
@@ -382,7 +613,7 @@
             if (!in_array($operand, static::OPERANDS)) {
                 throw new \Ada\Core\Exception(
                     'Unknown operand \'' . $operand . '\'',
-                    1
+                    2
                 );
             }
             return $operand;

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 22.05.2018
+    * @version   1.0.0 13.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,9 +15,7 @@
     require_once 'includes/autoload.php';
 
     //queries builder
-    //
-    //    public function where
-    //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
+
     //
     //
     //
@@ -27,6 +25,7 @@
     //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
     //Sql class
     //Str, Arr and Obj classes
+
 
     Db::add([
         'name'   => 'project',
@@ -41,15 +40,14 @@
     ]);
 
 
+    $q1 = Db::init()->getQuery()->select()->from('users');
+
 
     exit(var_dump(
 
         Db::init()->getQuery()
-            ->select()
-            ->from('users', 'u')
-            ->whereNotNull('u.id')
+            ->union([$q1, $q1])
             ->fetchRows()
-
 
     ));
 
