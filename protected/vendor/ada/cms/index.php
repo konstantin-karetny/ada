@@ -40,13 +40,15 @@
     ]);
 
 
-    $q1 = Db::init()->getQuery()->select()->from('users');
 
 
     exit(var_dump(
 
         Db::init()->getQuery()
-            ->union([$q1, $q1])
+            ->select()
+            ->from('users')
+            ->groupBy(['id', 'name'])
+            ->orderBy(['id'])
             ->fetchRows()
 
     ));

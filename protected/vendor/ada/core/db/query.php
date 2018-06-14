@@ -29,6 +29,7 @@
             $distinct      = false,
             $from          = [],
             $function      = [],
+            $group_by      = [],
             $joins         = [],
             $order_by      = [],
             $self_joins    = [],
@@ -112,6 +113,10 @@
             return $this->function;
         }
 
+        public function getGroupBy(): array {
+            return $this->group_by;
+        }
+
         public function getJoins(): array {
             return $this->joins;
         }
@@ -134,6 +139,16 @@
 
         public function getWheres(): array {
             return $this->wheres;
+        }
+
+        public function groupBy(array $columns): \Ada\Core\Db\Query {
+            $this->group_by = array_map(
+                function(string $column) {
+                    return \Ada\Core\Clean::cmd($column);
+                },
+                $columns
+            );
+            return $this;
         }
 
         public function join(
@@ -206,6 +221,12 @@
             array $columns,
             bool  $asc = true
         ): \Ada\Core\Db\Query {
+            $columns = array_map(
+                function(string $column) {
+                    return \Ada\Core\Clean::cmd($column);
+                },
+                $columns
+            );
             $this->order_by = get_defined_vars();
             return $this;
         }
@@ -570,11 +591,19 @@
                 );
                 $i++;
             }
+            $group_by = $this->getGroupBy();
+            if ($group_by) {
+                $res .= ' GROUP BY ';
+                foreach ($group_by as $column) {
+                    $res .= $db->q($column) . ', ';
+                }
+                $res  = rtrim($res, ', ');
+            }
             $order_by = $this->getOrderBy();
             if ($order_by) {
-                $res .= ' ORDER BY';
+                $res .= ' ORDER BY ';
                 foreach ($order_by['columns'] as $column) {
-                    $res .= ' ' . $db->q($column) . ',';
+                    $res .= $db->q($column) . ', ';
                 }
                 $res  = rtrim($res, ', ');
                 $res .= $order_by['asc'] ? ' ASC' : ' DESC';
@@ -584,19 +613,17 @@
         }
 
         protected function getQueryUnion(): string {
-            return (
-                '(' .
-                    implode(
-                        ') UNION (',
-                        array_map(
-                            function (\Ada\Core\Db\Query $query) {
-                                return $query->toString();
-                            },
-                            $this->getUnionQueries()
-                        )
-                    ) .
-                ')'
-            );
+            return '(' .
+                implode(
+                    ') UNION (',
+                    array_map(
+                        function (\Ada\Core\Db\Query $query) {
+                            return $query->toString();
+                        },
+                        $this->getUnionQueries()
+                    )
+                ) .
+            ')';
         }
 
         protected function getQueryUpdate(): string {
