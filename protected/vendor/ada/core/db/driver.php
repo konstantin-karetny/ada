@@ -549,27 +549,27 @@
         }
 
         public function q(string $name, string $alias = ''): string {
+            $q   = $this->getQuote();
+            $res = str_replace('.', $q . '.' . $q, $name);
             return (
                 (
-                    strpos($name, '.') === false
-                        ? ($this->getQuote() . $name . $this->getQuote())
-                        : implode(
-                            '.',
-                            array_map(
-                                function($el) {
-                                    return (
-                                        $this->getQuote() .
-                                        $el .
-                                        $this->getQuote()
-                                    );
-                                },
-                                explode('.', $name)
-                            )
+                    preg_match('/\(.+\)/', $res)
+                        ? str_replace(
+                            [
+                                '(',
+                                ')'
+                            ],
+                            [
+                                '(' . $q,
+                                $q . ')'
+                            ],
+                            $res
                         )
+                        : ($q . $res . $q)
                 ) .
                 (
                     $alias
-                        ? (' AS ' . $this->getQuote() . $alias . $this->getQuote())
+                        ? (' AS ' . $q . $alias . $q)
                         : ''
                 )
             );

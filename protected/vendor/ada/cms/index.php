@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 13.06.2018
+    * @version   1.0.0 15.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,6 +13,8 @@
     ini_set('display_errors', 1);
 
     require_once 'includes/autoload.php';
+
+
 
     //queries builder
 
@@ -45,10 +47,12 @@
     exit(var_dump(
 
         Db::init()->getQuery()
-            ->select()
-            ->from('users')
-            ->groupBy(['id', 'name'])
-            ->orderBy(['id'])
+            ->select([['MAX(u.id)', 'dd']])
+            ->from('users', 'u')
+            ->orNotExists(
+                Db::init()->getQuery()->select()->from('users')
+            )
+            ->whereBetween('id', 1, 10)
             ->fetchRows()
 
     ));

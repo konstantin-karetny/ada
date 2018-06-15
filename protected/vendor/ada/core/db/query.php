@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 13.06.2018
+    * @version   1.0.0 15.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -20,7 +20,15 @@
                 '=',
                 '>',
                 '>=',
-                'LIKE'
+                'BETWEEN',
+                'EXISTS',
+                'IN',
+                'IS NOT NULL',
+                'IS NULL',
+                'LIKE',
+                'NOT BETWEEN',
+                'NOT EXISTS',
+                'NOT IN'
             ];
 
         protected
@@ -28,10 +36,10 @@
             $db            = null,
             $distinct      = false,
             $from          = [],
-            $function      = [],
-            $group_by      = [],
+            $groups_by     = [],
+            $havings       = [],
             $joins         = [],
-            $order_by      = [],
+            $orders_by     = [],
             $self_joins    = [],
             $type          = 'select',
             $union_queries = [],
@@ -51,7 +59,7 @@
         }
 
         public function exec(): bool {
-            return $this->driverExec(__FUNCTION__, func_get_args());
+            return $this->driverExec(__FUNCTION__);
         }
 
         public function fetchCell(
@@ -109,20 +117,20 @@
             return $this->from;
         }
 
-        public function getFunction(): array {
-            return $this->function;
+        public function getGroupsBy(): array {
+            return $this->groups_by;
         }
 
-        public function getGroupBy(): array {
-            return $this->group_by;
+        public function getHavings(): array {
+            return $this->havings;
         }
 
         public function getJoins(): array {
             return $this->joins;
         }
 
-        public function getOrderBy(): array {
-            return $this->order_by;
+        public function getOrdersBy(): array {
+            return $this->orders_by;
         }
 
         public function getSelfJoins(): array {
@@ -142,11 +150,21 @@
         }
 
         public function groupBy(array $columns): \Ada\Core\Db\Query {
-            $this->group_by = array_map(
-                function(string $column) {
-                    return \Ada\Core\Clean::cmd($column);
-                },
-                $columns
+            foreach ($columns as $column) {
+                $this->addGroupBy($column);
+            }
+            return $this;
+        }
+
+        public function having(
+            string $column,
+            string $operand,
+            string $value
+        ): \Ada\Core\Db\Query {
+            $this->addHaving(
+                $column,
+                $operand,
+                $this->getDb()->e($value)
             );
             return $this;
         }
@@ -210,24 +228,31 @@
         ): \Ada\Core\Db\Query {
             $this->addWhere(
                 $column,
-                $this->validateOperand($operand),
+                $operand,
                 $this->getDb()->q($column2),
                 true
             );
             return $this;
         }
 
-        public function orderBy(
-            array $columns,
-            bool  $asc = true
+        public function orderBy(array $columns): \Ada\Core\Db\Query {
+            foreach ($columns as $column) {
+                $this->addOrderBy(
+                    ...\Ada\Core\Type::set($column, 'array', false)
+                );
+            }
+            return $this;
+        }
+
+        public function orExists(
+            \Ada\Core\Db\Query $subquery
         ): \Ada\Core\Db\Query {
-            $columns = array_map(
-                function(string $column) {
-                    return \Ada\Core\Clean::cmd($column);
-                },
-                $columns
+            $this->addWhere(
+                '',
+                'EXISTS',
+                $subquery->toString(),
+                true
             );
-            $this->order_by = get_defined_vars();
             return $this;
         }
 
@@ -261,6 +286,18 @@
                     ' AND ' .
                     $this->getDb()->e($value2)
                 ),
+                true
+            );
+            return $this;
+        }
+
+        public function orNotExists(
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                '',
+                'NOT EXISTS',
+                $subquery->toString(),
                 true
             );
             return $this;
@@ -300,7 +337,7 @@
         ): \Ada\Core\Db\Query {
             $this->addWhere(
                 $column,
-                $this->validateOperand($operand),
+                $operand,
                 $this->getDb()->e($value),
                 true
             );
@@ -323,31 +360,6 @@
                     ...\Ada\Core\Type::set($column, 'array', false)
                 );
             }
-            return $this;
-        }
-
-        public function selectAvg(string $column): \Ada\Core\Db\Query {
-            $this->setFunction('AVG', $column);
-            return $this;
-        }
-
-        public function selectCount(string $column): \Ada\Core\Db\Query {
-            $this->setFunction('COUNT', $column);
-            return $this;
-        }
-
-        public function selectMax(string $column): \Ada\Core\Db\Query {
-            $this->setFunction('MAX', $column);
-            return $this;
-        }
-
-        public function selectMin(string $column): \Ada\Core\Db\Query {
-            $this->setFunction('MIN', $column);
-            return $this;
-        }
-
-        public function selectSum(string $column): \Ada\Core\Db\Query {
-            $this->setFunction('SUM', $column);
             return $this;
         }
 
@@ -379,7 +391,7 @@
         ): \Ada\Core\Db\Query {
             $this->addWhere(
                 $column,
-                $this->validateOperand($operand),
+                $operand,
                 $this->getDb()->e($value)
             );
             return $this;
@@ -409,8 +421,19 @@
         ): \Ada\Core\Db\Query {
             $this->addWhere(
                 $column,
-                $this->validateOperand($operand),
+                $operand,
                 $this->getDb()->q($column2)
+            );
+            return $this;
+        }
+
+        public function whereExists(
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                '',
+                'EXISTS',
+                $subquery->toString()
             );
             return $this;
         }
@@ -444,6 +467,17 @@
                     ' AND ' .
                     $this->getDb()->e($value2)
                 )
+            );
+            return $this;
+        }
+
+        public function whereNotExists(
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                '',
+                'NOT EXISTS',
+                $subquery->toString()
             );
             return $this;
         }
@@ -482,6 +516,22 @@
             return end($this->columns);
         }
 
+        protected function addGroupBy(string $column): string {
+            $this->groups_by[] = $column;
+            return end($this->groups_by);
+        }
+
+        protected function addHaving(
+            string $column,
+            string $operand,
+            string $value,
+            bool   $or = false
+        ): array {
+            $operand         = $this->validateOperand($operand);
+            $this->havings[] = get_defined_vars();
+            return end($this->havings);
+        }
+
         protected function addJoin(
             string $type,
             string $table_name,
@@ -492,9 +542,12 @@
             return end($this->joins);
         }
 
-        protected function addSelfJoin(string $alias): array {
-            $this->self_joins[] = get_defined_vars();
-            return end($this->self_joins);
+        protected function addOrderBy(
+            string $column,
+            bool   $asc    = true
+        ): array {
+            $this->orders_by[] = get_defined_vars();
+            return end($this->orders_by);
         }
 
         protected function addWhere(
@@ -502,7 +555,8 @@
             string $operand,
             string $value,
             bool   $or = false
-        ): array {;
+        ): array {
+            $operand        = $this->validateOperand($operand);
             $this->wheres[] = get_defined_vars();
             return end($this->wheres);
         }
@@ -516,26 +570,19 @@
         }
 
         protected function getQuerySelect(): string {
-            $db       = $this->getDb();
-            $res      = 'SELECT ';
-            $function = $this->getFunction();
-            if ($function) {
-                $res .= $function['name'] . '(' . $db->q($function['column']) . ')';
+            $db  = $this->getDb();
+            $res = 'SELECT ' . ($this->getDistinct() ? 'DISTINCT ' : '');
+            foreach ($this->getColumns() as $column) {
+                $res .= (
+                    (
+                        $column['name'] == '*'
+                            ? $column['name']
+                            : $db->q($column['name'], $column['alias'])
+                    ) .
+                    ', '
+                );
             }
-            else {
-                $res  .= $this->getDistinct() ? 'DISTINCT ' : '';
-                foreach ($this->getColumns() as $column) {
-                    $res .= (
-                        (
-                            $column['name'] == '*'
-                                ? $column['name']
-                                : $db->q($column['name'], $column['alias'])
-                        ) .
-                        ', '
-                    );
-                }
-                $res = rtrim($res, ', ');
-            }
+            $res  = rtrim($res, ', ');
             $from = $this->getFrom();
             $res .= ' FROM ' . (
                 $db->{$from['add_prefix'] ? 't' : 'q'}(
@@ -570,43 +617,67 @@
                     )
                 );
             }
+            $i      = 0;
             $wheres = $this->getWheres();
             if (!$wheres || !empty($wheres[0]['or'])) {
                 $res .= ' WHERE TRUE';
             }
-            $i = 0;
             foreach ($wheres as $where) {
-                $between = in_array(
-                    $where['operand'],
-                    ['BETWEEN', 'NOT BETWEEN']
-                );
-                $res    .= (
+                $res .= ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ';
+                switch ($where['operand']) {
+                    case 'BETWEEN':
+                    case 'NOT BETWEEN':
+                        $res .= (
+                            '(' .
+                                $db->q($where['column']) . ' ' .
+                                $where['operand']        . ' ' .
+                                $where['value']          .
+                            ')'
+                        );
+                        break;
+                    case 'EXISTS':
+                    case 'NOT EXISTS':
+                        $res .= $where['operand'] . ' (' . $where['value'] . ')';
+                        break;
+                    default:
+                        $res .= (
+                            $db->q($where['column']) . ' ' .
+                            $where['operand']        . ' ' .
+                            $where['value']
+                        );
+                }
+                $i++;
+            }
+            $groups_by = $this->getGroupsBy();
+            if ($groups_by) {
+                $res .= ' GROUP BY ';
+                foreach ($groups_by as $column) {
+                    $res .= $db->q($column) . ', ';
+                }
+                $res  = rtrim($res, ', ');
+            }
+            $i = 0;
+            foreach ($this->getHavings() as $having) {
+                $res .= (
                     ' ' .
-                    ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
-                    ($between ? '(' : '') .
-                    $db->q($where['column'])                       . ' ' .
-                    $where['operand']                              . ' ' .
-                    $where['value'] .
-                    ($between ? ')' : '')
+                    ($i ? 'AND' : 'HAVING')   . ' ' .
+                    $db->q($having['column']) . ' ' .
+                    $having['operand']        . ' ' .
+                    $having['value']
                 );
                 $i++;
             }
-            $group_by = $this->getGroupBy();
-            if ($group_by) {
-                $res .= ' GROUP BY ';
-                foreach ($group_by as $column) {
-                    $res .= $db->q($column) . ', ';
-                }
-                $res  = rtrim($res, ', ');
-            }
-            $order_by = $this->getOrderBy();
-            if ($order_by) {
+            $orders_by = $this->getOrdersBy();
+            if ($orders_by) {
                 $res .= ' ORDER BY ';
-                foreach ($order_by['columns'] as $column) {
-                    $res .= $db->q($column) . ', ';
+                foreach ($orders_by as $order_by) {
+                    $res .= (
+                        $db->q($order_by['column']) .
+                        ($order_by['asc'] ? ' ASC' : ' DESC') .
+                        ', '
+                    );
                 }
                 $res  = rtrim($res, ', ');
-                $res .= $order_by['asc'] ? ' ASC' : ' DESC';
             }
             var_dump( $this, $res );
             return preg_replace('/\s+/', ' ', $res);
@@ -628,11 +699,6 @@
 
         protected function getQueryUpdate(): string {
 
-        }
-
-        protected function setFunction(string $name, string $column): array {
-            $name                  = strtoupper(\Ada\Core\Clean::cmd($name));
-            return $this->function = get_defined_vars();
         }
 
         protected function validateOperand(string $operand): string {
