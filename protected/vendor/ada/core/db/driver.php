@@ -654,7 +654,7 @@
                             ['DEFAULT_COLLATION_NAME',     'collation'],
                             ['SCHEMA_NAME',                'schema']
                         ])
-                        ->from('INFORMATION_SCHEMA.SCHEMATA', '', false)
+                        ->table('INFORMATION_SCHEMA.SCHEMATA', '', false)
                         ->where('SCHEMA_NAME', 'LIKE', $this->getName())
                         ->fetchRow(),
                     [

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 15.06.2018
+    * @version   1.0.0 18.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,13 +15,7 @@
     require_once 'includes/autoload.php';
 
 
-
     //queries builder
-
-    //
-    //
-    //
-    //https://www.w3schools.com/sql/sql_where.asp
     //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
     //C:\OSPanel\domains\jobfood\libraries\joomla\database\query.php
     //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
@@ -46,13 +40,40 @@
 
     exit(var_dump(
 
+
+
+
         Db::init()->getQuery()
-            ->select([['MAX(u.id)', 'dd']])
-            ->from('users', 'u')
-            ->orNotExists(
-                Db::init()->getQuery()->select()->from('users')
+            ->delete([
+                'name' => 'name4',
+                'text' => 'text4'
+            ])
+            ->table('test')
+            ->toString()
+
+
+
+
+
+
+    ));
+
+
+
+
+
+
+    exit(var_dump(
+
+        Db::init()->getQuery()
+            ->select()
+            ->table('users', 'u')
+            ->whereBetween('id', '2', 10)
+            ->whereAny(
+                'id',
+                '>',
+                Db::init()->getQuery()->select([['MIN(u.id)']])->table('users')
             )
-            ->whereBetween('id', 1, 10)
             ->fetchRows()
 
     ));
