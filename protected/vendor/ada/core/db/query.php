@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 18.06.2018
+    * @version   1.0.0 19.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -98,15 +98,6 @@
             return $this->driverExec(__FUNCTION__, func_get_args());
         }
 
-        public function table(
-            string $name,
-            string $alias      = '',
-            bool   $add_prefix = true
-        ): \Ada\Core\Db\Query {
-            $this->table = get_defined_vars();
-            return $this;
-        }
-
         public function getColumns(): array {
             return $this->columns;
         }
@@ -180,6 +171,12 @@
         }
 
         public function insert(array $values): \Ada\Core\Db\Query {
+            if (!$values) {
+                throw new \Ada\Core\Exception(
+                    '\'values\' argument can not be empty',
+                    2
+                );
+            }
             $this->type   = 'insert';
             $this->values = $values;
             return $this;
@@ -412,11 +409,29 @@
             return $this;
         }
 
+        public function table(
+            string $name,
+            string $alias      = '',
+            bool   $add_prefix = true
+        ): \Ada\Core\Db\Query {
+            $this->table = get_defined_vars();
+            return $this;
+        }
+
         public function toString(): string {
             if ($this->getType() != 'union' && !$this->getTable()) {
                 throw new \Ada\Core\Exception('No table specified', 1);
             }
-            return $this->{'getQuery' . ucfirst($this->getType())}();
+            $res = preg_replace(
+                '/\s+/',
+                ' ',
+                $this->{'getQuery' . ucfirst($this->getType())}()
+            );
+            return
+                substr($res, -1, 1) === ' ' &&
+                substr($res, -2, 1) !== ':'
+                    ? trim($res)
+                    : $res;
         }
 
         public function union(array $queries): \Ada\Core\Db\Query {
@@ -426,6 +441,12 @@
         }
 
         public function update(array $values): \Ada\Core\Db\Query {
+            if (!$values) {
+                throw new \Ada\Core\Exception(
+                    '\'values\' argument can not be empty',
+                    2
+                );
+            }
             $this->type   = 'update';
             $this->values = $values;
             return $this;
@@ -452,7 +473,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand) . ' ALL',
-                '(' . $subquery->toString() . ')'
+                '( ' . $subquery->toString() . ' )'
             );
             return $this;
         }
@@ -465,7 +486,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand) . ' ANY',
-                '(' . $subquery->toString() . ')'
+                '( ' . $subquery->toString() . ' )'
             );
             return $this;
         }
@@ -631,28 +652,11 @@
             return end($this->wheres);
         }
 
-        protected function driverExec(string $method, array $arguments) {
+        protected function driverExec(string $method, array $arguments = []) {
             return $this->getDb()->$method($this->toString(), ...$arguments);
         }
 
-        protected function getQueryDelete(): string {
-            return
-                'DELETE FROM ' . $this->getQueryPartTable() .
-                ' '            . $this->getQueryPartWhere();
-        }
-
-        protected function getQueryInsert(): string {
-            $db     = $this->getDb();
-            $values = $this->getValues();
-            return
-                'INSERT INTO '  . $this->getQueryPartTable() . ' (' .
-                    implode(', ', array_map([$db, 'q'], array_keys($values))) .
-                ') VALUES (' .
-                    implode(', ', array_map([$db, 'e'], $values)) .
-                ')';
-        }
-
-        protected function getQueryPartColumns(array $columns = []): string {
+        protected function getPartColumns(array $columns = []): string {
             $columns = $columns ? $columns : $this->getColumns();
             if (!$columns) {
                 return '*';
@@ -669,72 +673,42 @@
             );
         }
 
-        protected function getQueryPartTable(array $table = []): string {
-            $table = $table ? $table : $this->getTable();
-            return $this->getDb()->{$table['add_prefix'] ? 't' : 'q'}(
-                $table['name'],
-                $table['alias']
-            );
-        }
-
-        protected function getQueryPartWhere(array $wheres = []): string {
-            $res    = '';
-            $i      = 0;
-            $db     = $this->getDb();
-            $wheres = $wheres ? $wheres : $this->getWheres();
-            if (!$wheres || !empty($wheres[0]['or'])) {
-                $res .= 'WHERE TRUE';
+        protected function getPartGroupsBy(array $groups_by = []): string {
+            $groups_by = $groups_by ? $groups_by : $this->getGroupsBy();
+            if (!$groups_by) {
+                return '';
             }
-            foreach ($wheres as $where) {
-                $res .= (
-                    ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
-                    $db->q($where['column']) . ' ' .
-                    $where['operand'] . ' ' .
-                    $where['value']
-                );
-                $i++;
-            }
-            return $res;
-        }
-
-        /*...............*/
-        protected function getQueryPartSelfJoins(array $wheres = []): string {
-            $res    = '';
-            $i      = 0;
-            $db     = $this->getDb();
-            $wheres = $wheres ? $wheres : $this->getWheres();
-            if (!$wheres || !empty($wheres[0]['or'])) {
-                $res .= 'WHERE TRUE';
-            }
-            foreach ($wheres as $where) {
-                $res .= (
-                    ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
-                    $db->q($where['column']) . ' ' .
-                    $where['operand'] . ' ' .
-                    $where['value']
-                );
-                $i++;
-            }
-            return $res;
-        }
-
-        protected function getQuerySelect(): string {
+            $res = 'GROUP BY ';
             $db  = $this->getDb();
-            $res = (
-                'SELECT ' . ($this->getDistinct() ? 'DISTINCT ' : '') . ' ' .
-                $this->getQueryPartColumns() .
-                ' FROM ' . $this->getQueryPartTable()
-            );
-            $table = $this->getTable();
-            foreach ($this->getSelfJoins() as $alias) {
-                $res .= ', ' . $this->getQueryPartTable(
-                    array_merge($table, ['alias' => $alias])
-                );
+            foreach ($groups_by as $column) {
+                $res .= $db->q($column) . ', ';
             }
-            foreach ($this->getJoins() as $join) {
+            return rtrim($res, ', ');
+        }
+
+        protected function getPartHavings(array $havings = []): string {
+            $res = '';
+            $i   = 0;
+            $db  = $this->getDb();
+            foreach ($havings ? $havings : $this->getHavings() as $having) {
+                $res .= (
+                    ' ' .
+                    ($i ? 'AND' : 'HAVING')   . ' ' .
+                    $db->q($having['column']) . ' ' .
+                    $having['operand']        . ' ' .
+                    $having['value']
+                );
+                $i++;
+            }
+            return $res;
+        }
+
+        protected function getPartJoins(array $joins = []): string {
+            $res = '';
+            foreach ($joins ? $joins : $this->getJoins() as $join) {
                 $res .= (
                     ' ' . (!$join['type'] ? '' : $join['type'] . ' ') . 'JOIN ' .
-                    $this->getQueryPartTable($join) .
+                    $this->getPartTable($join) .
                     (
                         isset($join['column1'])
                             ? (
@@ -747,39 +721,99 @@
                     )
                 );
             }
-            $res      .= ' ' . $this->getQueryPartWhere();
-            $groups_by = $this->getGroupsBy();
-            if ($groups_by) {
-                $res .= ' GROUP BY ';
-                foreach ($groups_by as $column) {
-                    $res .= $db->q($column) . ', ';
-                }
-                $res = rtrim($res, ', ');
+            return $res;
+        }
+
+        protected function getPartOrdersBy(array $orders_by = []): string {
+            $orders_by = $orders_by ? $orders_by : $this->getOrdersBy();
+            if (!$orders_by) {
+                return '';
             }
-            $i = 0;
-            foreach ($this->getHavings() as $having) {
+            $res .= 'ORDER BY ';
+            $db   = $this->getDb();
+            foreach ($orders_by as $order_by) {
                 $res .= (
-                    ' ' .
-                    ($i ? 'AND' : 'HAVING')   . ' ' .
-                    $db->q($having['column']) . ' ' .
-                    $having['operand']        . ' ' .
-                    $having['value']
+                    $db->q($order_by['column']) .
+                    ($order_by['asc'] ? ' ASC' : ' DESC') .
+                    ', '
+                );
+            }
+            return rtrim($res, ', ');
+        }
+
+        protected function getPartSelfJoins(
+            array $table   = [],
+            array $aliases = []
+        ): string {
+            $res   = '';
+            $table = $table ? $table : $this->getTable();
+            foreach ($aliases ? $aliases : $this->getSelfJoins() as $alias) {
+                $res .= ', ' . $this->getPartTable(
+                    array_merge($table, ['alias' => $alias])
+                );
+            }
+            return $res;
+        }
+
+        protected function getPartTable(array $table = []): string {
+            $table = $table ? $table : $this->getTable();
+            return $this->getDb()->{$table['add_prefix'] ? 't' : 'q'}(
+                $table['name'],
+                $table['alias']
+            );
+        }
+
+        protected function getPartWhere(array $wheres = []): string {
+            $res    = '';
+            $i      = 0;
+            $db     = $this->getDb();
+            $wheres = $wheres ? $wheres : $this->getWheres();
+            if (!$wheres || !empty($wheres[0]['or'])) {
+                $res .= 'WHERE TRUE';
+            }
+            foreach ($wheres as $where) {
+                $res .= (
+                    ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
+                    $db->q($where['column']) . ' ' .
+                    $where['operand'] . ' ' .
+                    $where['value']
                 );
                 $i++;
             }
-            $orders_by = $this->getOrdersBy();
-            if ($orders_by) {
-                $res .= ' ORDER BY ';
-                foreach ($orders_by as $order_by) {
-                    $res .= (
-                        $db->q($order_by['column']) .
-                        ($order_by['asc'] ? ' ASC' : ' DESC') .
-                        ', '
-                    );
-                }
-                $res = rtrim($res, ', ');
-            }
-            return preg_replace('/\s+/', ' ', $res);
+            return $res;
+        }
+
+        protected function getQueryDelete(): string {
+            return
+                'DELETE FROM ' . $this->getPartTable() .
+                ' '            . $this->getPartWhere();
+        }
+
+        protected function getQueryInsert(): string {
+            $db     = $this->getDb();
+            $values = $this->getValues();
+            return
+                'INSERT INTO '  . $this->getPartTable() . ' (' .
+                    implode(', ', array_map([$db, 'q'], array_keys($values))) .
+                ') VALUES (' .
+                    implode(', ', array_map([$db, 'e'], $values)) .
+                ')';
+        }
+
+
+        protected function getQuerySelect(): string {
+            return
+                'SELECT ' .
+               ($this->getDistinct() ? 'DISTINCT ' : '') .
+                $this->getPartColumns()   . ' ' .
+                'FROM ' .
+                $this->getPartTable()     . ' ' .
+                $this->getPartSelfJoins() . ' ' .
+                $this->getPartJoins()     . ' ' .
+                $this->getPartWhere()     . ' ' .
+                $this->getPartGroupsBy()  . ' ' .
+                $this->getPartHavings()   . ' ' .
+                $this->getPartOrdersBy();
         }
 
         protected function getQueryUnion(): string {
@@ -797,23 +831,23 @@
         }
 
         protected function getQueryUpdate(): string {
+            $res = 'UPDATE ' . $this->getPartTable() . ' SET ';
             $db  = $this->getDb();
-            $res = 'UPDATE ' . $this->getQueryPartTable() . ' SET ';
             foreach ($this->getValues() as $k => $v) {
                 $res .= $db->q($k) . ' = ' . $db->e($v) . ', ';
             }
-            return rtrim($res, ', ') . $this->getQueryPartWhere();
+            return rtrim($res, ', ') . ' ' . $this->getPartWhere();
         }
 
         protected function validateOperand(string $operand): string {
-            $operand = strtoupper(trim(preg_replace('/\s+/', ' ', $operand)));
-            if (!in_array($operand, static::OPERANDS)) {
+            $res = strtoupper(trim(preg_replace('/\s+/', ' ', $operand)));
+            if (!in_array($res, static::OPERANDS)) {
                 throw new \Ada\Core\Exception(
                     'Unknown operand \'' . $operand . '\'',
-                    2
+                    3
                 );
             }
-            return $operand;
+            return $res;
         }
 
     }

@@ -37,32 +37,6 @@
 
 
 
-
-    exit(var_dump(
-
-
-
-
-        Db::init()->getQuery()
-            ->delete([
-                'name' => 'name4',
-                'text' => 'text4'
-            ])
-            ->table('test')
-            ->toString()
-
-
-
-
-
-
-    ));
-
-
-
-
-
-
     exit(var_dump(
 
         Db::init()->getQuery()
@@ -77,8 +51,6 @@
             ->fetchRows()
 
     ));
-
-
 
 
 
