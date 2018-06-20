@@ -173,16 +173,22 @@
             return !$this->isConnected();
         }
 
-        public function e(string $val) {
-            if (is_numeric($val)) {
-                return $val * 1;
+        public function e(string $value) {
+            if ($value === '') {
+                throw new \Ada\Core\Exception(
+                    '\'value\' argument can not be empty',
+                    22222222222222222
+                );
+            }
+            if (is_numeric($value)) {
+                return $value * 1;
             }
             return (
                 ' ' . static::ESC_TAG .
                 str_replace(
                     static::ESC_TAG,
                     '\\' . static::ESC_TAG . '\\',
-                    $val
+                    $value
                 ) .
                 static::ESC_TAG . ' '
             );

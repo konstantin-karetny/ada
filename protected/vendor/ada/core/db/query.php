@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 19.06.2018
+    * @version   1.0.0 20.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,7 +12,7 @@
     abstract class Query extends \Ada\Core\Proto {
 
         const
-            OPERANDS       = [
+            OPERANDS    = [
                 '!=',
                 '<',
                 '<=',
@@ -32,19 +32,19 @@
             ];
 
         protected
-            $columns       = [],
-            $db            = null,
-            $distinct      = false,
-            $groups_by     = [],
-            $havings       = [],
-            $joins         = [],
-            $orders_by     = [],
-            $self_joins    = [],
-            $table         = [],
-            $type          = 'select',
-            $union_queries = [],
-            $values        = [],
-            $wheres        = [];
+            $columns    = [],
+            $db         = null,
+            $distinct   = false,
+            $groups_by  = [],
+            $havings    = [],
+            $joins      = [],
+            $orders_by  = [],
+            $self_joins = [],
+            $table      = [],
+            $type       = 'select',
+            $union      = [],
+            $values     = [],
+            $wheres     = [];
 
         public static function init(\Ada\Core\Db\Driver $db): \Ada\Core\Db\Query {
             return new static(...func_get_args());
@@ -138,8 +138,8 @@
             return $this->type;
         }
 
-        public function getUnionQueries(): array {
-            return $this->union_queries;
+        public function getUnion(): array {
+            return $this->union;
         }
 
         public function getValues(): array {
@@ -297,6 +297,25 @@
             return $this;
         }
 
+        public function orGroup(
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                '',
+                '',
+                (
+                    '(' .
+                        ltrim(
+                            $this->getPartWhere($subquery->getWheres()),
+                            ' WHERE'
+                        ) .
+                    ')'
+                ),
+                true
+            );
+            return $this;
+        }
+
         public function orIn(
             string $column,
             array  $values
@@ -309,6 +328,19 @@
                         implode(', ', array_map([$this->getDb(), 'e'], $values)) .
                     ')'
                 ),
+                true
+            );
+            return $this;
+        }
+
+        public function orInSub(
+            string             $column,
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'IN',
+                '(' . $subquery->toString() . ')',
                 true
             );
             return $this;
@@ -361,6 +393,19 @@
             return $this;
         }
 
+        public function orNotInSub(
+            string             $column,
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'NOT IN',
+                '(' . $subquery->toString() . ')',
+                true
+            );
+            return $this;
+        }
+
         public function orNotNull(string $column): \Ada\Core\Db\Query {
             $this->addWhere($column, 'IS NOT NULL', '', true);
             return $this;
@@ -368,6 +413,20 @@
 
         public function orNull(string $column): \Ada\Core\Db\Query {
             $this->addWhere($column, 'IS NULL', '', true);
+            return $this;
+        }
+
+        public function orSub(
+            string             $column,
+            string             $operand,
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                $this->validateOperand($operand),
+                '(' . $subquery->toString() . ')',
+                true
+            );
             return $this;
         }
 
@@ -410,7 +469,7 @@
         }
 
         public function table(
-            string $name,
+            string $table_name,
             string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
@@ -435,8 +494,12 @@
         }
 
         public function union(array $queries): \Ada\Core\Db\Query {
-            $this->type          = 'union';
-            $this->union_queries = $queries;
+            $this->addUnion($queries);
+            return $this;
+        }
+
+        public function unionAll(array $queries): \Ada\Core\Db\Query {
+            $this->addUnion($queries, true);
             return $this;
         }
 
@@ -532,6 +595,24 @@
             return $this;
         }
 
+        public function whereGroup(
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                '',
+                '',
+                (
+                    '(' .
+                        ltrim(
+                            $this->getPartWhere($subquery->getWheres()),
+                            ' WHERE'
+                        ) .
+                    ')'
+                )
+            );
+            return $this;
+        }
+
         public function whereIn(
             string $column,
             array  $values
@@ -544,6 +625,18 @@
                         implode(', ', array_map([$this->getDb(), 'e'], $values)) .
                     ')'
                 )
+            );
+            return $this;
+        }
+
+        public function whereInSub(
+            string             $column,
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'IN',
+                '(' . $subquery->toString() . ')'
             );
             return $this;
         }
@@ -592,6 +685,18 @@
             return $this;
         }
 
+        public function whereNotInSub(
+            string             $column,
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                'NOT IN',
+                '(' . $subquery->toString() . ')'
+            );
+            return $this;
+        }
+
         public function whereNotNull(string $column): \Ada\Core\Db\Query {
             $this->addWhere($column, 'IS NOT NULL', '');
             return $this;
@@ -599,6 +704,19 @@
 
         public function whereNull(string $column): \Ada\Core\Db\Query {
             $this->addWhere($column, 'IS NULL', '');
+            return $this;
+        }
+
+        public function whereSub(
+            string             $column,
+            string             $operand,
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
+            $this->addWhere(
+                $column,
+                $this->validateOperand($operand),
+                '(' . $subquery->toString() . ')'
+            );
             return $this;
         }
 
@@ -640,6 +758,15 @@
         ): array {
             $this->orders_by[] = get_defined_vars();
             return end($this->orders_by);
+        }
+
+        protected function addUnion(
+            array $queries,
+            bool  $all     = false
+        ) {
+            $this->type  = 'union';
+            $this->union = get_defined_vars();
+            return end($this->union);
         }
 
         protected function addWhere(
@@ -705,6 +832,7 @@
 
         protected function getPartJoins(array $joins = []): string {
             $res = '';
+            $db  = $this->getDb();
             foreach ($joins ? $joins : $this->getJoins() as $join) {
                 $res .= (
                     ' ' . (!$join['type'] ? '' : $join['type'] . ' ') . 'JOIN ' .
@@ -729,8 +857,8 @@
             if (!$orders_by) {
                 return '';
             }
-            $res .= 'ORDER BY ';
-            $db   = $this->getDb();
+            $res = 'ORDER BY ';
+            $db  = $this->getDb();
             foreach ($orders_by as $order_by) {
                 $res .= (
                     $db->q($order_by['column']) .
@@ -758,7 +886,7 @@
         protected function getPartTable(array $table = []): string {
             $table = $table ? $table : $this->getTable();
             return $this->getDb()->{$table['add_prefix'] ? 't' : 'q'}(
-                $table['name'],
+                $table['table_name'],
                 $table['alias']
             );
         }
@@ -774,7 +902,7 @@
             foreach ($wheres as $where) {
                 $res .= (
                     ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
-                    $db->q($where['column']) . ' ' .
+                    (!$where['column'] ? '' : $db->q($where['column'])  . ' ') .
                     $where['operand'] . ' ' .
                     $where['value']
                 );
@@ -817,17 +945,17 @@
         }
 
         protected function getQueryUnion(): string {
-            return '(' .
+            $union = $this->getUnion();
+            return
                 implode(
-                    ') UNION (',
+                    ' UNION ' . ($union['all'] ? 'ALL ' : ''),
                     array_map(
                         function (\Ada\Core\Db\Query $query) {
                             return $query->toString();
                         },
-                        $this->getUnionQueries()
+                        $union['queries']
                     )
-                ) .
-            ')';
+                );
         }
 
         protected function getQueryUpdate(): string {

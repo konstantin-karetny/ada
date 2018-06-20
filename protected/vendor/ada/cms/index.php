@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 18.06.2018
+    * @version   1.0.0 20.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,10 +15,12 @@
     require_once 'includes/autoload.php';
 
 
+
+
     //queries builder
-    //https://www.doctrine-project.org/projects/doctrine-orm/en/latest/reference/query-builder.html#the-querybuilder
-    //C:\OSPanel\domains\jobfood\libraries\joomla\database\query.php
-    //C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
+    //drop methods?
+    //rewrite core queries
+    //
     //Sql class
     //Str, Arr and Obj classes
 
@@ -41,22 +43,13 @@
 
         Db::init()->getQuery()
             ->select()
-            ->table('users', 'u')
-            ->whereBetween('id', '2', 10)
-            ->whereAny(
-                'id',
-                '>',
-                Db::init()->getQuery()->select([['MIN(u.id)']])->table('users')
+            ->table('test')
+            ->orGroup(
+                Db::init()->getQuery()->where('id', '=', 1)->where('name', '!=', 'name3')->where('text', '!=', '\'\'')
             )
-            ->fetchRows()
+            ->toString()
 
     ));
-
-
-
-
-
-
 
 
 

@@ -1,5 +1,6 @@
 ﻿C:\OSPanel\domains\joomla\libraries\joomla\database\query.php
 C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Builder.php
+C:\OSPanel\domains\laravel\vendor\laravel\framework\src\Illuminate\Database\Query\Grammars\Grammar.php
 
 SQL Tutorial
 https://www.w3schools.com/sql
