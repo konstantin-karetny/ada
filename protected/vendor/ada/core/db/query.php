@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 20.06.2018
+    * @version   1.0.0 21.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -12,7 +12,7 @@
     abstract class Query extends \Ada\Core\Proto {
 
         const
-            OPERANDS    = [
+            OPERANDS   = [
                 '!=',
                 '<',
                 '<=',
@@ -32,19 +32,18 @@
             ];
 
         protected
-            $columns    = [],
-            $db         = null,
-            $distinct   = false,
-            $groups_by  = [],
-            $havings    = [],
-            $joins      = [],
-            $orders_by  = [],
-            $self_joins = [],
-            $table      = [],
-            $type       = 'select',
-            $union      = [],
-            $values     = [],
-            $wheres     = [];
+            $columns   = [],
+            $db        = null,
+            $distinct  = false,
+            $groups_by = [],
+            $havings   = [],
+            $joins     = [],
+            $orders_by = [],
+            $table     = [],
+            $type      = 'select',
+            $union     = [],
+            $values    = [],
+            $wheres    = [];
 
         public static function init(\Ada\Core\Db\Driver $db): \Ada\Core\Db\Query {
             return new static(...func_get_args());
@@ -54,6 +53,16 @@
             $this->db = $db;
         }
 
+        public function columns(array $columns = []): \Ada\Core\Db\Query {
+            $this->type = 'select';
+            foreach ($columns as $column) {
+                $this->addColumn(
+                    ...\Ada\Core\Type::set($column, 'array', false)
+                );
+            }
+            return $this;
+        }
+
         public function delete(): \Ada\Core\Db\Query {
             $this->type = 'delete';
             return $this;
@@ -61,6 +70,36 @@
 
         public function distinct(bool $distinct): \Ada\Core\Db\Query {
             $this->distinct = $distinct;
+            return $this;
+        }
+
+        public function dropColumns(): \Ada\Core\Db\Query {
+            $this->columns = [];
+            return $this;
+        }
+
+        public function dropGroupsBy(): \Ada\Core\Db\Query {
+            $this->groups_by = [];
+            return $this;
+        }
+
+        public function dropHavings(): \Ada\Core\Db\Query {
+            $this->havings = [];
+            return $this;
+        }
+
+        public function dropJoins(): \Ada\Core\Db\Query {
+            $this->joins = [];
+            return $this;
+        }
+
+        public function dropOrdersBy(): \Ada\Core\Db\Query {
+            $this->orders_by = [];
+            return $this;
+        }
+
+        public function dropWheres(): \Ada\Core\Db\Query {
+            $this->wheres = [];
             return $this;
         }
 
@@ -98,6 +137,14 @@
             return $this->driverExec(__FUNCTION__, func_get_args());
         }
 
+        public function from(
+            string $table_name,
+            string $alias      = '',
+            bool   $add_prefix = true
+        ): \Ada\Core\Db\Query {
+            return $this->table(...func_get_args());
+        }
+
         public function getColumns(): array {
             return $this->columns;
         }
@@ -124,10 +171,6 @@
 
         public function getOrdersBy(): array {
             return $this->orders_by;
-        }
-
-        public function getSelfJoins(): array {
-            return $this->self_joins;
         }
 
         public function getTable(): array {
@@ -162,6 +205,12 @@
             string $operand,
             string $value
         ): \Ada\Core\Db\Query {
+            if ($value === '') {
+                throw new \Ada\Core\Exception(
+                    'Argument 3 passed to ' . __METHOD__ . '() must not be empty',
+                    1
+                );
+            }
             $this->addHaving(
                 $column,
                 $this->validateOperand($operand),
@@ -173,13 +222,21 @@
         public function insert(array $values): \Ada\Core\Db\Query {
             if (!$values) {
                 throw new \Ada\Core\Exception(
-                    '\'values\' argument can not be empty',
+                    'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
                     2
                 );
             }
             $this->type   = 'insert';
             $this->values = $values;
             return $this;
+        }
+
+        public function into(
+            string $table_name,
+            string $alias      = '',
+            bool   $add_prefix = true
+        ): \Ada\Core\Db\Query {
+            return $this->table(...func_get_args());
         }
 
         public function join(
@@ -303,14 +360,7 @@
             $this->addWhere(
                 '',
                 '',
-                (
-                    '(' .
-                        ltrim(
-                            $this->getPartWhere($subquery->getWheres()),
-                            ' WHERE'
-                        ) .
-                    ')'
-                ),
+                $this->getPartWhereGroup($subquery->getWheres()),
                 true
             );
             return $this;
@@ -435,6 +485,12 @@
             string $operand,
             string $value
         ): \Ada\Core\Db\Query {
+            if ($value === '') {
+                throw new \Ada\Core\Exception(
+                    'Argument 3 passed to ' . __METHOD__ . '() must not be empty',
+                    3
+                );
+            }
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand),
@@ -454,18 +510,14 @@
         }
 
         public function select(array $columns = []): \Ada\Core\Db\Query {
-            $this->type = 'select';
-            foreach ($columns as $column) {
-                $this->addColumn(
-                    ...\Ada\Core\Type::set($column, 'array', false)
-                );
-            }
-            return $this;
+            return $this->columns($columns);
         }
 
-        public function selfJoin(string $alias): \Ada\Core\Db\Query {
-            $this->addSelfJoin($alias);
-            return $this;
+        public function selectOne(
+            string $name,
+            string $alias = ''
+        ): \Ada\Core\Db\Query {
+            return $this->columns([func_get_args()]);
         }
 
         public function table(
@@ -479,7 +531,7 @@
 
         public function toString(): string {
             if ($this->getType() != 'union' && !$this->getTable()) {
-                throw new \Ada\Core\Exception('No table specified', 1);
+                throw new \Ada\Core\Exception('No table specified', 4);
             }
             $res = preg_replace(
                 '/\s+/',
@@ -506,8 +558,8 @@
         public function update(array $values): \Ada\Core\Db\Query {
             if (!$values) {
                 throw new \Ada\Core\Exception(
-                    '\'values\' argument can not be empty',
-                    2
+                    'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
+                    5
                 );
             }
             $this->type   = 'update';
@@ -520,6 +572,12 @@
             string $operand,
             string $value
         ): \Ada\Core\Db\Query {
+            if ($value === '') {
+                throw new \Ada\Core\Exception(
+                    'Argument 3 passed to ' . __METHOD__ . '() must not be empty',
+                    6
+                );
+            }
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand),
@@ -601,14 +659,7 @@
             $this->addWhere(
                 '',
                 '',
-                (
-                    '(' .
-                        ltrim(
-                            $this->getPartWhere($subquery->getWheres()),
-                            ' WHERE'
-                        ) .
-                    ')'
-                )
+                $this->getPartWhereGroup($subquery->getWheres())
             );
             return $this;
         }
@@ -869,20 +920,6 @@
             return rtrim($res, ', ');
         }
 
-        protected function getPartSelfJoins(
-            array $table   = [],
-            array $aliases = []
-        ): string {
-            $res   = '';
-            $table = $table ? $table : $this->getTable();
-            foreach ($aliases ? $aliases : $this->getSelfJoins() as $alias) {
-                $res .= ', ' . $this->getPartTable(
-                    array_merge($table, ['alias' => $alias])
-                );
-            }
-            return $res;
-        }
-
         protected function getPartTable(array $table = []): string {
             $table = $table ? $table : $this->getTable();
             return $this->getDb()->{$table['add_prefix'] ? 't' : 'q'}(
@@ -911,6 +948,17 @@
             return $res;
         }
 
+        protected function getPartWhereGroup(array $wheres): string {
+            return
+                '(' .
+                    preg_replace(
+                        '/^\s*WHERE\s*/',
+                        '',
+                        $this->getPartWhere($wheres)
+                    ) .
+                ')';
+        }
+
         protected function getQueryDelete(): string {
             return
                 'DELETE FROM ' . $this->getPartTable() .
@@ -933,14 +981,13 @@
             return
                 'SELECT ' .
                ($this->getDistinct() ? 'DISTINCT ' : '') .
-                $this->getPartColumns()   . ' ' .
+                $this->getPartColumns()  . ' ' .
                 'FROM ' .
-                $this->getPartTable()     . ' ' .
-                $this->getPartSelfJoins() . ' ' .
-                $this->getPartJoins()     . ' ' .
-                $this->getPartWhere()     . ' ' .
-                $this->getPartGroupsBy()  . ' ' .
-                $this->getPartHavings()   . ' ' .
+                $this->getPartTable()    . ' ' .
+                $this->getPartJoins()    . ' ' .
+                $this->getPartWhere()    . ' ' .
+                $this->getPartGroupsBy() . ' ' .
+                $this->getPartHavings()  . ' ' .
                 $this->getPartOrdersBy();
         }
 
@@ -972,7 +1019,7 @@
             if (!in_array($res, static::OPERANDS)) {
                 throw new \Ada\Core\Exception(
                     'Unknown operand \'' . $operand . '\'',
-                    3
+                    7
                 );
             }
             return $res;

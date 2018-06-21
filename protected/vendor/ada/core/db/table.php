@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.05.2018
+    * @version   1.0.0 21.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -95,9 +95,7 @@
             bool $cached     = true
         ): array {
             if (!$cached || $this->columns_names === null) {
-                $this->columns_names = $this->getDb()->fetchColumn(
-                    $this->getQueryColumnsNames()
-                );
+                $this->columns_names = $this->getColumnsNames();
             }
             if (!$as_objects) {
                 return $this->columns_names;
@@ -185,19 +183,19 @@
 
         protected function extractParams(): array {
             $db  = $this->getDb();
-            $row = $db->fetchRow('
-                SELECT ' . $db->qs([
+            $row = $db->getQuery()
+                ->select([
                     'CHARACTER_SET_NAME',
                     'COLLATION_NAME',
                     'ENGINE',
                     'TABLE_SCHEMA'
-                ]) . '
-                FROM '  . $db->q('information_schema.TABLES', 't') . '
-                JOIN '  . $db->q('information_schema.COLLATION_CHARACTER_SET_APPLICABILITY', 'ccsa') . '
-                ON '    . $db->q('ccsa.COLLATION_NAME') . ' = '    . $db->q('t.TABLE_COLLATION') . '
-                WHERE ' . $db->q('t.TABLE_SCHEMA')      . ' LIKE ' . $db->e($db->getName()) . '
-                AND '   . $db->q('t.TABLE_NAME')        . ' LIKE ' . $db->e($this->getName(true, false)) . '
-            ');
+                ])
+                ->from('information_schema.TABLES', 't', false)
+                ->join('information_schema.COLLATION_CHARACTER_SET_APPLICABILITY', 'ccsa', false)
+                ->on('ccsa.COLLATION_NAME', '=', 't.TABLE_COLLATION')
+                ->where('t.TABLE_SCHEMA', '=', $db->getName())
+                ->where('t.TABLE_NAME',   '=', $this->getName(true, false))
+                ->fetchRow();
             return
                 $row
                     ? [
@@ -209,13 +207,14 @@
                     : [];
         }
 
-        protected function getQueryColumnsNames(): string {
+        protected function getColumnsNames(): array {
             $db = $this->getDb();
-            return '
-                SELECT ' . $db->q('COLUMN_NAME') . '
-                FROM '   . $db->q('INFORMATION_SCHEMA.COLUMNS') . '
-                WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($db->getName()) . '
-                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($this->getName(true, false));
+            return $db->getQuery()
+                ->selectOne('COLUMN_NAME')
+                ->from('INFORMATION_SCHEMA.COLUMNS', '', false)
+                ->where('TABLE_SCHEMA', '=', $db->getName())
+                ->where('TABLE_NAME',   '=', $this->getName(true, false))
+                ->fetchColumn();
         }
 
     }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 20.06.2018
+    * @version   1.0.0 21.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -14,11 +14,8 @@
 
     require_once 'includes/autoload.php';
 
-
-
-
     //queries builder
-    //drop methods?
+    //on statement required ............................
     //rewrite core queries
     //
     //Sql class
@@ -38,16 +35,12 @@
     ]);
 
 
+    $t = Db::init(1)->getTable('test');
 
     exit(var_dump(
 
-        Db::init()->getQuery()
-            ->select()
-            ->table('test')
-            ->orGroup(
-                Db::init()->getQuery()->where('id', '=', 1)->where('name', '!=', 'name3')->where('text', '!=', '\'\'')
-            )
-            ->toString()
+        $t,
+        $t->getColumns(true)
 
     ));
 

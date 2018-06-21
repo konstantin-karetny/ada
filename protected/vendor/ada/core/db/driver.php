@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 13.06.2018
+    * @version   1.0.0 21.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -96,7 +96,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to begin transaction. ' . $e->getMessage(),
-                    4
+                    2
                 );
             }
         }
@@ -110,7 +110,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to close transaction. ' . $e->getMessage(),
-                    13
+                    3
                 );
             }
         }
@@ -123,7 +123,7 @@
             if ($this->getName() === '') {
                 throw new \Ada\Core\Exception(
                     $error . '. No database name',
-                    2
+                    4
                 );
             }
             try {
@@ -136,7 +136,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     $error . '. ' . $e->getMessage(),
-                    2
+                    5
                 );
             }
             return $this->isConnected();
@@ -151,22 +151,6 @@
             return explode("\n", trim(ob_get_clean()));
         }
 
-        public function deleteRow(string $table_name, string $condition): bool {
-            $query = $this->getQueryDeleteRow($table_name, $condition);
-            try {
-                return $this->exec($query);
-            } catch (\Throwable $e) {
-                throw new \Ada\Core\Exception(
-                    (
-                        'Failed to delete row. ' .
-                        $e->getMessage() . '. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
-                    ),
-                    12
-                );
-            }
-        }
-
         public function disconnect(): bool {
             $this->pdo  = null;
             $this->stmt = null;
@@ -176,8 +160,8 @@
         public function e(string $value) {
             if ($value === '') {
                 throw new \Ada\Core\Exception(
-                    '\'value\' argument can not be empty',
-                    22222222222222222
+                    'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
+                    6
                 );
             }
             if (is_numeric($value)) {
@@ -240,7 +224,7 @@
                         $e->getMessage() . '. ' .
                         'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
                     ),
-                    5
+                    7
                 );
             }
             $this->fetch_mode = [];
@@ -385,7 +369,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to get PDO attribute ' . $name . '. ' . $e->getMessage(),
-                    3
+                    12
                 );
             }
         }
@@ -486,7 +470,11 @@
                     function($el) {
                         return ltrim($el, $this->getPrefix());
                     },
-                    $this->fetchColumn($this->getQueryTablesNames())
+                    $this->getQuery()
+                        ->selectOne('TABLE_NAME')
+                        ->from('information_schema.TABLES', '', false)
+                        ->where('TABLE_SCHEMA', '=', $this->getName())
+                        ->fetchColumn()
                 );
             }
             if (!$as_objects) {
@@ -505,22 +493,6 @@
 
         public function getVersion(): string {
             return $this->version;
-        }
-
-        public function insertRow(string $table_name, array $row): bool {
-            $query = $this->getQueryInsertRow($table_name, $row);
-            try {
-                return $this->exec($query);
-            } catch (\Throwable $e) {
-                throw new \Ada\Core\Exception(
-                    (
-                        'Failed to insert row. ' .
-                        $e->getMessage() . '. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
-                    ),
-                    6
-                );
-            }
         }
 
         public function isConnected(): bool {
@@ -605,7 +577,7 @@
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
                     'Failed to roll back transaction. ' . $e->getMessage(),
-                    14
+                    13
                 );
             }
         }
@@ -630,93 +602,26 @@
             );
         }
 
-        public function updateRow(
-            string $table_name,
-            array  $row,
-            string $condition
-        ): bool {
-            $query = $this->getQueryUpdateRow($table_name, $row, $condition);
-            try {
-                return $this->exec($query);
-            } catch (\Throwable $e) {
-                throw new \Ada\Core\Exception(
-                    (
-                        'Failed to update row. ' .
-                        $e->getMessage() . '. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
-                    ),
-                    7
-                );
-            }
-        }
-
         protected function extractParams(): array {
             return array_map(
                 'trim',
                 array_merge(
-                    $this->getQuery()
-                        ->select([
-                            ['DEFAULT_CHARACTER_SET_NAME', 'charset'],
-                            ['DEFAULT_COLLATION_NAME',     'collation'],
-                            ['SCHEMA_NAME',                'schema']
-                        ])
-                        ->table('INFORMATION_SCHEMA.SCHEMATA', '', false)
-                        ->where('SCHEMA_NAME', 'LIKE', $this->getName())
-                        ->fetchRow(),
+                    (
+                        $this->getQuery()
+                            ->select([
+                                ['DEFAULT_CHARACTER_SET_NAME', 'charset'],
+                                ['DEFAULT_COLLATION_NAME',     'collation'],
+                                ['SCHEMA_NAME',                'schema']
+                            ])
+                            ->from('INFORMATION_SCHEMA.SCHEMATA', '', false)
+                            ->where('SCHEMA_NAME', '=', $this->getName())
+                            ->fetchRow()
+                    ),
                     [
                         'version' => $this->getAttribute(\PDO::ATTR_SERVER_VERSION)
                     ]
                 )
             );
-        }
-
-        protected function getQueryDeleteRow(
-            string $table_name,
-            string $condition
-        ): string {
-            return 'DELETE FROM ' . $this->t($table_name) . ' WHERE ' . $condition;
-        }
-
-        protected function getQueryInsertRow(
-            string $table_name,
-            array  $row
-        ): string {
-            return '
-                INSERT INTO ' .
-                $this->t($table_name) . '
-                (' .
-                    implode(
-                        ', ',
-                        array_map([$this, 'q'], array_keys($row))
-                    ) . '
-                )
-                VALUES(' .
-                    implode(
-                        ', ',
-                        array_map([$this, 'e'], $row)
-                    ) . '
-                )
-            ';
-        }
-
-        protected function getQueryTablesNames(): string {
-            return '
-                SELECT ' . $this->q('TABLE_NAME') . '
-                FROM '   . $this->q('information_schema.TABLES') . '
-                WHERE '  . $this->q('TABLE_SCHEMA') . ' LIKE ' . $this->e($this->getName())
-            ;
-        }
-
-        protected function getQueryUpdateRow(
-            string $table_name,
-            array  $row,
-            string $condition
-        ): string {
-            $res = 'UPDATE ' . $this->t($table_name) . ' SET ';
-            foreach ($row as $k => $v) {
-                $res .= $this->q($k) . ' = ' . $this->e($v) . ',';
-            }
-            return rtrim($res, " \t\n\r\0\x0B,") . ' WHERE ' . $condition;
         }
 
     }
