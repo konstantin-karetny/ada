@@ -15,8 +15,13 @@
     require_once 'includes/autoload.php';
 
     //queries builder
-    //on statement required ............................
     //rewrite core queries
+    //LIKE
+    //->fetch
+    //->deleteRow(
+    //->insertRow(
+    //->updateRow(
+    //on statement required ............................
     //
     //Sql class
     //Str, Arr and Obj classes

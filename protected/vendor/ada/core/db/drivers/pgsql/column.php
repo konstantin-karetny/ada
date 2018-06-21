@@ -14,8 +14,8 @@
         protected function extractParams(): array {
             $db    = $this->getDb();
             $table = $this->getTable();
-            $row   = $db->fetchRow('
-                SELECT ' . $db->qs([
+            $row   = $db->getQuery()
+                ->select([
                     'character_maximum_length',
                     'character_set_name',
                     'collation_name',
@@ -25,12 +25,12 @@
                     'is_nullable',
                     'numeric_precision',
                     'numeric_scale'
-                ]) . '
-                FROM '  . $db->q('information_schema.columns') . '
-                WHERE ' . $db->q('table_schema') . ' LIKE ' . $db->e($table->getSchema()) . '
-                AND  '  . $db->q('table_name')   . ' LIKE ' . $db->e($table->getName(true, false)) . '
-                AND '   . $db->q('column_name')  . ' LIKE ' . $db->e($this->getName())
-            );
+                ])
+                ->from('information_schema.columns', '', false)
+                ->where('table_schema', '=', $table->getSchema())
+                ->where('table_name',   '=', $table->getName(true, false))
+                ->where('column_name',  '=', $this->getName())
+                ->fetchRow();
             if (!$row) {
                 return [];
             }

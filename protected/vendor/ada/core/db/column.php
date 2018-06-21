@@ -113,8 +113,8 @@
         protected function extractParams(): array {
             $db    = $this->getDb();
             $table = $this->getTable();
-            $row   = $db->fetchRow('
-                SELECT ' . $db->qs([
+            $row   = $db->getQuery()
+                ->select([
                     'CHARACTER_SET_NAME',
                     'COLLATION_NAME',
                     'COLUMN_DEFAULT',
@@ -125,12 +125,12 @@
                     'IS_NULLABLE',
                     'TABLE_NAME',
                     'TABLE_SCHEMA'
-                ]) . '
-                FROM '   . $db->q('information_schema.COLUMNS') . '
-                WHERE '  . $db->q('TABLE_SCHEMA') . ' LIKE ' . $db->e($table->getSchema()) . '
-                AND '    . $db->q('TABLE_NAME')   . ' LIKE ' . $db->e($table->getName(true, false)) . '
-                AND '    . $db->q('COLUMN_NAME')  . ' LIKE ' . $db->e($this->getName())
-            );
+                ])
+                ->from('information_schema.COLUMNS', '', false)
+                ->where('TABLE_SCHEMA', '=', $table->getSchema())
+                ->where('TABLE_NAME',   '=', $table->getName(true, false))
+                ->where('COLUMN_NAME',  '=', $this->getName())
+                ->fetchRow();
             if (!$row) {
                 return [];
             }
