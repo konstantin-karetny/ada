@@ -163,7 +163,10 @@
         }
 
         public function clear(): bool {
-            if (!$this->isStarted() && !$this->start()) {
+            if (
+                (!$this->isStarted() && !$this->start()) ||
+                ($this->isReadOnly() && !$this->restart(false))
+            ) {
                 return false;
             }
 			session_unset();

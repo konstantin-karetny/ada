@@ -476,6 +476,11 @@
             return $this;
         }
 
+        public function orRaw(string $condition): \Ada\Core\Db\Query {
+            $this->addWhere('', '', $condition, true);
+            return $this;
+        }
+
         public function orSub(
             string             $column,
             string             $operand,
@@ -765,6 +770,11 @@
 
         public function whereNull(string $column): \Ada\Core\Db\Query {
             $this->addWhere($column, 'IS NULL', '');
+            return $this;
+        }
+
+        public function whereRaw(string $condition): \Ada\Core\Db\Query {
+            $this->addWhere('', '', $condition);
             return $this;
         }
 

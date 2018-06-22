@@ -60,7 +60,7 @@
                 ->selectOne('data')
                 ->from($this->getTable()->getName())
                 ->where('id', '=', $session_id)
-                ->fetchCell();
+                ->fetchCell('string');
         }
 
         public function write($session_id, $session_data): bool {

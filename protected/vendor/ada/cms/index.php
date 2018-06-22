@@ -15,7 +15,6 @@
     require_once 'includes/autoload.php';
 
     //queries builder
-    //on statement required ............................
     //
     //Sql class
     //Str, Arr and Obj classes
@@ -34,14 +33,14 @@
     ]);
 
 
-    $t = Db::init(1)->getTable('test');
+
+    Session::preset([
+        'handler' => new Session\Handlers\Db(Db::init(0)->getTable('session'))
+    ]);
 
     exit(var_dump(
 
-        Db::init()->getQuery()
-            ->columns()
-            ->table('test')
-            ->toString()
+        1
 
     ));
 
