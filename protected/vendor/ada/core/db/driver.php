@@ -546,9 +546,9 @@
                         : ($q . $res . $q)
                 ) .
                 (
-                    $alias
-                        ? (' AS ' . $q . $alias . $q)
-                        : ''
+                    $alias === ''
+                        ? ''
+                        : ' AS ' . $q . $alias . $q
                 )
             );
         }

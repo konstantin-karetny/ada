@@ -34,13 +34,15 @@
 
 
 
-    Session::preset([
-        'handler' => new Session\Handlers\Db(Db::init(0)->getTable('session'))
-    ]);
-
     exit(var_dump(
 
-        1
+        Db::init()->getQuery()
+            ->select([
+                'id',
+                [Db::init()->getQuery()->selectOne('MAX(id)')->from('test')]
+            ])
+            ->from('test')
+            ->toString()
 
     ));
 

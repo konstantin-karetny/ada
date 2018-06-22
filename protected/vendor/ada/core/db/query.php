@@ -56,9 +56,9 @@
         public function columns(array $columns = []): \Ada\Core\Db\Query {
             $this->type = 'select';
             foreach ($columns as $column) {
-                $this->addColumn(
-                    ...\Ada\Core\Type::set($column, 'array', false)
-                );
+                $args   = \Ada\Core\Type::set($column, 'array', false);
+                $method = 'addColumn' . (is_string(reset($args)) ? '' : 'Sub');
+                $this->$method(...$args);
             }
             return $this;
         }
@@ -535,6 +535,13 @@
             return $this->columns([func_get_args()]);
         }
 
+        public function selectSub(
+            \Ada\Core\Db\Query $subquery,
+            string             $alias
+        ): \Ada\Core\Db\Query {
+            return $this->columns([func_get_args()]);
+        }
+
         public function table(
             string $table_name,
             string $alias      = '',
@@ -795,6 +802,17 @@
             string $name,
             string $alias = ''
         ): array {
+            $subquery        = null;
+            $this->columns[] = get_defined_vars();
+            return end($this->columns);
+        }
+
+        protected function addColumnSub(
+            \Ada\Core\Db\Query $subquery,
+            string             $alias
+        ): array {
+            $name            = '';
+            $subquery        = $subquery->toString();
             $this->columns[] = get_defined_vars();
             return end($this->columns);
         }
@@ -865,7 +883,18 @@
                 ', ',
                 array_map(
                     function($el) use (&$db) {
-                        return $db->q($el['name'], $el['alias']);
+                        return (
+                            isset($el['subquery'])
+                                ? (
+                                    '('. $el['subquery'] . ')' .
+                                    (
+                                        $el['alias'] === ''
+                                            ? ''
+                                            : ' AS ' . $db->q($el['alias'])
+                                    )
+                                )
+                                : $db->q($el['name'], $el['alias'])
+                        );
                     },
                     $columns
                 )
