@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.06.2018
+    * @version   1.0.0 22.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -39,10 +39,10 @@
             $havings   = [],
             $joins     = [],
             $orders_by = [],
+            $row       = [],
             $table     = [],
             $type      = 'select',
             $union     = [],
-            $values    = [],
             $wheres    = [];
 
         public static function init(\Ada\Core\Db\Driver $db): \Ada\Core\Db\Query {
@@ -173,6 +173,10 @@
             return $this->orders_by;
         }
 
+        public function getRow(): array {
+            return $this->row;
+        }
+
         public function getTable(): array {
             return $this->table;
         }
@@ -183,10 +187,6 @@
 
         public function getUnion(): array {
             return $this->union;
-        }
-
-        public function getValues(): array {
-            return $this->values;
         }
 
         public function getWheres(): array {
@@ -219,15 +219,15 @@
             return $this;
         }
 
-        public function insert(array $values): \Ada\Core\Db\Query {
-            if (!$values) {
+        public function insert(array $row): \Ada\Core\Db\Query {
+            if (!$row) {
                 throw new \Ada\Core\Exception(
                     'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
                     2
                 );
             }
-            $this->type   = 'insert';
-            $this->values = $values;
+            $this->type = 'insert';
+            $this->row  = $row;
             return $this;
         }
 
@@ -262,14 +262,24 @@
             string $operand,
             string $column2
         ): \Ada\Core\Db\Query {
+            return $this->onGroup(
+                $this->getDb()->getQuery()
+                    ->whereColumn(
+                        $column1,
+                        $this->validateOperand($operand),
+                        $column2
+                    )
+            );
+        }
+
+        public function onGroup(
+            \Ada\Core\Db\Query $subquery
+        ): \Ada\Core\Db\Query {
             if (!$this->joins) {
                 return $this;
             }
-            $operand       = $this->validateOperand($operand);
-            $this->joins[] = array_merge(
-                array_pop($this->joins),
-                get_defined_vars()
-            );
+            end($this->joins);
+            $this->joins[key($this->joins)]['ons'][] = $subquery->getWheres();
             return $this;
         }
 
@@ -555,15 +565,15 @@
             return $this;
         }
 
-        public function update(array $values): \Ada\Core\Db\Query {
-            if (!$values) {
+        public function update(array $row): \Ada\Core\Db\Query {
+            if (!$row) {
                 throw new \Ada\Core\Exception(
                     'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
                     5
                 );
             }
-            $this->type   = 'update';
-            $this->values = $values;
+            $this->type = 'update';
+            $this->row  = $row;
             return $this;
         }
 
@@ -799,6 +809,7 @@
             string $alias      = '',
             bool   $add_prefix = true
         ): array {
+            $ons           = [];
             $this->joins[] = get_defined_vars();
             return end($this->joins);
         }
@@ -884,20 +895,23 @@
         protected function getPartJoins(array $joins = []): string {
             $res = '';
             $db  = $this->getDb();
+            $ons = function (array $ons) {
+                $res = '';
+                $i   = 0;
+                foreach ($ons as $on) {
+                    $res .= (
+                        ($i ? ' AND ' : ' ON ') .
+                        $this->getPartWhereGroup($on)
+                    );
+                    $i++;
+                }
+                return $res;
+            };
             foreach ($joins ? $joins : $this->getJoins() as $join) {
                 $res .= (
                     ' ' . (!$join['type'] ? '' : $join['type'] . ' ') . 'JOIN ' .
                     $this->getPartTable($join) .
-                    (
-                        isset($join['column1'])
-                            ? (
-                                ' ON ' .
-                                $db->q($join['column1']) . ' ' .
-                                $join['operand']         . ' ' .
-                                $db->q($join['column2'])
-                            )
-                            : ''
-                    )
+                    $ons($join['ons'])
                 );
             }
             return $res;
@@ -966,13 +980,13 @@
         }
 
         protected function getQueryInsert(): string {
-            $db     = $this->getDb();
-            $values = $this->getValues();
+            $db  = $this->getDb();
+            $row = $this->getRow();
             return
                 'INSERT INTO '  . $this->getPartTable() . ' (' .
-                    implode(', ', array_map([$db, 'q'], array_keys($values))) .
+                    implode(', ', array_map([$db, 'q'], array_keys($row))) .
                 ') VALUES (' .
-                    implode(', ', array_map([$db, 'e'], $values)) .
+                    implode(', ', array_map([$db, 'e'], array_values($row))) .
                 ')';
         }
 
@@ -1008,7 +1022,7 @@
         protected function getQueryUpdate(): string {
             $res = 'UPDATE ' . $this->getPartTable() . ' SET ';
             $db  = $this->getDb();
-            foreach ($this->getValues() as $k => $v) {
+            foreach ($this->getRow() as $k => $v) {
                 $res .= $db->q($k) . ' = ' . $db->e($v) . ', ';
             }
             return rtrim($res, ', ') . ' ' . $this->getPartWhere();

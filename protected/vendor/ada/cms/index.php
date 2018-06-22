@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 21.06.2018
+    * @version   1.0.0 22.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -15,12 +15,6 @@
     require_once 'includes/autoload.php';
 
     //queries builder
-    //rewrite core queries
-    //LIKE
-    //->fetch
-    //->deleteRow(
-    //->insertRow(
-    //->updateRow(
     //on statement required ............................
     //
     //Sql class
@@ -44,8 +38,12 @@
 
     exit(var_dump(
 
-        $t,
-        $t->getColumns(true)
+        Db::init()->getQuery()
+            ->from('test', 't1')
+            ->join('test', 't2')
+            ->on('t1.id', '=', 't2.id')
+            ->on('t1.id', '>', 1)
+            ->toString()
 
     ));
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.06.2018
+    * @version   1.0.0 22.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -68,10 +68,6 @@
                 );
             }
             $this->setProps($params);
-        }
-
-        public function deleteRow(string $condition): bool {
-            return $this->getDb()->deleteRow($this->getName(), $condition);
         }
 
         public function getCharset(): string {
@@ -153,14 +149,6 @@
 
         public function getSchema(): string {
             return $this->schema;
-        }
-
-        public function insertRow(array $row): bool {
-            return $this->getDb()->insertRow($this->getName(), $row);
-        }
-
-        public function updateRow(array $row, string $condition): bool {
-            return $this->getDb()->updateRow($this->getName(), $row, $condition);
         }
 
         protected function extractKeys(): array {

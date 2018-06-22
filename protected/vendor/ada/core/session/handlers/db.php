@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 22.06.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -19,45 +19,52 @@
         }
 
         public function destroy($session_id): bool {
-            $db = $this->table->getDb();
-            return $db->deleteRow(
-                $this->table->getName(),
-                $db->q('id') . ' LIKE ' . $db->e($session_id)
-            );
+            return $this->getDb()->getQuery()
+                ->delete()
+                ->from($this->getTable()->getName())
+                ->where('id', '=', $session_id)
+                ->exec();
         }
 
         public function gc($maxlifetime): bool {
-            $db = $this->table->getDb();
-            return $db->deleteRow(
-                $this->table->getName(),
-                (
-                    $db->q('last_stop_datetime') .
-                    ' < ' .
-                    $db->e(
-                        \Ada\Core\DateTime::init(
-                            \Ada\Core\DateTime::init()->getTimestamp() - $maxlifetime
-                        )->format(
-                            $db->getDateFormat()
+            $db = $this->getDb();
+            return $db->getQuery()
+                ->delete()
+                    ->from($this->getTable()->getName())
+                    ->where(
+                        'last_stop_datetime',
+                        '<',
+                        (
+                            \Ada\Core\DateTime::init(
+                                \Ada\Core\DateTime::init()->getTimestamp()
+                                -
+                                $maxlifetime
+                            )->format(
+                                $db->getDateFormat()
+                            )
                         )
                     )
-                )
-            );
+                    ->exec();
+        }
+
+        public function getDb(): \Ada\Core\Db\Driver {
+            return $this->getTable()->getDb();
+        }
+
+        public function getTable(): \Ada\Core\Db\Table {
+            return $this->table;
         }
 
         public function read($session_id): string {
-            $db = $this->table->getDb();
-            return $db->fetchCell(
-                '
-                    SELECT ' . $db->q('data') . '
-                    FROM '   . $db->t($this->table->getName()) . '
-                    WHERE '  . $db->q('id') . ' LIKE ' . $db->e($session_id) . '
-                ',
-                'string'
-            );
+            return $this->getDb()->getQuery()
+                ->selectOne('data')
+                ->from($this->getTable()->getName())
+                ->where('id', '=', $session_id)
+                ->fetchCell();
         }
 
         public function write($session_id, $session_data): bool {
-            $db  = $this->table->getDb();
+            $db  = $this->getDb();
             $row = [
                 'id'                 => $session_id,
                 'data'               => $session_data,
@@ -66,14 +73,17 @@
                 )
             ];
             if (\Ada\Core\Session::init()->isNew()) {
-                return $db->insertRow($this->table->getName(), $row);
+                return $db->getQuery()
+                    ->insert($row)
+                    ->into($this->getTable()->getName())
+                    ->exec();
             }
             unset($row['id']);
-            return $db->updateRow(
-                $this->table->getName(),
-                $row,
-                $db->q('id') . ' LIKE ' . $db->e($session_id)
-            );
+            return $db->getQuery()
+                ->update($row)
+                ->table($this->getTable()->getName())
+                ->where('id', '=', $session_id)
+                ->exec();
         }
 
     }
