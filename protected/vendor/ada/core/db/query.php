@@ -53,16 +53,6 @@
             $this->db = $db;
         }
 
-        public function columns(array $columns = []): \Ada\Core\Db\Query {
-            $this->type = 'select';
-            foreach ($columns as $column) {
-                $args   = \Ada\Core\Type::set($column, 'array', false);
-                $method = 'addColumn' . (is_string(reset($args)) ? '' : 'Sub');
-                $this->$method(...$args);
-            }
-            return $this;
-        }
-
         public function delete(): \Ada\Core\Db\Query {
             $this->type = 'delete';
             return $this;
@@ -142,7 +132,16 @@
             string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
-            return $this->table(...func_get_args());
+            $this->addTable(...func_get_args());
+            return $this;
+        }
+
+        public function fromSub(
+            \Ada\Core\Db\Query $subquery,
+            string             $alias
+        ): \Ada\Core\Db\Query {
+            $this->addTable('', $alias, true, $subquery);
+            return $this;
         }
 
         public function getColumns(): array {
@@ -236,7 +235,8 @@
             string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
-            return $this->table(...func_get_args());
+            $this->addTable(...func_get_args());
+            return $this;
         }
 
         public function join(
@@ -262,7 +262,7 @@
             string $operand,
             string $column2
         ): \Ada\Core\Db\Query {
-            return $this->onGroup(
+            return $this->onMulti(
                 $this->getDb()->getQuery()
                     ->whereColumn(
                         $column1,
@@ -272,7 +272,7 @@
             );
         }
 
-        public function onGroup(
+        public function onMulti(
             \Ada\Core\Db\Query $subquery
         ): \Ada\Core\Db\Query {
             if (!$this->joins) {
@@ -364,7 +364,7 @@
             return $this;
         }
 
-        public function orGroup(
+        public function orMulti(
             \Ada\Core\Db\Query $subquery
         ): \Ada\Core\Db\Query {
             $this->addWhere(
@@ -517,7 +517,7 @@
 
         public function rightJoin(
             string $table_name,
-            string $alias      = '',
+            string $alias = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
             $this->addJoin('RIGHT', ...func_get_args());
@@ -525,21 +525,31 @@
         }
 
         public function select(array $columns = []): \Ada\Core\Db\Query {
-            return $this->columns($columns);
+            foreach ($columns as $column) {
+                $args = \Ada\Core\Type::set($column, 'array', false);
+                is_string(reset($args))
+                    ? $this->selectOne(...$args)
+                    : $this->selectSub(...$args);
+            }
+            return $this;
         }
 
         public function selectOne(
             string $name,
             string $alias = ''
         ): \Ada\Core\Db\Query {
-            return $this->columns([func_get_args()]);
+            $this->type = 'select';
+            $this->addColumn(...func_get_args());
+            return $this;
         }
 
         public function selectSub(
             \Ada\Core\Db\Query $subquery,
-            string             $alias
+            string             $alias = ''
         ): \Ada\Core\Db\Query {
-            return $this->columns([func_get_args()]);
+            $this->type = 'select';
+            $this->addColumn('', $alias, $subquery);
+            return $this;
         }
 
         public function table(
@@ -547,7 +557,7 @@
             string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
-            $this->table = get_defined_vars();
+            $this->addTable(...func_get_args());
             return $this;
         }
 
@@ -560,11 +570,7 @@
                 ' ',
                 $this->{'getQuery' . ucfirst($this->getType())}()
             );
-            return
-                substr($res, -1, 1) === ' ' &&
-                substr($res, -2, 1) !== ':'
-                    ? trim($res)
-                    : $res;
+            return substr($res, -2) === ': ' ? $res : trim($res);
         }
 
         public function union(array $queries): \Ada\Core\Db\Query {
@@ -675,7 +681,7 @@
             return $this;
         }
 
-        public function whereGroup(
+        public function whereMulti(
             \Ada\Core\Db\Query $subquery
         ): \Ada\Core\Db\Query {
             $this->addWhere(
@@ -799,20 +805,10 @@
         }
 
         protected function addColumn(
-            string $name,
-            string $alias = ''
+            string             $name,
+            string             $alias    = '',
+            \Ada\Core\Db\Query $subquery = null
         ): array {
-            $subquery        = null;
-            $this->columns[] = get_defined_vars();
-            return end($this->columns);
-        }
-
-        protected function addColumnSub(
-            \Ada\Core\Db\Query $subquery,
-            string             $alias
-        ): array {
-            $name            = '';
-            $subquery        = $subquery->toString();
             $this->columns[] = get_defined_vars();
             return end($this->columns);
         }
@@ -838,25 +834,36 @@
             bool   $add_prefix = true
         ): array {
             $ons           = [];
+            $subquery      = null;
             $this->joins[] = get_defined_vars();
             return end($this->joins);
         }
 
         protected function addOrderBy(
             string $column,
-            bool   $asc    = true
+            bool   $asc = true
         ): array {
             $this->orders_by[] = get_defined_vars();
             return end($this->orders_by);
         }
 
+        protected function addTable(
+            string             $table_name,
+            string             $alias      = '',
+            bool               $add_prefix = true,
+            \Ada\Core\Db\Query $subquery   = null
+        ): array {
+            $this->table = get_defined_vars();
+            return $this->getTable();
+        }
+
         protected function addUnion(
             array $queries,
-            bool  $all     = false
-        ) {
+            bool  $all = false
+        ): array {
             $this->type  = 'union';
             $this->union = get_defined_vars();
-            return end($this->union);
+            return $this->getUnion();
         }
 
         protected function addWhere(
@@ -878,27 +885,23 @@
             if (!$columns) {
                 return '*';
             }
-            $db = $this->getDb();
-            return implode(
-                ', ',
-                array_map(
-                    function($el) use (&$db) {
-                        return (
-                            isset($el['subquery'])
-                                ? (
-                                    '('. $el['subquery'] . ')' .
-                                    (
-                                        $el['alias'] === ''
-                                            ? ''
-                                            : ' AS ' . $db->q($el['alias'])
-                                    )
-                                )
-                                : $db->q($el['name'], $el['alias'])
-                        );
-                    },
-                    $columns
-                )
-            );
+            $res = '';
+            $db  = $this->getDb();
+            foreach ($columns as $column) {
+                $res .= (
+                    $column['subquery'] === null
+                        ? $db->q($column['name'], $column['alias'])
+                        : (
+                            '('. $column['subquery']->toString() . ')' .
+                            (
+                                $column['alias'] === ''
+                                    ? ''
+                                    : ' AS ' . $db->q($column['alias'])
+                            )
+                        )
+                ) . ', ';
+            }
+            return rtrim($res, ', ');
         }
 
         protected function getPartGroupsBy(array $groups_by = []): string {
@@ -974,11 +977,21 @@
         }
 
         protected function getPartTable(array $table = []): string {
+            $db    = $this->getDb();
             $table = $table ? $table : $this->getTable();
-            return $this->getDb()->{$table['add_prefix'] ? 't' : 'q'}(
-                $table['table_name'],
-                $table['alias']
-            );
+            if ($table['subquery'] === null) {
+                return $db->{$table['add_prefix'] ? 't' : 'q'}(
+                    $table['table_name'],
+                    $table['alias']
+                );
+            }
+            return
+                '(' . $table['subquery']->toString() . ')' .
+                (
+                    $table['alias'] === ''
+                        ? ''
+                        : ' AS ' . $db->q($table['alias'])
+                );
         }
 
         protected function getPartWhere(

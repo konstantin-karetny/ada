@@ -14,8 +14,6 @@
 
     require_once 'includes/autoload.php';
 
-    //queries builder
-    //
     //Sql class
     //Str, Arr and Obj classes
 
@@ -36,13 +34,7 @@
 
     exit(var_dump(
 
-        Db::init()->getQuery()
-            ->select([
-                'id',
-                [Db::init()->getQuery()->selectOne('MAX(id)')->from('test')]
-            ])
-            ->from('test')
-            ->toString()
+        true
 
     ));
 
