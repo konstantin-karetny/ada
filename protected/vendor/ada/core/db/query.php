@@ -370,7 +370,7 @@
             $this->addWhere(
                 '',
                 '',
-                $this->getPartWhereGroup($subquery->getWheres()),
+                '(' . $this->getPartWhere($subquery->getWheres(), false) . ')',
                 true
             );
             return $this;
@@ -669,7 +669,7 @@
             $this->addWhere(
                 '',
                 '',
-                $this->getPartWhereGroup($subquery->getWheres())
+                '(' . $this->getPartWhere($subquery->getWheres(), false) . ')'
             );
             return $this;
         }
@@ -901,7 +901,7 @@
                 foreach ($ons as $on) {
                     $res .= (
                         ($i ? ' AND ' : ' ON ') .
-                        $this->getPartWhereGroup($on)
+                        $this->getPartWhere($on, false)
                     );
                     $i++;
                 }
@@ -942,17 +942,24 @@
             );
         }
 
-        protected function getPartWhere(array $wheres = []): string {
+        protected function getPartWhere(
+            array $wheres = [],
+            bool  $intro  = true
+        ): string {
             $res    = '';
             $i      = 0;
             $db     = $this->getDb();
             $wheres = $wheres ? $wheres : $this->getWheres();
             if (!$wheres || !empty($wheres[0]['or'])) {
-                $res .= 'WHERE TRUE';
+                $res .= $intro ? 'WHERE TRUE' : '';
             }
             foreach ($wheres as $where) {
                 $res .= (
-                    ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' ' .
+                    (
+                        !$i && !$intro
+                            ? ''
+                            : ' ' . ($where['or'] ? 'OR' : ($i ? 'AND' : 'WHERE')) . ' '
+                    ) .
                     (!$where['column'] ? '' : $db->q($where['column'])  . ' ') .
                     $where['operand'] . ' ' .
                     $where['value']
@@ -960,17 +967,6 @@
                 $i++;
             }
             return $res;
-        }
-
-        protected function getPartWhereGroup(array $wheres): string {
-            return
-                '(' .
-                    preg_replace(
-                        '/^\s*WHERE\s*/',
-                        '',
-                        $this->getPartWhere($wheres)
-                    ) .
-                ')';
         }
 
         protected function getQueryDelete(): string {

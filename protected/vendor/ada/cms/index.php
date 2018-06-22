@@ -39,10 +39,8 @@
     exit(var_dump(
 
         Db::init()->getQuery()
-            ->from('test', 't1')
-            ->join('test', 't2')
-            ->on('t1.id', '=', 't2.id')
-            ->on('t1.id', '>', 1)
+            ->columns()
+            ->table('test')
             ->toString()
 
     ));
