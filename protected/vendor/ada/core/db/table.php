@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.06.2018
+    * @version   1.0.0 05.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -154,11 +154,7 @@
         protected function extractKeys(): array {
             $res = [];
             $db  = $this->getDb();
-            foreach ($db->fetchRows('
-                SHOW INDEX
-                FROM '  . $db->t($this->getName()) . '
-                WHERE ' . $db->q('Non_unique')     . ' = 0
-            ') as $row) {
+            foreach ($db->fetchRows(Sql\Table::init($db)->indexes($this)) as $row) {
                 $key = trim($row['Key_name']);
                 $res[
                     \Ada\Core\Clean::cmd($key) == 'primary'
@@ -181,8 +177,8 @@
                 ->from('information_schema.TABLES', 't', false)
                 ->join('information_schema.COLLATION_CHARACTER_SET_APPLICABILITY', 'ccsa', false)
                 ->on('ccsa.COLLATION_NAME', '=', 't.TABLE_COLLATION')
-                ->where('t.TABLE_SCHEMA', '=', $db->getName())
-                ->where('t.TABLE_NAME',   '=', $this->getName(true, false))
+                ->where('t.TABLE_SCHEMA',   '=', $db->getName())
+                ->where('t.TABLE_NAME',     '=', $this->getName(true, false))
                 ->fetchRow();
             return
                 $row

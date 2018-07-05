@@ -14,7 +14,6 @@
 
     require_once 'includes/autoload.php';
 
-    //Sql class
     //Str, Arr and Obj classes
 
 
@@ -31,10 +30,9 @@
     ]);
 
 
-
     exit(var_dump(
 
-        true
+        Obj::getBasename(Db::init(1))
 
     ));
 

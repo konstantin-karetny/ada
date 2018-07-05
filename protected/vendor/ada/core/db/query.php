@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.06.2018
+    * @version   1.0.0 05.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -517,7 +517,7 @@
 
         public function rightJoin(
             string $table_name,
-            string $alias = '',
+            string $alias      = '',
             bool   $add_prefix = true
         ): \Ada\Core\Db\Query {
             $this->addJoin('RIGHT', ...func_get_args());
@@ -565,12 +565,12 @@
             if ($this->getType() != 'union' && !$this->getTable()) {
                 throw new \Ada\Core\Exception('No table specified', 4);
             }
-            $res = preg_replace(
-                '/\s+/',
-                ' ',
-                $this->{'getQuery' . ucfirst($this->getType())}()
+            return ltrim(
+                \Ada\Core\Str::toOneLine(
+                    $this->{'getQuery' . ucfirst($this->getType())}(),
+                    false
+                )
             );
-            return substr($res, -2) === ': ' ? $res : trim($res);
         }
 
         public function union(array $queries): \Ada\Core\Db\Query {
@@ -1077,7 +1077,7 @@
         }
 
         protected function validateOperand(string $operand): string {
-            $res = strtoupper(trim(preg_replace('/\s+/', ' ', $operand)));
+            $res = strtoupper(\Ada\Core\Str::toOneLine($operand));
             if (!in_array($res, static::OPERANDS)) {
                 throw new \Ada\Core\Exception(
                     'Unknown operand \'' . $operand . '\'',

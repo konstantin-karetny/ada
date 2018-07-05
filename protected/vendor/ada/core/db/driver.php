@@ -200,15 +200,13 @@
                     preg_replace(
                         [
                             '/\\' . static::PREFIX_ALIAS . '/',
-                            '/\s+/',
                             $pattern
                         ],
                         [
                             $this->getPrefix(),
-                            ' ',
                             ' ? '
                         ],
-                        $query
+                        \Ada\Core\Str::toOneLine($query, false)
                     )
                 )
             );
@@ -222,7 +220,7 @@
                     (
                         'Failed to execute a database query. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
+                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
                     ),
                     7
                 );
@@ -262,7 +260,7 @@
                 throw new \Ada\Core\Exception(
                     (
                         'Unknown column \'' . $column . '\'. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
+                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
                     ),
                     8
                 );
@@ -286,7 +284,7 @@
                     (
                         'Failed to fetch data from the database. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
+                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
                     ),
                     9
                 );
@@ -327,7 +325,7 @@
                     (
                         'Failed to fetch data from the database. ' .
                         $e->getMessage() . '. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
+                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
                     ),
                     10
                 );
@@ -345,7 +343,7 @@
                 throw new \Ada\Core\Exception(
                     (
                         'Unknown key \'' . $key . '\'. ' .
-                        'Query: \'' . preg_replace('/\s+/', ' ', $query) . '\''
+                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
                     ),
                     11
                 );

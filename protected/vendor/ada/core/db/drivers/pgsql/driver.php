@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.05.2018
+    * @version   1.0.0 05.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -20,10 +20,11 @@
             $user        = 'postgres';
 
         protected function extractParams(): array {
-            $search_path = explode(' ', $this->fetchCell('SHOW search_path'));
+            $sql         = \Ada\Core\Db\Sql\PgSQL\Driver::init($this);
+            $search_path = explode(' ', $this->fetchCell($sql->searchPath()));
             return [
-                'charset'   => trim($this->fetchCell('SHOW SERVER_ENCODING')),
-                'collation' => trim($this->fetchCell('SHOW LC_COLLATE')),
+                'charset'   => trim($this->fetchCell($sql->serverEncoding())),
+                'collation' => trim($this->fetchCell($sql->lcСollate())),
                 'schema'    => trim(end($search_path)),
                 'version'   => trim($this->getAttribute(\PDO::ATTR_SERVER_VERSION))
             ];
