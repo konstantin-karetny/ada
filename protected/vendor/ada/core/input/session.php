@@ -1,13 +1,13 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Input;
 
     class Session extends Session\Input {
 
@@ -44,7 +44,7 @@
         }
 
         public static function getIniParam(string $name, $default = null) {
-            return static::getIniParams()[Clean::cmd($name)] ?? $default;
+            return static::getIniParams()[\Ada\Core\Clean::cmd($name)] ?? $default;
         }
 
         public static function getIniParams(): array {
@@ -56,7 +56,7 @@
             return parent::getStorage();
         }
 
-        public static function init(): \Ada\Core\Session {
+        public static function init(): \Ada\Core\Input\Session {
             static $res;
             return $res ?? $res = new static;
         }
@@ -66,7 +66,7 @@
                 return false;
             }
             foreach ($params as $k => $v) {
-                $k = Clean::cmd($k);
+                $k = \Ada\Core\Clean::cmd($k);
                 switch ($k) {
                     case 'handler':
                         if (!session_set_save_handler($v)) {
@@ -75,14 +75,14 @@
                         static::$handler = $v;
                         break;
                     case 'ini_params':
-                        foreach (Type::set($v, 'array') as $kk => $vv) {
-                            $kk = Clean::cmd($kk);
+                        foreach (\Ada\Core\Types::set($v, 'array') as $kk => $vv) {
+                            $kk = \Ada\Core\Clean::cmd($kk);
                             if (!key_exists($kk, static::getIniParams())) {
                                 continue;
                             }
-                            static::$ini_params[$kk] = Type::set(
+                            static::$ini_params[$kk] = \Ada\Core\Types::set(
                                 $vv,
-                                Type::get(static::getIniParam($kk)),
+                                \Ada\Core\Types::get(static::getIniParam($kk)),
                                 false
                             );
                         }
@@ -93,12 +93,12 @@
         }
 
         protected function __construct() {
-            static::$system_namespace = Str::hash(__FILE__);
+            static::$system_namespace = \Ada\Core\Type\Str::init(__FILE__)->hash();
             static::$ini_params       = array_merge(
                 static::getIniParams(),
                 [
-                    'cookie_secure' => Url::init()->isSSL(),
-                    'save_path'     => Clean::path(session_save_path())
+                    'cookie_secure' => \Ada\Core\Url::init()->isSSL(),
+                    'save_path'     => \Ada\Core\Clean::path(session_save_path())
                 ]
             );
             session_name($this->generateName());
@@ -145,7 +145,7 @@
                         static::getIniParam('gc_maxlifetime')
                     )
                     <
-                    DateTime::init()->getTimestamp()
+                    \Ada\Core\DateTime::init()->getTimestamp()
                 ) ||
                 (
                     static::getString(
@@ -154,7 +154,7 @@
                         static::$system_namespace
                     )
                     !=
-                    Client::init()->getSignature()
+                    \Ada\Core\Client::init()->getSignature()
                 )
             ) {
                 return false;
@@ -261,12 +261,12 @@
             }
             static::set(
                 'last_stop_datetime',
-                DateTime::init()->format(),
+                \Ada\Core\DateTime::init()->format(),
                 static::$system_namespace
             );
             static::set(
                 'browser_signature',
-                Client::init()->getSignature(),
+                \Ada\Core\Client::init()->getSignature(),
                 static::$system_namespace
             );
             session_write_close();
@@ -275,11 +275,11 @@
         }
 
         protected function generateName(): string {
-            return Str::hash(__DIR__);
+            return \Ada\Core\Type\Str::init(__DIR__)->hash();
         }
 
         protected function getFile(): File {
-            return File::init(
+            return \Ada\Core\File::init(
                 static::getIniParam('save_path') . '/sess_' . $this->getId()
             );
         }

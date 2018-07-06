@@ -1,13 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
     namespace Ada\Core;
+
+    use Ada\Core\Input\Server as Server;
 
     class Client extends Proto {
 
@@ -84,9 +86,10 @@
         ): string {
             $res = '';
             foreach ($parts as $part) {
-                $res .= $part . $this->{'get' . Str::toCamelCase($part)}();
+                $method = 'get' . Type\Str::init($part)->toCamelCase();
+                $res   .= $part . $this->$method();
             }
-            return Str::hash($res);
+            return Type\Str::init($res)->hash();
         }
 
         public function setAuth(string $auth) {

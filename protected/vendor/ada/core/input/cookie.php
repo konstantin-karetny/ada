@@ -1,22 +1,22 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Input;
 
     class Cookie extends Input {
 
         public static function drop(string $name): bool {
-            $name = Clean::cmd($name);
-            if (!isset($_COOKIE[$name])) {
+            $name = \Ada\Core\Clean::cmd($name);
+            if (!isset(static::getStorage()[$name])) {
                 return true;
             }
-            unset($_COOKIE[$name]);
+            unset(static::getStorage()[$name]);
             return (bool) setcookie($name, '', time() - 1);
         }
 
@@ -25,8 +25,8 @@
             string $filter,
                    $default = ''
         ) {
-            return Clean::value(
-                $_COOKIE[Clean::cmd($name)] ?? $default,
+            return \Ada\Core\Clean::value(
+                static::getStorage()[\Ada\Core\Clean::cmd($name)] ?? $default,
                 $filter
             );
         }
@@ -38,15 +38,15 @@
             string $path     = '',
             bool   $httponly = false
         ): bool {
-            $name           = Clean::cmd($name);
-            $value          = Type::set($value);
-            $_COOKIE[$name] = $value;
+            $name                       = \Ada\Core\Clean::cmd($name);
+            $value                      = \Ada\Core\Types::set($value);
+            static::getStorage()[$name] = $value;
             return (bool) setcookie(
                 $name,
                 $value,
                 $expire,
                 $path,
-                Url::init()->isSSL(),
+                \Ada\Core\Url::init()->isSSL(),
                 $httponly
             );
         }

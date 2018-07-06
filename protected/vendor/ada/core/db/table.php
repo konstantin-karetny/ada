@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 05.07.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -60,10 +60,10 @@
             $params           = $this->extractParams();
             if (!$params) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'No table \''    . $this->getName()          . '\' ' .
-                        'in database \'' . $this->getDb()->getName() . '\''
-                    ),
+                    '
+                        No table \''    . $this->getName()          . '\'
+                        in database \'' . $this->getDb()->getName() . '\'
+                    ',
                     1
                 );
             }

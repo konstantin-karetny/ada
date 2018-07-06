@@ -82,7 +82,10 @@
         public static function value($value, string $filter) {
             $method = static::cmd($filter);
             if (!method_exists(__CLASS__, $method)) {
-                throw new Exception('Wrong filter name \'' . $filter . '\'', 1);
+                $method = Types::getFullName($method);
+            }
+            if (!method_exists(__CLASS__, $method)) {
+                throw new Exception('Unknown filter \'' . $filter . '\'', 1);
             }
             return static::$method($value);
         }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -55,11 +55,11 @@
             $params      = $this->extractParams();
             if (!$params) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'No column \''   . $this->getName()          . '\' ' .
-                        'in table \''    . $table->getName()         . '\' ' .
-                        'of database \'' . $this->getDb()->getName() . '\''
-                    ),
+                    '
+                        No column \''   . $this->getName()          . '\'
+                        in table \''    . $table->getName()         . '\'
+                        of database \'' . $this->getDb()->getName() . '\'
+                    ',
                     1
                 );
             }
@@ -139,7 +139,7 @@
             $res       = [
                 'charset'           => trim($row['CHARACTER_SET_NAME']),
                 'collation'         => trim($row['COLLATION_NAME']),
-                'default_value'     => \Ada\Core\Type::set(trim($row['COLUMN_DEFAULT'])),
+                'default_value'     => \Ada\Core\Types::set(trim($row['COLUMN_DEFAULT'])),
                 'is_auto_increment' => strpos(\Ada\Core\Clean::cmd($row['EXTRA']), 'auto_increment') !== false,
                 'is_nullable'       => \Ada\Core\Clean::cmd($row['IS_NULLABLE']) == 'yes',
                 'name'              => trim($row['COLUMN_NAME']),

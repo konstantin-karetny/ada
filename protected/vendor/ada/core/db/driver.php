@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.06.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -64,9 +64,9 @@
                 $params,
                 array_flip(static::INIT_PARAMS)
             ) as $k => $v) {
-                $this->$k = \Ada\Core\Type::set(
+                $this->$k = \Ada\Core\Types::set(
                     $v,
-                    \Ada\Core\Type::get($this->$k)
+                    \Ada\Core\Types::get($this->$k)
                 );
             }
             $this->setProps($this->extractParams());
@@ -78,10 +78,10 @@
                 )
             ) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Version of the driver ' . $this->getVersion() .
-                        ' less than required '   . $this->getMinVersion()
-                    ),
+                    '
+                        Version of the driver ' . $this->getVersion()    . '
+                        less than required '    . $this->getMinVersion() . '
+                    ',
                     1
                 );
             }
@@ -167,15 +167,14 @@
             if (is_numeric($value)) {
                 return $value * 1;
             }
-            return (
+            return
                 ' ' . static::ESC_TAG .
                 str_replace(
                     static::ESC_TAG,
                     '\\' . static::ESC_TAG . '\\',
                     $value
                 ) .
-                static::ESC_TAG . ' '
-            );
+                static::ESC_TAG . ' ';
         }
 
         public function exec(string $query): bool {
@@ -206,7 +205,7 @@
                             $this->getPrefix(),
                             ' ? '
                         ],
-                        \Ada\Core\Str::toOneLine($query, false)
+                        \Ada\Core\Type\Str::init($query)->oneLine(false)
                     )
                 )
             );
@@ -217,11 +216,10 @@
                 $res = (bool) $this->stmt->execute($inp_params);
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Failed to execute a database query. ' .
-                        $e->getMessage() . '. ' .
-                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
-                    ),
+                    '
+                        Failed to execute a database query. ' . $e->getMessage() . '.
+                        Query: \'' . \Ada\Core\Type\Str::init($query)->oneLine() . '\'
+                    ',
                     7
                 );
             }
@@ -239,7 +237,7 @@
         ) {
             $row = $this->fetchRow($query, \PDO::FETCH_NUM, []);
             $res = reset($row);
-            return \Ada\Core\Type::set(
+            return \Ada\Core\Types::set(
                 $res === false ? $default : $res,
                 $type
             );
@@ -258,10 +256,10 @@
             $column = $column === '' ? array_keys(reset($res))[0] : $column;
             if (!key_exists($column, reset($res))) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Unknown column \'' . $column . '\'. ' .
-                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
-                    ),
+                    '
+                        Unknown column \'' . $column . '\'.
+                        Query: \'' . \Ada\Core\Type\Str::init($query)->oneLine() . '\'
+                    ',
                     8
                 );
             }
@@ -281,11 +279,10 @@
                 $res = $this->stmt->fetch($fetch_style);
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Failed to fetch data from the database. ' .
-                        $e->getMessage() . '. ' .
-                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
-                    ),
+                    '
+                        Failed to fetch data from the database. ' . $e->getMessage() . '.
+                        Query: \''     . \Ada\Core\Type\Str::init($query)->oneLine() . '\'
+                    ',
                     9
                 );
             }
@@ -304,7 +301,7 @@
                 default:
                     $type = 'auto';
             }
-            return \Ada\Core\Type::set(
+            return \Ada\Core\Types::set(
                 $res === false ? $default : $res,
                 $type,
                 false
@@ -322,16 +319,15 @@
                 $res = $this->stmt->fetchAll($fetch_style);
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Failed to fetch data from the database. ' .
-                        $e->getMessage() . '. ' .
-                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
-                    ),
+                    '
+                        Failed to fetch data from the database. ' . $e->getMessage() . '.
+                        Query: \''     . \Ada\Core\Type\Str::init($query)->oneLine() . '\'
+                    ',
                     10
                 );
             }
             $this->stmt->closeCursor();
-            $res = \Ada\Core\Type::set(
+            $res = \Ada\Core\Types::set(
                 $res === false ? $default : $res,
                 'auto',
                 true
@@ -341,10 +337,10 @@
             }
             if (!key_exists($key, (array) reset($res))) {
                 throw new \Ada\Core\Exception(
-                    (
-                        'Unknown key \'' . $key . '\'. ' .
-                        'Query: \'' . \Ada\Core\Str::toOneLine($query) . '\''
-                    ),
+                    '
+                        Unknown key \'' . $key . '\'.
+                        Query: \'' . \Ada\Core\Type\Str::init($query)->oneLine() . '\'
+                    ',
                     11
                 );
             }
@@ -363,10 +359,13 @@
                 $this->connect();
             }
             try {
-                return \Ada\Core\Type::set($this->pdo->getAttribute($name));
+                return \Ada\Core\Types::set($this->pdo->getAttribute($name));
             } catch (\Throwable $e) {
                 throw new \Ada\Core\Exception(
-                    'Failed to get PDO attribute ' . $name . '. ' . $e->getMessage(),
+                    '
+                        Failed to get PDO attribute \'' . $name . '\'. ' .
+                        $e->getMessage() . '
+                    ',
                     12
                 );
             }
@@ -519,7 +518,7 @@
         }
 
         public function lastInsertId() {
-            return \Ada\Core\Type::set(
+            return \Ada\Core\Types::set(
                 $this->isConnected() ? $this->pdo->lastInsertId() : 0
             );
         }
@@ -527,7 +526,7 @@
         public function q(string $name, string $alias = ''): string {
             $q   = $this->getQuote();
             $res = str_replace('.', $q . '.' . $q, $name);
-            return (
+            return
                 (
                     preg_match('/\(.+\)/', $res)
                         ? str_replace(
@@ -547,8 +546,7 @@
                     $alias === ''
                         ? ''
                         : ' AS ' . $q . $alias . $q
-                )
-            );
+                );
         }
 
         public function qs(array $names): string {

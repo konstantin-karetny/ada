@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,7 +13,7 @@
 
         protected function dropProps() {
             foreach ($this as $k => $v) {
-                $this->$k = Type::INITIAL_VALUES[Type::get($v)];
+                $this->$k = Types::INITIAL_VALUES[Types::get($v)];
             }
         }
 
@@ -23,11 +23,11 @@
                 if (in_array($k, $except)) {
                     continue;
                 }
-                $getter  = 'get' . \Ada\Core\Str::toCamelCase($k);
+                $getter  = 'get' . Type\Str::init($k)->toCamelCase();
                 $res[$k] = (
                     method_exists($this, $getter)
                         ? $this->$getter()
-                        : Type::set($v)
+                        : Types::set($v)
                 );
             }
             return $res;
@@ -38,12 +38,12 @@
                 if (!property_exists($this, $k)) {
                     continue;
                 }
-                $setter = 'set' . \Ada\Core\Str::toCamelCase($k);
+                $setter = 'set' . Type\Str::init($k)->toCamelCase();
                 if (method_exists($this, $setter)) {
                     $this->$setter($v);
                     continue;
                 }
-                $this->$k = \Ada\Core\Type::set($v);
+                $this->$k = \Ada\Core\Types::set($v);
             }
         }
 

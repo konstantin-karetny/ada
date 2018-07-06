@@ -1,30 +1,26 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 14.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Type;
 
-    class Arr extends Proto {
+    class Arr extends Type {
 
         protected
-            $array = [];
+            $subj = [];
 
-        public static function init(array $array = []): \Ada\Core\Arr {
+        public static function init(array $array = []): \Ada\Core\Type\Arr {
             return new static(...func_get_args());
-        }
-
-        public function __construct(array $array = []) {
-            $this->array = $array;
         }
 
         public function diffRecursive(array $array): array {
             $res = [];
-            foreach ($this->toArray() as $k => $v) {
+            foreach ($this->getSubj() as $k => $v) {
                 if (array_key_exists($k, $array)) {
                     if (is_array($v)) {
                         $v_diffs = static::init($v)->diffRecursive($array[$k]);
@@ -43,12 +39,20 @@
             return $res;
         }
 
+        public function getInitialValue(): array {
+            return parent::getInitialValue();
+        }
+
+        public function getSubj(): array {
+            return parent::getSubj();
+        }
+
         public function keysExist(array $keys): bool {
-            return !array_diff_key(array_flip($keys), $this->toArray());
+            return !array_diff_key(array_flip($keys), $this->getSubj());
         }
 
         public function mergeRecursive(array $array): array {
-            $res = $this->toArray();
+            $res = $this->getSubj();
             foreach ($array as $key => &$value) {
                 if (
                     is_array($value)  &&
@@ -62,10 +66,6 @@
                 }
             }
             return $res;
-        }
-
-        public function toArray(): array {
-            return $this->array;
         }
 
     }

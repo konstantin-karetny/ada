@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 23.04.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Input;
 
-    class UploadedFile extends Proto {
+    class File extends \Ada\Core\Proto {
 
         const
             ERRORS      = [
@@ -35,16 +35,16 @@
             $path       = '',
             $size       = 0;
 
-        public static function init(array $params): \Ada\Core\UploadedFile {
+        public static function init(array $params): \Ada\Core\Input\File {
             return new static($params);
         }
 
         public function __construct(array $params) {
             foreach ($params as $k => $v) {
-                $v = Type::set($v);
+                $v = \Ada\Core\Types::set($v);
                 switch ($k) {
                     case 'name':
-                        $this->basename   = Path::clean($v, true);
+                        $this->basename   = \Ada\Core\Path::clean($v, true);
                         break;
                     case 'type':
                         $this->mime_type  = $v;
@@ -59,7 +59,7 @@
                         $this->$k = $v;
                 }
             }
-            $this->mime_type = File::init($this->path)->getMimeType($this->mime_type);
+            $this->mime_type = \Ada\Core\File::init($this->path)->getMimeType($this->mime_type);
             if ($this->error_code) {
                 $this->error_msg = (
                     static::ERRORS[$this->error_code] ?? static::ERRORS['unknown']
@@ -80,7 +80,7 @@
         }
 
         public function getExt(): string {
-            return File::init($this->basename)->getExt();
+            return \Ada\Core\File::init($this->basename)->getExt();
         }
 
         public function getMimeType(): string {
@@ -88,7 +88,7 @@
         }
 
         public function getName(): string {
-            return File::init($this->basename)->getName();
+            return \Ada\Core\File::init($this->basename)->getName();
         }
 
         public function getPath(): string {
@@ -106,8 +106,10 @@
         public function save(
             string $path,
             bool   $validate_ext = true
-        ): File {
-            $res = File::init(Clean::path($path, $validate_ext));
+        ): \Ada\Core\File {
+            $res = \Ada\Core\File::init(
+                \Ada\Core\Clean::path($path, $validate_ext)
+            );
             $dir = $res->getDir();
             if (
                 $this->getErrorCode() ||

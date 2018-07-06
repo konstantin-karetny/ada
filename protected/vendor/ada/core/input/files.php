@@ -1,21 +1,21 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Input;
 
-    class Files extends Proto {
+    class Files extends \Ada\Core\Proto {
 
         public static function get(
             string $name,
             array  $default = []
         ): array {
-            $name = Clean::cmd($name);
+            $name = \Ada\Core\Clean::cmd($name);
             if (!isset($_FILES[$name])) {
                 return $default;
             }
@@ -27,7 +27,7 @@
             }
             return array_map(
                 function($el) {
-                    return UploadedFile::init($el);
+                    return \Ada\Core\File::init($el['tmp_name']);
                 },
                 $res
             );

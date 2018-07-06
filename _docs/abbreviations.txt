@@ -1,0 +1,3 @@
+subj = subject
+val  = value
+var  = variable

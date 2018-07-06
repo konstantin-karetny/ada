@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 14.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,10 +22,7 @@
                 parent::__construct($timezone_name);
             } catch (\Throwable $e) {
                 throw new Exception(
-                    (
-                        'Wrong time zone \'' . $timezone_name . '\'. ' .
-                        $e->getMessage()
-                    ),
+                    'Wrong time zone \'' . $timezone_name . '\'. ' . $e->getMessage(),
                     1
                 );
             }

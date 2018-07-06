@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,7 +9,7 @@
 
     namespace Ada\Core;
 
-    class Type extends Proto {
+    class Types extends Proto {
 
         const
             INITIAL_VALUES = [
@@ -23,26 +23,29 @@
                 'string'   => ''
             ],
             NAMES          = [
-                'array'    => ['array'],
+                'array'    => ['array', 'arr'],
                 'bool'     => ['bool', 'boolean'],
                 'float'    => ['float', 'double'],
                 'int'      => ['int', 'integer'],
                 'null'     => ['null'],
-                'object'   => ['object'],
+                'object'   => ['object', 'obj'],
                 'resource' => ['resource'],
-                'string'   => ['string']
+                'string'   => ['string', 'str']
             ];
 
         public static function get($val): string {
             if (is_string($val) && is_numeric($val)) {
                 $val = 1 * $val;
             }
-            $type = Clean::cmd(gettype($val));
-            return key(
+            return static::getFullName(gettype($val));
+        }
+
+        public static function getFullName(string $alias): string {
+            return (string) key(
                 array_filter(
                     static::NAMES,
-                    function($el) use($type) {
-                        return in_array($type, $el);
+                    function($el) use($alias) {
+                        return in_array(Clean::cmd($alias), $el);
                     }
                 )
             );
@@ -69,12 +72,16 @@
                     return $val;
                 }
             }
-            $type = Clean::cmd($type);
-            if ($type == 'auto') {
-                $type = static::get($val);
+            $type_full = (
+                Clean::cmd($type) === 'auto'
+                    ? static::get($val)
+                    : static::getFullName($type)
+            );
+            if(!$type_full) {
+                throw new Exception('Unknown type \'' . $type . '\'', 1);
             }
-            if (!@settype($val, $type)) {
-                throw new Exception('Failed to set type \'' . $type . '\'', 1);
+            if (!@settype($val, $type_full)) {
+                throw new Exception('Failed to set type \'' . $type . '\'', 2);
             }
             return $val;
         }

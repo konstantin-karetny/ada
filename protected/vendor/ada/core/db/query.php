@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 05.07.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -346,7 +346,7 @@
         public function orderBy(array $columns): \Ada\Core\Db\Query {
             foreach ($columns as $column) {
                 $this->addOrderBy(
-                    ...\Ada\Core\Type::set($column, 'array', false)
+                    ...\Ada\Core\Types::set($column, 'array', false)
                 );
             }
             return $this;
@@ -526,7 +526,7 @@
 
         public function select(array $columns = []): \Ada\Core\Db\Query {
             foreach ($columns as $column) {
-                $args = \Ada\Core\Type::set($column, 'array', false);
+                $args = \Ada\Core\Types::set($column, 'array', false);
                 is_string(reset($args))
                     ? $this->selectOne(...$args)
                     : $this->selectSub(...$args);
@@ -566,10 +566,9 @@
                 throw new \Ada\Core\Exception('No table specified', 4);
             }
             return ltrim(
-                \Ada\Core\Str::toOneLine(
-                    $this->{'getQuery' . ucfirst($this->getType())}(),
-                    false
-                )
+                \Ada\Core\Type\Str::init(
+                    $this->{'getQuery' . ucfirst($this->getType())}()
+                )->oneLine(false)
             );
         }
 
@@ -1077,7 +1076,7 @@
         }
 
         protected function validateOperand(string $operand): string {
-            $res = strtoupper(\Ada\Core\Str::toOneLine($operand));
+            $res = strtoupper(\Ada\Core\Type\Str::init($operand)->oneLine());
             if (!in_array($res, static::OPERANDS)) {
                 throw new \Ada\Core\Exception(
                     'Unknown operand \'' . $operand . '\'',

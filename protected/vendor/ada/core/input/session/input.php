@@ -1,21 +1,21 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Session;
+    namespace Ada\Core\Input\Session;
 
-    use Ada\Core\Session as Session;
+    use Ada\Core\Input\Session as Session;
 
-    class Input extends \Ada\Core\Input {
+    class Input extends \Ada\Core\Input\Input {
 
         public static function drop(
             string $name,
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): bool {
             $session = Session::init();
             if (!$session->start()) {
@@ -37,7 +37,7 @@
             string $name,
             string $filter,
                    $default   = null,
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ) {
             $session = Session::init();
             return \Ada\Core\Clean::value(
@@ -58,10 +58,19 @@
             string $name,
             string $filter    = '',
             array  $default   = [],
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): array {
+            if (in_array($filter, \Ada\Core\Types::NAMES['object'])) {
+                throw new \Ada\Core\Exception(
+                    '
+                        Wrong filter \'' . $filter . '\'. ' .
+                        static::getStorageName() . ' array can not contain objects
+                    ',
+                    1
+                );
+            }
             $session = Session::init();
-            $res     = \Ada\Core\Type::set(
+            $res     = \Ada\Core\Types::set(
                 $session->start(true)
                     ? (
                         $_SESSION[
@@ -78,7 +87,7 @@
         public static function getBase64(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'base64', $default, $namespace);
         }
@@ -86,7 +95,7 @@
         public static function getBool(
             string $name,
             bool   $default   = false,
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): bool {
             return Session::get($name, 'bool', $default, $namespace);
         }
@@ -94,7 +103,7 @@
         public static function getCmd(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'cmd', $default, $namespace);
         }
@@ -102,7 +111,7 @@
         public static function getEmail(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'email', $default, $namespace);
         }
@@ -110,7 +119,7 @@
         public static function getFloat(
             string $name,
             float  $default   = 0,
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): float {
             return Session::get($name, 'float', $default, $namespace);
         }
@@ -118,7 +127,7 @@
         public static function getHtml(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'html', $default, $namespace);
         }
@@ -126,7 +135,7 @@
         public static function getInt(
             string $name,
             int    $default   = 0,
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): int {
             return Session::get($name, 'int', $default, $namespace);
         }
@@ -134,7 +143,7 @@
         public static function getPath(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'path', $default, $namespace);
         }
@@ -142,7 +151,7 @@
         public static function getString(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'string', $default, $namespace);
         }
@@ -150,7 +159,7 @@
         public static function getUrl(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'url', $default, $namespace);
         }
@@ -158,7 +167,7 @@
         public static function getWord(
             string $name,
             string $default   = '',
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): string {
             return Session::get($name, 'word', $default, $namespace);
         }
@@ -166,7 +175,7 @@
         public static function set(
             string $name,
                    $value     = null,
-            string $namespace = \Ada\Core\Session::DEFAULT_NAMESPACE
+            string $namespace = \Ada\Core\Input\Session::DEFAULT_NAMESPACE
         ): bool {
             $session = Session::init();
             if (!$session->start()) {
@@ -176,7 +185,7 @@
                 $session->namespaceFull($namespace)
             ][
                 \Ada\Core\Clean::cmd($name)
-            ] = \Ada\Core\Type::set($value);
+            ] = \Ada\Core\Types::set($value);
             return true;
         }
 

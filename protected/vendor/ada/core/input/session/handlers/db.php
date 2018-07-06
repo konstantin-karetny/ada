@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 22.06.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Session\Handlers;
+    namespace Ada\Core\Input\Session\Handlers;
 
-    class Db extends \Ada\Core\Session\Handler {
+    class Db extends \Ada\Core\Input\Session\Handler {
 
         protected
             $table = null;
@@ -72,7 +72,7 @@
                     $db->getDateFormat()
                 )
             ];
-            if (\Ada\Core\Session::init()->isNew()) {
+            if (\Ada\Core\Input\Session::init()->isNew()) {
                 return $db->getQuery()
                     ->insert($row)
                     ->into($this->getTable()->getName())

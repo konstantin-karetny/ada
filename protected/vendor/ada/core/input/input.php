@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 08.05.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Input;
 
-    abstract class Input extends Proto {
+    abstract class Input extends \Ada\Core\Proto {
 
         abstract public static function get(
             string $name,
@@ -58,11 +58,16 @@
             string $default = ''
         ): string {
             foreach ($names as $name) {
-                if (key_exists(Clean::cmd($name), static::getStorage())) {
+                if (
+                    key_exists(
+                        \Ada\Core\Clean::cmd($name),
+                        static::getStorage()
+                    )
+                ) {
                     return static::get($name, $filter);
                 }
             }
-            return Clean::value($default, $filter);
+            return \Ada\Core\Clean::value($default, $filter);
         }
 
         public static function getHtml(
@@ -87,12 +92,20 @@
         }
 
         public static function getStorage(): array {
-            return $GLOBALS[
-                '_' .
+            //maybe form $GLOBALS, but by link
+            //$_SESSION to getStorage() C:\OSPanel\domains\project\protected\vendor\ada\core\input\session\input.php
+            return ${substr(static::getStorageName(), 1)};
+        }
+
+        public static function getStorageName(): string {
+            return
+                '$_' .
                 strtoupper(
-                    substr(strrchr(get_called_class(), '\\'), 1)
-                )
-            ];
+                    substr(
+                        strrchr(get_called_class(), '\\'),
+                        1
+                    )
+                );
         }
 
         public static function getString(

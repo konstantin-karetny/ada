@@ -70,14 +70,13 @@
         }
 
         public function getMimeType(string $default = ''): string {
-            return (
+            return
                 $this->exists() && class_exists('finfo')
                     ? $this->mime_type = (new \finfo())->file(
                         $this->getPath(),
                         FILEINFO_MIME_TYPE
                     )
-                    : $default
-            );
+                    : $default;
         }
 
         public function getName(): string {

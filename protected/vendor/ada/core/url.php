@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 21.06.2018
+    * @version   1.0.0 06.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -274,7 +274,10 @@
         public function setHost(string $host) {
             $host = static::clean($host);
             if ($host == '') {
-                throw new Exception('Host must not be empty', 3);
+                throw new Exception(
+                    'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
+                    3
+                );
             }
             $this->host = $host;
         }
@@ -307,7 +310,10 @@
         public function setScheme(string $scheme) {
             $scheme = static::clean($scheme);
             if ($scheme == '') {
-                throw new Exception('Scheme must not be empty', 4);
+                throw new Exception(
+                    'Argument 1 passed to ' . __METHOD__ . '() must not be empty',
+                    4
+                );
             }
             if (!in_array($scheme, static::SCHEMES)) {
                 throw new Exception('Unknown scheme \'' . $scheme . '\'', 5);
@@ -373,23 +379,26 @@
                 $res = 'http';
                 if (
                     strtolower(trim(
-                        Server::getString('HTTPS', 'off')
+                        Input\Server::getString('HTTPS', 'off')
                     )) !== 'off' ||
                     strtolower(trim(
-                        Server::getString('HTTP_X_FORWARDED_PROTO', 'http')
+                        Input\Server::getString('HTTP_X_FORWARDED_PROTO', 'http')
                     )) !== 'http'
                 ) {
                     $res .= 's';
                 }
-                $res .= '://' . Server::getUrl('HTTP_HOST');
+                $res .= '://' . Input\Server::getUrl('HTTP_HOST');
             }
-            if (Server::getBool('PHP_SELF') && Server::getBool('REQUEST_URI')) {
-                $res .= '/' . Server::getUrl('REQUEST_URI');
+            if (
+                Input\Server::getBool('PHP_SELF') &&
+                Input\Server::getBool('REQUEST_URI')
+            ) {
+                $res .= '/' . Input\Server::getUrl('REQUEST_URI');
             }
             else {
-                $res .= Server::getUrl('SCRIPT_NAME');
-                if (Server::getBool('QUERY_STRING')) {
-                    $res .= '?' . Server::getUrl('QUERY_STRING');
+                $res .= Input\Server::getUrl('SCRIPT_NAME');
+                if (Input\Server::getBool('QUERY_STRING')) {
+                    $res .= '?' . Input\Server::getUrl('QUERY_STRING');
                 }
             }
             return static::$cache['current'] = static::clean($res);
@@ -401,16 +410,16 @@
                 if (!in_array($k, static::PARTS)) {
                     continue;
                 }
-                $res[$k] = Type::set(static::clean($v), Type::get($this->$k));
+                $res[$k] = Types::set(static::clean($v), Types::get($this->$k));
             }
-            if ($res['host'] !== Server::getUrl('HTTP_HOST')) {
+            if ($res['host'] !== Input\Server::getUrl('HTTP_HOST')) {
                 return $res;
             }
             $script_path = File::init(
-                Server::getPath(
+                Input\Server::getPath(
                     (
                         strpos(php_sapi_name(), 'cgi') !== false &&
-                        Server::getBool('REQUEST_URI') === ''  &&
+                        Input\Server::getBool('REQUEST_URI') === ''  &&
                         !ini_get('cgi.fix_pathinfo')
                     )
                         ? 'PHP_SELF'
