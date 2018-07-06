@@ -1,32 +1,32 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 11.05.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Fs;
 
-    class File extends Proto {
+    class File extends \Ada\Core\Proto {
 
         protected
             $path = '';
 
-        public static function init(string $path): \Ada\Core\File {
+        public static function init(string $path): \Ada\Core\Fs\File {
             return new static($path);
         }
 
         public function __construct(string $path) {
-            $this->path = Clean::path($path);
+            $this->path = Path::clean($path);
         }
 
         public function copy(
             string $path,
             bool   $validate_ext = true
-        ): \Ada\Core\File {
-            $res = static::init(Clean::path($path, $validate_ext));
+        ): \Ada\Core\Fs\File {
+            $res = static::init(Path::clean($path, $validate_ext));
             $dir = $res->getDir();
             if (!$dir->exists() && !$dir->create()) {
                 return $res;
@@ -52,7 +52,7 @@
             return pathinfo($this->getPath(), PATHINFO_BASENAME);
         }
 
-        public function getDir(): \Ada\Core\Dir {
+        public function getDir(): \Ada\Core\Fs\Dir {
             return Dir::init(
                 trim(
                     pathinfo($this->getPath(), PATHINFO_DIRNAME),
@@ -106,8 +106,8 @@
         public function move(
             string $path,
             bool   $validate_ext = true
-        ): \Ada\Core\File {
-            $res = static::init(Clean::path($path, $validate_ext));
+        ): \Ada\Core\Fs\File {
+            $res = static::init(Path::clean($path, $validate_ext));
             $dir = $res->getDir();
             if (!$dir->exists() && !$dir->create()) {
                 return $res;
@@ -147,7 +147,7 @@
         public function setEditTime(int $time = 0): bool {
             return (bool) @touch(
                 $this->getPath(),
-                $time > 0 ? $time : DateTime::init()->getTimestamp()
+                $time > 0 ? $time : \Ada\Core\DateTime::init()->getTimestamp()
             );
         }
 
@@ -160,7 +160,7 @@
             bool   $append       = false,
             bool   $validate_ext = true
         ): bool {
-            $this->path = Clean::path($this->getPath(), $validate_ext);
+            $this->path = Path::clean($this->getPath(), $validate_ext);
             $dir        = $this->getDir();
             if (!$dir->exists() && !$dir->create()) {
                 return false;

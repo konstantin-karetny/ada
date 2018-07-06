@@ -68,7 +68,7 @@
         }
 
         public static function path($value, bool $valueidate_ext = false): string {
-            return Path::clean($value, $valueidate_ext);
+            return Fs\Path::clean($value, $valueidate_ext);
         }
 
         public static function string($value): string {

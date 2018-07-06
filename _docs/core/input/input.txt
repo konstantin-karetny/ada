@@ -1,0 +1,3 @@
+﻿... variable variables cannot be used with PHP's Superglobal arrays ...
+http://php.net/manual/ru/language.variables.variable.php
+* public static function &getStorage() { ... }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -415,7 +415,7 @@
             if ($res['host'] !== Input\Server::getUrl('HTTP_HOST')) {
                 return $res;
             }
-            $script_path = File::init(
+            $script_path = Fs\File::init(
                 Input\Server::getPath(
                     (
                         strpos(php_sapi_name(), 'cgi') !== false &&

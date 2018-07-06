@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -27,7 +27,7 @@
             }
             return array_map(
                 function($el) {
-                    return \Ada\Core\File::init($el['tmp_name']);
+                    return File::init($el);
                 },
                 $res
             );

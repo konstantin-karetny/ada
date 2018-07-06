@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -13,18 +13,15 @@
 
         const
             ERRORS      = [
-                UPLOAD_ERR_OK         => 'There is no error, the file uploaded with success',
-                UPLOAD_ERR_INI_SIZE   => 'The uploaded file exceeds the maximum failszie',
-                UPLOAD_ERR_FORM_SIZE  => (
-                    'The uploaded file exceeds the \'MAX_FILE_SIZE\' ' .
-                    'directive that was specified in the HTML form'
-                ),
-                UPLOAD_ERR_PARTIAL    => 'The uploaded file was only partially uploaded',
-                UPLOAD_ERR_NO_FILE    => 'No file was uploaded',
-                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary directory',
                 UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
                 UPLOAD_ERR_EXTENSION  => 'A PHP extension stopped the file upload',
-                'unknown'             => 'Unknown error'
+                UPLOAD_ERR_FORM_SIZE  => 'The uploaded file exceeds the \'MAX_FILE_SIZE\' directive that was specified in the HTML form',
+                UPLOAD_ERR_INI_SIZE   => 'The uploaded file exceeds the maximum failszie',
+                UPLOAD_ERR_NO_FILE    => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary directory',
+                UPLOAD_ERR_OK         => 'There is no error, the file uploaded with success',
+                UPLOAD_ERR_PARTIAL    => 'The uploaded file was only partially uploaded',
+                10                    => 'Unknown error'
             ];
 
         protected
@@ -44,27 +41,29 @@
                 $v = \Ada\Core\Types::set($v);
                 switch ($k) {
                     case 'name':
-                        $this->basename   = \Ada\Core\Path::clean($v, true);
+                        $this->basename      = \Ada\Core\Clean::path($v, true);
                         break;
                     case 'type':
-                        $this->mime_type  = $v;
+                        $this->mime_type     = $v;
                         break;
                     case 'tmp_name':
-                        $this->path       = $v;
+                        $this->path          = $v;
                         break;
                     case 'error':
-                        $this->error_code = $v;
+                        $this->error_code    = isset(static::ERRORS[$v]) ? $v : 10;
+                        if ($this->getErrorCode()) {
+                            $this->error_msg = static::ERRORS[$this->getErrorCode()];
+                        }
                         break;
                     default:
-                        $this->$k = $v;
+                        $this->$k            = $v;
                 }
             }
-            $this->mime_type = \Ada\Core\File::init($this->path)->getMimeType($this->mime_type);
-            if ($this->error_code) {
-                $this->error_msg = (
-                    static::ERRORS[$this->error_code] ?? static::ERRORS['unknown']
-                );
-            }
+            $this->mime_type = \Ada\Core\Fs\File::init(
+                $this->getPath()
+            )->getMimeType(
+                $this->getMimeType()
+            );
         }
 
         public function getBasename(): string {
@@ -80,7 +79,7 @@
         }
 
         public function getExt(): string {
-            return \Ada\Core\File::init($this->basename)->getExt();
+            return \Ada\Core\Fs\File::init($this->getBasename())->getExt();
         }
 
         public function getMimeType(): string {
@@ -88,7 +87,7 @@
         }
 
         public function getName(): string {
-            return \Ada\Core\File::init($this->basename)->getName();
+            return \Ada\Core\Fs\File::init($this->getBasename())->getName();
         }
 
         public function getPath(): string {
@@ -100,26 +99,27 @@
         }
 
         public function isUploded(): bool {
-            return (bool) is_uploaded_file($this->path);
+            return (bool) is_uploaded_file($this->getPath());
         }
 
         public function save(
             string $path,
             bool   $validate_ext = true
-        ): \Ada\Core\File {
-            $res = \Ada\Core\File::init(
+        ): \Ada\Core\Fs\File {
+            $res = \Ada\Core\Fs\File::init(
                 \Ada\Core\Clean::path($path, $validate_ext)
             );
             $dir = $res->getDir();
             if (
                 $this->getErrorCode() ||
                 (
-                    !$dir->exists() && !$dir->create()
+                    !$dir->exists() &&
+                    !$dir->create()
                 )
             ) {
                 return $res;
             }
-            @move_uploaded_file($this->path, $res->getPath());
+            @move_uploaded_file($this->getPath(), $res->getPath());
             return $res;
         }
 

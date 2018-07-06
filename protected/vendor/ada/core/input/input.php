@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -91,10 +91,10 @@
             return static::get($name, 'path', $default);
         }
 
-        public static function getStorage(): array {
-            //maybe form $GLOBALS, but by link
-            //$_SESSION to getStorage() C:\OSPanel\domains\project\protected\vendor\ada\core\input\session\input.php
-            return ${substr(static::getStorageName(), 1)};
+        public static function &getStorage(): array {
+            return $GLOBALS[
+                substr(static::getStorageName(), 1)
+            ];
         }
 
         public static function getStorageName(): string {
