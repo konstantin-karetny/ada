@@ -79,7 +79,7 @@
 
         public static function getInt(
             string $name,
-            int $default = 0
+            int    $default = 0
         ): int {
             return static::get($name, 'int', $default);
         }
