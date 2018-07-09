@@ -1,25 +1,25 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 16.03.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Fs;
 
-    class Dir extends Proto {
+    class Dir extends \Ada\Core\Proto {
 
         protected
             $path = '';
 
-        public static function init(string $path): \Ada\Core\Dir {
+        public static function init(string $path): \Ada\Core\Fs\Dir {
             return new static($path);
         }
 
         public function __construct(string $path) {
-            $this->path = Clean::path($path);
+            $this->path = Path::clean($path);
         }
 
         public function contents(): array {
@@ -78,7 +78,7 @@
             }
             foreach (new \DirectoryIterator($this->path) as $iter) {
                 if ($iter->isDir() && !$iter->isDot()) {
-                    $path       = Clean::path($iter->getPathname());
+                    $path       = Path::clean($iter->getPathname());
                     $res[$path] = static::init($path);
                 }
             }
@@ -97,7 +97,7 @@
             }
             foreach (new \DirectoryIterator($this->path) as $iter) {
                 if ($iter->isFile() && !$iter->isDot()) {
-                    $path       = Clean::path($iter->getPathname());
+                    $path       = Path::clean($iter->getPathname());
                     $res[$path] = File::init($path);
                 }
             }
@@ -105,7 +105,7 @@
             return $res;
         }
 
-        public function getDir(): \Ada\Core\Dir {
+        public function getDir(): \Ada\Core\Fs\Dir {
             return static::init(pathinfo($this->path, PATHINFO_DIRNAME));
         }
 
@@ -159,7 +159,7 @@
         public function setEditTime(int $time = 0): bool {
             return (bool) @touch(
                 $this->path,
-                $time > 0 ? $time : DateTime::init()->getTimestamp()
+                $time > 0 ? $time : \Ada\Core\DateTime::init()->getTimestamp()
             );
         }
 

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -51,7 +51,7 @@
             return static::$ini_params;
         }
 
-        public static function getStorage(): array {
+        public static function &getStorage(): array {
             static::init()->start();
             return parent::getStorage();
         }
@@ -279,7 +279,7 @@
         }
 
         protected function getFile(): File {
-            return \Ada\Core\File::init(
+            return \Ada\Core\Fs\File::init(
                 static::getIniParam('save_path') . '/sess_' . $this->getId()
             );
         }

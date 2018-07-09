@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -41,7 +41,7 @@
             }
             $res = [];
             foreach (static::getLocalesPathes() as $path) {
-                foreach (Dir::init($path)->files() as $file) {
+                foreach (Fs\Dir::init($path)->files() as $file) {
                     if ($file->getExt() == static::LOCALES_EXT) {
                         $res[] = $file->getName();
                     }
@@ -185,7 +185,7 @@
             $res = [];
             foreach (static::getLocalesPathes() as $path) {
                 $res = Type\Arr::init($res)->mergeRecursive(
-                    File::init(
+                    Fs\File::init(
                         $path . '/' . $locale_name . '.' . static::LOCALES_EXT
                     )->parseIni()
                 );

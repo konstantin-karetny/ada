@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core;
+    namespace Ada\Core\Dev;
 
-    class Constructor extends Proto {
+    class Constructor extends \Ada\Core\Proto {
 
         public static function renderClass(
             array $props,
@@ -31,19 +31,22 @@
 
         public static function renderProps(array $props) {
             $pad_length = max(array_map('strlen', array_keys($props)));
-            $last_k     = end(array_keys($props));
+            $keys       = array_keys($props);
+            $last_k     = end($keys);
+            echo '
+                    protected';
             foreach ($props as $k => $v) {
                 echo '
-                    $' . str_pad($k, $pad_length) . ' = ' .
-                    (is_string($v) ? ('\'' . $v . '\'') : $v) .
-                    ($k == $last_k ?  ';' : ',');
+                        $' . str_pad($k, $pad_length) . ' = ' .
+                        (is_string($v) ? ('\'' . $v . '\'') : $v) .
+                        ($k == $last_k ?  ';' : ',');
             }
         }
 
         public static function renderGetters(array $props) {
             foreach ($props as $k => $v) {
                 echo '
-                    public function get' . Type\Str::init($k)->toCamelCase() . '(): ' . Types::get($v) . ' {
+                    public function get' . \Ada\Core\Type\Str::init($k)->toCamelCase() . '(): ' . \Ada\Core\Types::get($v) . ' {
                         return $this->' . $k . ';
                     }
                 ';
@@ -53,7 +56,7 @@
         public static function renderSetters(array $props) {
             foreach ($props as $k => $v) {
                 echo '
-                    public function set' . Type\Str::init($k)->toCamelCase() . '(' . Types::get($v) . ' $' . $k . '): ' . Types::get($v) . ' {
+                    public function set' . \Ada\Core\Type\Str::init($k)->toCamelCase() . '(' . \Ada\Core\Types::get($v) . ' $' . $k . ') {
                         $this->' . $k . ' = $' . $k . ';
                     }
                 ';

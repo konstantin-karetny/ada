@@ -1,3 +1,5 @@
+dev  = development
+fs   = file system
 subj = subject
 val  = value
 var  = variable

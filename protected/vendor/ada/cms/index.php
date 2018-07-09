@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 07.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,8 +11,6 @@
 
     error_reporting(E_ALL);
     ini_set('display_errors', 1);
-
-    //C:\OSPanel\domains\project\protected\vendor\ada\core\input\input.php line 95 ................
 
     require_once 'includes/autoload.php';
 
@@ -28,17 +26,7 @@
         'user'   => 'postgres'
     ]);
 
-
     //Input\Session::preset(['handler' => new Input\Session\Handlers\Db(Db::init()->getTable('session'))]);
-
-
-
-    exit(var_dump(
-
-        Input\Cookie::set('kkkkkk')
-        //Input\Cookie::drop('kkkkkk'),Input\Cookie::getStorage()
-
-    ));
 
 
     if ($_POST) {
