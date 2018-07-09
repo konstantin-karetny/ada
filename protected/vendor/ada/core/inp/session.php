@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Input;
+    namespace Ada\Core\Inp;
 
-    class Session extends Session\Input {
+    class Session extends Session\Inp {
 
         const
             DEFAULT_NAMESPACE = '_',
@@ -56,7 +56,7 @@
             return parent::getStorage();
         }
 
-        public static function init(): \Ada\Core\Input\Session {
+        public static function init(): \Ada\Core\Inp\Session {
             static $res;
             return $res ?? $res = new static;
         }
@@ -135,7 +135,7 @@
                 (
                     (
                         strtotime(
-                            static::getString(
+                            static::getStr(
                                 'last_stop_datetime',
                                 '',
                                 static::$system_namespace
@@ -148,7 +148,7 @@
                     \Ada\Core\DateTime::init()->getTimestamp()
                 ) ||
                 (
-                    static::getString(
+                    static::getStr(
                         'browser_signature',
                         '',
                         static::$system_namespace

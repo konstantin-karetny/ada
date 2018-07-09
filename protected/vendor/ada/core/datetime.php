@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -47,8 +47,9 @@
                     }
                 }
             }
-            sort($res);
-            return static::$cache['locales_names'] = array_unique($res);
+            return static::$cache['locales_names'] = array_unique(
+                Type\Arr::init($res)->sort()
+            );
         }
 
         public static function getLocalesPathes(): array {
@@ -74,7 +75,7 @@
                         date_default_timezone_set($v);
                         break;
                     case 'default_format':
-                        static::$default_format      = Clean::string($v);
+                        static::$default_format      = Clean::str($v);
                         break;
                     case 'default_locale_name':
                         static::$default_locale_name = Clean::cmd($v);

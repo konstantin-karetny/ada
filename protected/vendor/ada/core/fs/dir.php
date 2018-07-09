@@ -82,8 +82,7 @@
                     $res[$path] = static::init($path);
                 }
             }
-            ksort($res);
-            return $res;
+            return \Ada\Core\Type\Arr::init($res)->ksort();
         }
 
         public function exists(): bool {
@@ -101,8 +100,7 @@
                     $res[$path] = File::init($path);
                 }
             }
-            ksort($res);
-            return $res;
+            return \Ada\Core\Type\Arr::init($res)->ksort();
         }
 
         public function getDir(): \Ada\Core\Fs\Dir {

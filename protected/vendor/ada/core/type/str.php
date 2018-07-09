@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -11,11 +11,14 @@
 
     class Str extends Type {
 
+        const
+            TRIM_CHARS = " \t\n\r\0\x0B";
+
         protected
-            $subj = '';
+            $subj      = '';
 
         public static function init(string $string = ''): \Ada\Core\Type\Str {
-            return new static(...func_get_args());
+            return new static($string);
         }
 
         public function getInitialValue(): string {

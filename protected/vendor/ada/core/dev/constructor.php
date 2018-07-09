@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -31,8 +31,7 @@
 
         public static function renderProps(array $props) {
             $pad_length = max(array_map('strlen', array_keys($props)));
-            $keys       = array_keys($props);
-            $last_k     = end($keys);
+            $last_k     = \Ada\Core\Type\Arr::init($props)->lastKey();
             echo '
                     protected';
             foreach ($props as $k => $v) {

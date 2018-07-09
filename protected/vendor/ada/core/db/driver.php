@@ -235,8 +235,9 @@
             string $type    = 'auto',
             string $default = null
         ) {
-            $row = $this->fetchRow($query, \PDO::FETCH_NUM, []);
-            $res = reset($row);
+            $res = \Ada\Core\Type\Arr::init(
+                $this->fetchRow($query, \PDO::FETCH_NUM, [])
+            )->first();
             return \Ada\Core\Types::set(
                 $res === false ? $default : $res,
                 $type

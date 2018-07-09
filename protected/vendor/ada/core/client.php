@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -9,7 +9,7 @@
 
     namespace Ada\Core;
 
-    use Ada\Core\Input\Server as Server;
+    use Ada\Core\Inp\Server as Server;
 
     class Client extends Proto {
 
@@ -133,49 +133,49 @@
                 $cached && static::$cache
                     ? static::$cache
                     : static::$cache = [
-                        'auth'          => Server::getFrstExisting(
+                        'auth'          => Server::getFirstExisting(
                             [
                                 'HTTP_AUTHORIZATION',
                                 'REDIRECT_HTTP_AUTHORIZATION'
                             ],
-                            'string',
+                            'str',
                             $this->getAuth()
                         ),
-                        'browser'       => Server::getString(
+                        'browser'       => Server::getStr(
                             'HTTP_USER_AGENT',
                             $this->getBrowser()
                         ),
-                        'cache_control' => Server::getString(
+                        'cache_control' => Server::getStr(
                             'HTTP_CACHE_CONTROL',
                             $this->getCacheControl()
                         ),
-                        'charset'       => Server::getString(
+                        'charset'       => Server::getStr(
                             'HTTP_ACCEPT_CHARSET',
                             $this->getCharset()
                         ),
-                        'content_type'  => Server::getString(
+                        'content_type'  => Server::getStr(
                             'HTTP_ACCEPT',
                             $this->getContentType()
                         ),
-                        'encoding'      => Server::getString(
+                        'encoding'      => Server::getStr(
                             'HTTP_ACCEPT_ENCODING',
                             $this->getEncoding()
                         ),
-                        'ip'            => Server::getString(
+                        'ip'            => Server::getStr(
                             'REMOTE_ADDR',
                             $this->getIp()
                         ),
-                        'ip_proxy'      => Server::getFrstExisting(
+                        'ip_proxy'      => Server::getFirstExisting(
                             [
                                 'HTTP_CLIENT_IP',
                                 'HTTP_X_FORWARDED_FOR'
                             ],
-                            'string',
+                            'str',
                             $this->getIpProxy()
                         ),
                         'lang'          => strtolower(
                             substr(
-                                Server::getString(
+                                Server::getStr(
                                     'HTTP_ACCEPT_LANGUAGE',
                                     $this->getLang()
                                 ),

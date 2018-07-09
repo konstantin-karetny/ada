@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Input;
+    namespace Ada\Core\Inp;
 
-    abstract class Input extends \Ada\Core\Proto {
+    abstract class Inp extends \Ada\Core\Proto {
 
         abstract public static function get(
             string $name,
@@ -52,7 +52,7 @@
             return static::get($name, 'float', $default);
         }
 
-        public static function getFrstExisting(
+        public static function getFirstExisting(
             array  $names,
             string $filter,
             string $default = ''
@@ -108,11 +108,11 @@
                 );
         }
 
-        public static function getString(
+        public static function getStr(
             string $name,
             string $default = ''
         ): string {
-            return static::get($name, 'string', $default);
+            return static::get($name, 'str', $default);
         }
 
         public static function getUrl(

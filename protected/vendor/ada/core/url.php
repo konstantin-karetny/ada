@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -109,7 +109,7 @@
                     array_values(static::UNSAFE_CHARS_CODES),
                     static::encode(
                         strtolower(
-                            trim($url, " \t\n\r\0\x0B/")
+                            trim($url, Type\Str::TRIM_CHARS . '/')
                         )
                     )
                 ),
@@ -209,7 +209,7 @@
         }
 
         public function getRoot(array $parts = self::ROOT_DEFAULT_PARTS): string {
-            return $this->toString(
+            return $this->toStr(
                 array_intersect(static::ROOT_PARTS, $parts)
             );
         }
@@ -253,7 +253,7 @@
             if (headers_sent()) {
                 echo (
                     '<script>document.location.href="' .
-                    str_replace('"', '&apos;', $this->toString()) .
+                    str_replace('"', '&apos;', $this->toStr()) .
                     '";</script>'
                 );
                 return;
@@ -261,7 +261,7 @@
             header('Cache-Control: no-cache, no-store, must-revalidate');
             header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
             header(
-                'Refresh: ' . ($delay > 0 ? $delay : 0) . '; ' . $this->toString(),
+                'Refresh: ' . ($delay > 0 ? $delay : 0) . '; ' . $this->toStr(),
                 $replace,
                 $http_response_code
             );
@@ -336,7 +336,7 @@
             }
         }
 
-        public function toString(array $parts = self::DEFAULT_PARTS): string {
+        public function toStr(array $parts = self::DEFAULT_PARTS): string {
             $res = '';
             if (in_array('scheme', $parts)) {
                 $res .= $this->scheme . '://';
@@ -379,26 +379,26 @@
                 $res = 'http';
                 if (
                     strtolower(trim(
-                        Input\Server::getString('HTTPS', 'off')
+                        Inp\Server::getStr('HTTPS', 'off')
                     )) !== 'off' ||
                     strtolower(trim(
-                        Input\Server::getString('HTTP_X_FORWARDED_PROTO', 'http')
+                        Inp\Server::getStr('HTTP_X_FORWARDED_PROTO', 'http')
                     )) !== 'http'
                 ) {
                     $res .= 's';
                 }
-                $res .= '://' . Input\Server::getUrl('HTTP_HOST');
+                $res .= '://' . Inp\Server::getUrl('HTTP_HOST');
             }
             if (
-                Input\Server::getBool('PHP_SELF') &&
-                Input\Server::getBool('REQUEST_URI')
+                Inp\Server::getBool('PHP_SELF') &&
+                Inp\Server::getBool('REQUEST_URI')
             ) {
-                $res .= '/' . Input\Server::getUrl('REQUEST_URI');
+                $res .= '/' . Inp\Server::getUrl('REQUEST_URI');
             }
             else {
-                $res .= Input\Server::getUrl('SCRIPT_NAME');
-                if (Input\Server::getBool('QUERY_STRING')) {
-                    $res .= '?' . Input\Server::getUrl('QUERY_STRING');
+                $res .= Inp\Server::getUrl('SCRIPT_NAME');
+                if (Inp\Server::getBool('QUERY_STRING')) {
+                    $res .= '?' . Inp\Server::getUrl('QUERY_STRING');
                 }
             }
             return static::$cache['current'] = static::clean($res);
@@ -412,14 +412,14 @@
                 }
                 $res[$k] = Types::set(static::clean($v), Types::get($this->$k));
             }
-            if ($res['host'] !== Input\Server::getUrl('HTTP_HOST')) {
+            if ($res['host'] !== Inp\Server::getUrl('HTTP_HOST')) {
                 return $res;
             }
             $script_path = Fs\File::init(
-                Input\Server::getPath(
+                Inp\Server::getPath(
                     (
                         strpos(php_sapi_name(), 'cgi') !== false &&
-                        Input\Server::getBool('REQUEST_URI') === ''  &&
+                        Inp\Server::getBool('REQUEST_URI') === ''  &&
                         !ini_get('cgi.fix_pathinfo')
                     )
                         ? 'PHP_SELF'

@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Input;
+    namespace Ada\Core\Inp;
 
-    class Get extends Input {
+    class Get extends Inp {
 
         public static function drop(string $name): bool {
             return \Ada\Core\Url::init()->dropVar($name);

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -25,7 +25,7 @@
                 (string) preg_replace(
                     '/[\/\\\]+/',
                     static::DS,
-                    trim($path, " \t\n\r\0\x0B\\/")
+                    trim($path, \Ada\Core\Type\Str::TRIM_CHARS . '\\/')
                 )
             );
             return

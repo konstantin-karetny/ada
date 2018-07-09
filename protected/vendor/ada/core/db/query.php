@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -278,8 +278,9 @@
             if (!$this->joins) {
                 return $this;
             }
-            end($this->joins);
-            $this->joins[key($this->joins)]['ons'][] = $subquery->getWheres();
+            $this->joins[
+                \Ada\Core\Type\Arr::init($this->joins)->lastKey()
+            ]['ons'][] = $subquery->getWheres();
             return $this;
         }
 
@@ -291,7 +292,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand) . ' ALL',
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -305,7 +306,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand) . ' ANY',
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -358,7 +359,7 @@
             $this->addWhere(
                 '',
                 'EXISTS',
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -400,7 +401,7 @@
             $this->addWhere(
                 $column,
                 'IN',
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -430,7 +431,7 @@
             $this->addWhere(
                 '',
                 'NOT EXISTS',
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -460,7 +461,7 @@
             $this->addWhere(
                 $column,
                 'NOT IN',
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -489,7 +490,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand),
-                '(' . $subquery->toString() . ')',
+                '(' . $subquery->toStr() . ')',
                 true
             );
             return $this;
@@ -561,7 +562,7 @@
             return $this;
         }
 
-        public function toString(): string {
+        public function toStr(): string {
             if ($this->getType() != 'union' && !$this->getTable()) {
                 throw new \Ada\Core\Exception('No table specified', 4);
             }
@@ -621,7 +622,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand) . ' ALL',
-                '( ' . $subquery->toString() . ' )'
+                '( ' . $subquery->toStr() . ' )'
             );
             return $this;
         }
@@ -634,7 +635,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand) . ' ANY',
-                '( ' . $subquery->toString() . ' )'
+                '( ' . $subquery->toStr() . ' )'
             );
             return $this;
         }
@@ -675,7 +676,7 @@
             $this->addWhere(
                 '',
                 'EXISTS',
-                '(' . $subquery->toString() . ')'
+                '(' . $subquery->toStr() . ')'
             );
             return $this;
         }
@@ -714,7 +715,7 @@
             $this->addWhere(
                 $column,
                 'IN',
-                '(' . $subquery->toString() . ')'
+                '(' . $subquery->toStr() . ')'
             );
             return $this;
         }
@@ -742,7 +743,7 @@
             $this->addWhere(
                 '',
                 'NOT EXISTS',
-                '(' . $subquery->toString() . ')'
+                '(' . $subquery->toStr() . ')'
             );
             return $this;
         }
@@ -770,7 +771,7 @@
             $this->addWhere(
                 $column,
                 'NOT IN',
-                '(' . $subquery->toString() . ')'
+                '(' . $subquery->toStr() . ')'
             );
             return $this;
         }
@@ -798,7 +799,7 @@
             $this->addWhere(
                 $column,
                 $this->validateOperand($operand),
-                '(' . $subquery->toString() . ')'
+                '(' . $subquery->toStr() . ')'
             );
             return $this;
         }
@@ -876,7 +877,7 @@
         }
 
         protected function driverExec(string $method, array $arguments = []) {
-            return $this->getDb()->$method($this->toString(), ...$arguments);
+            return $this->getDb()->$method($this->toStr(), ...$arguments);
         }
 
         protected function getPartColumns(array $columns = []): string {
@@ -891,7 +892,7 @@
                     $column['subquery'] === null
                         ? $db->q($column['name'], $column['alias'])
                         : (
-                            '('. $column['subquery']->toString() . ')' .
+                            '('. $column['subquery']->toStr() . ')' .
                             (
                                 $column['alias'] === ''
                                     ? ''
@@ -985,7 +986,7 @@
                 );
             }
             return
-                '(' . $table['subquery']->toString() . ')' .
+                '(' . $table['subquery']->toStr() . ')' .
                 (
                     $table['alias'] === ''
                         ? ''
@@ -1059,7 +1060,7 @@
                     ' UNION ' . ($union['all'] ? 'ALL ' : ''),
                     array_map(
                         function (\Ada\Core\Db\Query $query) {
-                            return $query->toString();
+                            return $query->toStr();
                         },
                         $union['queries']
                     )

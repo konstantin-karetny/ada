@@ -1,13 +1,13 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Input;
+    namespace Ada\Core\Inp;
 
     class File extends \Ada\Core\Proto {
 
@@ -32,7 +32,7 @@
             $path       = '',
             $size       = 0;
 
-        public static function init(array $params): \Ada\Core\Input\File {
+        public static function init(array $params): \Ada\Core\Inp\File {
             return new static($params);
         }
 

@@ -1,15 +1,15 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
     */
 
-    namespace Ada\Core\Input\Session\Handlers;
+    namespace Ada\Core\Inp\Session\Handlers;
 
-    class Db extends \Ada\Core\Input\Session\Handler {
+    class Db extends \Ada\Core\Inp\Session\Handler {
 
         protected
             $table = null;
@@ -60,7 +60,7 @@
                 ->selectOne('data')
                 ->from($this->getTable()->getName())
                 ->where('id', '=', $session_id)
-                ->fetchCell('string');
+                ->fetchCell('str');
         }
 
         public function write($session_id, $session_data): bool {
@@ -72,7 +72,7 @@
                     $db->getDateFormat()
                 )
             ];
-            if (\Ada\Core\Input\Session::init()->isNew()) {
+            if (\Ada\Core\Inp\Session::init()->isNew()) {
                 return $db->getQuery()
                     ->insert($row)
                     ->into($this->getTable()->getName())

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 04.05.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -25,13 +25,16 @@
                 '\Driver'
             );
             static::$instances[] = $class::init(...func_get_args());
-            end(static::$instances);
-            return (int) key(static::$instances);
+            return Type\Arr::init(static::$instances)->lastKey();
         }
 
         public static function getDrivers(bool $supported_only = false): array {
-            $res = array_map('strtolower', (array) \PDO::getAvailableDrivers());
-            sort($res);
+            $res = Type\Arr::init(
+                array_map(
+                    'strtolower',
+                    (array) \PDO::getAvailableDrivers()
+                )
+            )->sort();
             if (!$supported_only) {
                 return $res;
             }

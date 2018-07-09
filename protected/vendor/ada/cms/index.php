@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/cms
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -26,11 +26,19 @@
         'user'   => 'postgres'
     ]);
 
+
     //Input\Session::preset(['handler' => new Input\Session\Handlers\Db(Db::init()->getTable('session'))]);
 
 
+    exit(var_dump( Type\Arr::init([
+        'driver' => 'pgsql',
+        'name'   => 'postgres',
+        'prefix' => 'pj_',
+        'user'   => 'postgres'
+    ])->last() ));
+
     if ($_POST) {
-        exit(var_dump( Input\Files::get('fileinp') ));
+        exit(var_dump( Inp\Files::get('fileinp') ));
     }
 
 ?>

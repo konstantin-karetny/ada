@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 09.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -19,10 +19,12 @@
             int        $code     = 0,
             \Throwable $previous = null
         ) {
-            $message       = Type\Str::init($message)->oneLine();
-            parent::__construct($message, $code, $previous);
-            $trace         = $this->getTrace();
-            $this->context = reset($trace)['class'];
+            parent::__construct(
+                Type\Str::init($message)->oneLine(),
+                $code,
+                $previous
+            );
+            $this->context = Type\Arr::init($this->getTrace())->first()['class'];
             $this->message = $this->context . ' error. ' . $this->message;
         }
 
