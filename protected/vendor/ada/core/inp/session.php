@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -61,13 +61,16 @@
             return $res ?? $res = new static;
         }
 
+        public static function isInited(): bool {
+            return static::$inited;
+        }
+
         public static function preset(array $params): bool {
             if (static::$inited) {
                 return false;
             }
             foreach ($params as $k => $v) {
-                $k = \Ada\Core\Clean::cmd($k);
-                switch ($k) {
+                switch (\Ada\Core\Clean::cmd($k)) {
                     case 'handler':
                         if (!session_set_save_handler($v)) {
                             return false;
@@ -75,7 +78,7 @@
                         static::$handler = $v;
                         break;
                     case 'ini_params':
-                        foreach (\Ada\Core\Types::set($v, 'array') as $kk => $vv) {
+                        foreach (\Ada\Core\Types::set($v, 'arr') as $kk => $vv) {
                             $kk = \Ada\Core\Clean::cmd($kk);
                             if (!key_exists($kk, static::getIniParams())) {
                                 continue;

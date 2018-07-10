@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -126,7 +126,11 @@
         }
 
         public static function init(string $url = ''): \Ada\Core\Url {
-            return new static(...func_get_args());
+            return new static($url);
+        }
+
+        public static function isInited(): bool {
+            return static::$inited;
         }
 
         public static function preset(array $params): bool {
@@ -134,8 +138,7 @@
                 return false;
             }
             foreach ($params as $k => $v) {
-                $k = Clean::cmd($k);
-                switch ($k) {
+                switch (Clean::cmd($k)) {
                     case 'default_root':
                         static::$default_root = static::init($v)->getRoot();
                         break;
@@ -163,7 +166,7 @@
             );
         }
 
-        public function __construct(string $url = '') {
+        protected function __construct(string $url = '') {
             $url = $url === '' ? $this->detectCurrent() : $url;
             if (!static::check($url)) {
                 throw new Exception('Wrong url \'' . $url . '\'', 2);

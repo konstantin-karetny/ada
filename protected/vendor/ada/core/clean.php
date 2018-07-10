@@ -19,6 +19,16 @@
             return (bool) (is_numeric($value) ? (1 * $value) : $value);
         }
 
+        public static function classname(string $value): string {
+            return rtrim(
+                ltrim(
+                    (string) preg_replace('/[^a-z0-9_\\\]/i', '', $value),
+                    implode('', Type\Integer::NUMBERS) . '\\'
+                ),
+                '\\'
+            );
+        }
+
         public static function cmd(
             string $value,
             bool   $lower_case = true

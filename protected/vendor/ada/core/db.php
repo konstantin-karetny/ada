@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -18,13 +18,16 @@
             $instances     = [];
 
         public static function add(array $params): int {
-            $class = (
-                __CLASS__ .
-                '\Drivers\\' .
-                ($params['driver'] ?? static::DEFAULT_DRIVER) .
-                '\Driver'
+            $class = implode(
+                '\\',
+                [
+                    __CLASS__,
+                    'Drivers',
+                    $params['driver'] ?? static::DEFAULT_DRIVER,
+                    'Driver'
+                ]
             );
-            static::$instances[] = $class::init(...func_get_args());
+            static::$instances[] = $class::init($params);
             return Type\Arr::init(static::$instances)->lastKey();
         }
 

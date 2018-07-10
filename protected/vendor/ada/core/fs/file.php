@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 07.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -18,7 +18,7 @@
             return new static($path);
         }
 
-        public function __construct(string $path) {
+        protected function __construct(string $path) {
             $this->path = Path::clean($path);
         }
 

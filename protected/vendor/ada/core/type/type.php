@@ -18,16 +18,16 @@
             $this->subj = $subj;
         }
 
+        protected function getSubject() {
+            return $this->subj;
+        }
+
         public function getInitialValue() {
             return \Ada\Core\Types::INITIAL_VALUES[$this->getType()];
         }
 
-        public function getSubj() {
-            return $this->subj;
-        }
-
         public function getType(): string {
-            return \Ada\Core\Types::get($this->getSubj());
+            return \Ada\Core\Types::get($this->getSubject());
         }
 
     }

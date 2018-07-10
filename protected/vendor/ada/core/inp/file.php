@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -36,7 +36,7 @@
             return new static($params);
         }
 
-        public function __construct(array $params) {
+        protected function __construct(array $params) {
             foreach ($params as $k => $v) {
                 $v = \Ada\Core\Types::set($v);
                 switch ($k) {

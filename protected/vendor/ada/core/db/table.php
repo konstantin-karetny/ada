@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -39,7 +39,7 @@
             if ($name && $res && $cached) {
                 return $res;
             }
-            return $res = new static(...func_get_args());
+            return $res = new static($name, $db);
         }
 
         protected function __construct(

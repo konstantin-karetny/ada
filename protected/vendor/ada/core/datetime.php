@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -60,7 +60,11 @@
             string $time          = 'now',
             string $timezone_name = ''
         ): \Ada\Core\DateTime {
-            return new static(...func_get_args());
+            return new static($time, $timezone_name);
+        }
+
+        public static function isInited(): bool {
+            return static::$inited;
         }
 
         public static function preset(array $params): bool {
@@ -68,8 +72,7 @@
                 return false;
             }
             foreach ($params as $k => $v) {
-                $k = Clean::cmd($k);
-                switch ($k) {
+                switch (Clean::cmd($k)) {
                     case 'default_timezone_name':
                         DateTime\TimeZone::init($v);
                         date_default_timezone_set($v);
@@ -81,10 +84,12 @@
                         static::$default_locale_name = Clean::cmd($v);
                         break;
                     case 'locales_pathes':
-                        static::$locales_pathes      = array_unique(array_merge(
-                            static::$locales_pathes,
-                            Clean::values($v, 'path')
-                        ));
+                        static::$locales_pathes      = array_unique(
+                            array_merge(
+                                static::$locales_pathes,
+                                Clean::values($v, 'path')
+                            )
+                        );
                         break;
                 }
             }

@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -25,8 +25,8 @@
             return parent::getInitialValue();
         }
 
-        public function getSubj(): string {
-            return parent::getSubj();
+        public function getString(): string {
+            return $this->getSubject();
         }
 
         public function hash(
@@ -34,7 +34,7 @@
             string $algo2     = 'md5',
             int    $cut_index = 8
         ): string {
-            $hash  = hash($algo1, $this->getSubj());
+            $hash  = hash($algo1, $this->getString());
             $start = strlen($hash) / 10;
             return hash(
                 $algo2,
@@ -47,7 +47,7 @@
         }
 
         public function oneLine(bool $trim = true): string {
-            $res = preg_replace('/\s+/', ' ', $this->getSubj());
+            $res = preg_replace('/\s+/', ' ', $this->getString());
             return $trim ? trim($res) : $res;
         }
 
@@ -59,7 +59,7 @@
                 '/[' . $replacement . ']+/',
                 $separator,
                 trim(
-                    preg_replace('/([A-Z])/', ' $1', $this->getSubj())
+                    preg_replace('/([A-Z])/', ' $1', $this->getString())
                 )
             );
         }

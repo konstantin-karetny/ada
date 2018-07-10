@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 05.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -24,10 +24,10 @@
                     substr($class, $slash)
                 );
                 if (class_exists($driver_class)) {
-                    return $driver_class::init(...func_get_args());
+                    return $driver_class::init($db);
                 }
             }
-            return new static(...func_get_args());
+            return new static($db);
         }
 
         protected function __construct(\Ada\Core\Db\Driver $db) {

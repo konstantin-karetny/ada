@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 09.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -46,7 +46,7 @@
             $wheres    = [];
 
         public static function init(\Ada\Core\Db\Driver $db): \Ada\Core\Db\Query {
-            return new static(...func_get_args());
+            return new static($db);
         }
 
         protected function __construct(\Ada\Core\Db\Driver $db) {
@@ -347,7 +347,7 @@
         public function orderBy(array $columns): \Ada\Core\Db\Query {
             foreach ($columns as $column) {
                 $this->addOrderBy(
-                    ...\Ada\Core\Types::set($column, 'array', false)
+                    ...\Ada\Core\Types::set($column, 'arr', false)
                 );
             }
             return $this;
@@ -527,7 +527,7 @@
 
         public function select(array $columns = []): \Ada\Core\Db\Query {
             foreach ($columns as $column) {
-                $args = \Ada\Core\Types::set($column, 'array', false);
+                $args = \Ada\Core\Types::set($column, 'arr', false);
                 is_string(reset($args))
                     ? $this->selectOne(...$args)
                     : $this->selectSub(...$args);

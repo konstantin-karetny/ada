@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 06.07.2018
+    * @version   1.0.0 10.07.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -22,7 +22,7 @@
                     1
                 );
             }
-            return new static(...func_get_args());
+            return new static($object);
         }
 
         public function getBasename(): string {
@@ -30,9 +30,13 @@
                 str_replace(
                     '\\',
                     '/',
-                    get_class($this->getSubj())
+                    get_class($this->getObject())
                 )
             );
+        }
+
+        public function getObject() {
+            return $this->getSubject();
         }
 
     }

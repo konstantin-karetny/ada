@@ -26,16 +26,17 @@
         'user'   => 'postgres'
     ]);
 
-
     //Input\Session::preset(['handler' => new Input\Session\Handlers\Db(Db::init()->getTable('session'))]);
 
+    //http://project/site?unit=articles&controller=item&task=view&arg1=str&arg2=2.2&arg3=3
 
-    exit(var_dump( Type\Arr::init([
-        'driver' => 'pgsql',
-        'name'   => 'postgres',
-        'prefix' => 'pj_',
-        'user'   => 'postgres'
-    ])->last() ));
+    exit(var_dump(
+
+
+        App::init(Url::init())->exec()
+
+
+    ));
 
     if ($_POST) {
         exit(var_dump( Inp\Files::get('fileinp') ));
