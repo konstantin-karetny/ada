@@ -4,25 +4,25 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit270c472534132bae6ae5690412d18171
+class ComposerStaticInit5757e4ab3c867f0d32fcdbd03ab7e8ca
 {
     public static $prefixLengthsPsr4 = array (
         'A' => 
         array (
-            'Ada\\Tools\\' => 10,
-            'Ada\\Framework\\' => 14,
+            'Ada\\Units\\Articles\\' => 19,
+            'Ada\\Core\\' => 9,
             'Ada\\Cms\\' => 8,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'Ada\\Tools\\' => 
+        'Ada\\Units\\Articles\\' => 
         array (
-            0 => __DIR__ . '/..' . '/ada/tools',
+            0 => __DIR__ . '/..' . '/ada/units/articles',
         ),
-        'Ada\\Framework\\' => 
+        'Ada\\Core\\' => 
         array (
-            0 => __DIR__ . '/..' . '/ada/framework',
+            0 => __DIR__ . '/..' . '/ada/core',
         ),
         'Ada\\Cms\\' => 
         array (
@@ -33,8 +33,8 @@ class ComposerStaticInit270c472534132bae6ae5690412d18171
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit270c472534132bae6ae5690412d18171::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit270c472534132bae6ae5690412d18171::$prefixDirsPsr4;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit5757e4ab3c867f0d32fcdbd03ab7e8ca::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit5757e4ab3c867f0d32fcdbd03ab7e8ca::$prefixDirsPsr4;
 
         }, null, ClassLoader::class);
     }

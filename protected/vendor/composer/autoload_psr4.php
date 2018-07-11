@@ -6,7 +6,7 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'Ada\\Tools\\' => array($vendorDir . '/ada/tools'),
-    'Ada\\Framework\\' => array($vendorDir . '/ada/framework'),
+    'Ada\\Units\\Articles\\' => array($vendorDir . '/ada/units/articles'),
+    'Ada\\Core\\' => array($vendorDir . '/ada/core'),
     'Ada\\Cms\\' => array($vendorDir . '/ada/cms'),
 );

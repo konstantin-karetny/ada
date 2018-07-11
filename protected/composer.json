@@ -11,22 +11,22 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "C:/OSPanel/domains/_packagist/ada/tools"
-        },
-        {
-            "type": "vcs",
-            "url": "C:/OSPanel/domains/_packagist/ada/framework"
-        },
-        {
-            "type": "vcs",
             "url": "C:/OSPanel/domains/_packagist/ada/cms"
+        },
+        {
+            "type": "vcs",
+            "url": "C:/OSPanel/domains/_packagist/ada/core"
+        },
+        {
+            "type": "vcs",
+            "url": "C:/OSPanel/domains/_packagist/ada/units/articles"
         }
     ],
     "require": {
         "php": ">=7.0.0",
-        "ada/tools": "*",
-        "ada/framework": "*",
-        "ada/cms": "*"
+        "ada/cms": "*",
+        "ada/core": "*",
+        "ada/units/articles": "*"
     },
     "minimum-stability": "dev"
 }

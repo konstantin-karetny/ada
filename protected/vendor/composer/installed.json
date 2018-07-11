@@ -1,48 +1,17 @@
 [
     {
-        "name": "ada/framework",
-        "version": "dev-master",
-        "version_normalized": "9999999-dev",
-        "source": {
-            "type": "git",
-            "url": "C:/OSPanel/domains/_packagist/ada/framework",
-            "reference": "9a56cfd37e1df789748c3688605ed8a32aca1c8f"
-        },
-        "require": {
-            "php": ">=7.0.0"
-        },
-        "time": "2017-10-03T11:17:00+00:00",
-        "type": "library",
-        "installation-source": "source",
-        "autoload": {
-            "psr-4": {
-                "Ada\\Framework\\": "/"
-            }
-        },
-        "license": [
-            "Apache 2.0"
-        ],
-        "authors": [
-            {
-                "name": "Konstantin Rudenko",
-                "email": "konstantin.i.rudenko@gmail.com"
-            }
-        ],
-        "description": "The Ada Framework"
-    },
-    {
         "name": "ada/cms",
         "version": "dev-master",
         "version_normalized": "9999999-dev",
         "source": {
             "type": "git",
             "url": "C:/OSPanel/domains/_packagist/ada/cms",
-            "reference": "3e74f8d2e348cf72f16cffd4585cd3b39bc0df9b"
+            "reference": "24a17a4de8658cc5443a702193aeb3331bb6faf3"
         },
         "require": {
             "php": ">=7.0.0"
         },
-        "time": "2017-10-03T11:19:29+00:00",
+        "time": "2018-07-11T07:59:31+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {
@@ -59,26 +28,26 @@
                 "email": "konstantin.i.rudenko@gmail.com"
             }
         ],
-        "description": "The Ada CMS"
+        "description": "Ada CMS"
     },
     {
-        "name": "ada/tools",
+        "name": "ada/core",
         "version": "dev-master",
         "version_normalized": "9999999-dev",
         "source": {
             "type": "git",
-            "url": "C:/OSPanel/domains/_packagist/ada/tools",
-            "reference": "1b6b158678a32e3331d7ea6132ec5141193a7291"
+            "url": "C:/OSPanel/domains/_packagist/ada/core",
+            "reference": "50eb53754c8051a4eee91e508579b44ee77c92d1"
         },
         "require": {
             "php": ">=7.0.0"
         },
-        "time": "2017-10-03T12:05:08+00:00",
+        "time": "2018-07-11T07:59:52+00:00",
         "type": "library",
         "installation-source": "source",
         "autoload": {
             "psr-4": {
-                "Ada\\Tools\\": "/"
+                "Ada\\Core\\": "/"
             }
         },
         "license": [
@@ -90,6 +59,37 @@
                 "email": "konstantin.i.rudenko@gmail.com"
             }
         ],
-        "description": "The Ada Tools"
+        "description": "Ada Core"
+    },
+    {
+        "name": "ada/units/articles",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "C:/OSPanel/domains/_packagist/ada/units/articles",
+            "reference": "50382128206f02ff07fe35507fb9336f218b7a15"
+        },
+        "require": {
+            "php": ">=7.0.0"
+        },
+        "time": "2018-07-11T07:59:08+00:00",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Ada\\Units\\Articles\\": "/"
+            }
+        },
+        "license": [
+            "Apache 2.0"
+        ],
+        "authors": [
+            {
+                "name": "Konstantin Rudenko",
+                "email": "konstantin.i.rudenko@gmail.com"
+            }
+        ],
+        "description": "Ada Units Articles"
     }
 ]

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "a13c255e020d176d3a3a3d437aef797c",
+    "content-hash": "6e0bb0e832ced29c5538e834c49618fb",
     "packages": [
         {
             "name": "ada/cms",
@@ -12,7 +12,7 @@
             "source": {
                 "type": "git",
                 "url": "C:/OSPanel/domains/_packagist/ada/cms",
-                "reference": "3e74f8d2e348cf72f16cffd4585cd3b39bc0df9b"
+                "reference": "24a17a4de8658cc5443a702193aeb3331bb6faf3"
             },
             "require": {
                 "php": ">=7.0.0"
@@ -32,16 +32,16 @@
                     "email": "konstantin.i.rudenko@gmail.com"
                 }
             ],
-            "description": "The Ada CMS",
-            "time": "2017-10-03T11:19:29+00:00"
+            "description": "Ada CMS",
+            "time": "2018-07-11T07:59:31+00:00"
         },
         {
-            "name": "ada/framework",
+            "name": "ada/core",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "C:/OSPanel/domains/_packagist/ada/framework",
-                "reference": "9a56cfd37e1df789748c3688605ed8a32aca1c8f"
+                "url": "C:/OSPanel/domains/_packagist/ada/core",
+                "reference": "50eb53754c8051a4eee91e508579b44ee77c92d1"
             },
             "require": {
                 "php": ">=7.0.0"
@@ -49,7 +49,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Ada\\Framework\\": "/"
+                    "Ada\\Core\\": "/"
                 }
             },
             "license": [
@@ -61,16 +61,16 @@
                     "email": "konstantin.i.rudenko@gmail.com"
                 }
             ],
-            "description": "The Ada Framework",
-            "time": "2017-10-03T11:17:00+00:00"
+            "description": "Ada Core",
+            "time": "2018-07-11T07:59:52+00:00"
         },
         {
-            "name": "ada/tools",
+            "name": "ada/units/articles",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "C:/OSPanel/domains/_packagist/ada/tools",
-                "reference": "1b6b158678a32e3331d7ea6132ec5141193a7291"
+                "url": "C:/OSPanel/domains/_packagist/ada/units/articles",
+                "reference": "50382128206f02ff07fe35507fb9336f218b7a15"
             },
             "require": {
                 "php": ">=7.0.0"
@@ -78,7 +78,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Ada\\Tools\\": "/"
+                    "Ada\\Units\\Articles\\": "/"
                 }
             },
             "license": [
@@ -90,8 +90,8 @@
                     "email": "konstantin.i.rudenko@gmail.com"
                 }
             ],
-            "description": "The Ada Tools",
-            "time": "2017-10-03T12:05:08+00:00"
+            "description": "Ada Units Articles",
+            "time": "2018-07-11T07:59:08+00:00"
         }
     ],
     "packages-dev": [],
