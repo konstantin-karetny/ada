@@ -1,7 +1,7 @@
 <?php
     /**
     * @package   project/core
-    * @version   1.0.0 10.07.2018
+    * @version   1.0.0 30.10.2018
     * @author    author
     * @copyright copyright
     * @license   Licensed under the Apache License, Version 2.0
@@ -77,7 +77,7 @@
                 return $res;
             }
             foreach (new \DirectoryIterator($this->path) as $iter) {
-                if ($iter->isDir() && !$iter->isDot()) {
+                if ($iter->isDir()) {
                     $path       = Path::clean($iter->getPathname());
                     $res[$path] = static::init($path);
                 }
@@ -95,7 +95,7 @@
                 return $res;
             }
             foreach (new \DirectoryIterator($this->path) as $iter) {
-                if ($iter->isFile() && !$iter->isDot()) {
+                if ($iter->isFile()) {
                     $path       = Path::clean($iter->getPathname());
                     $res[$path] = File::init($path);
                 }
